@@ -1,8 +1,6 @@
 
-import YahooFinance from 'yahoo-finance2';
-
-// Check documentation before changing: https://github.com/gadicc/yahoo-finance2
-const yahooFinance = new YahooFinance();
+// Removed yahoo-finance2 to ensure Vercel Edge Runtime compatibility
+// using direct fetch to Yahoo Finance unofficial API (standard practice for zero-cost)
 
 interface MarketData {
     symbol: string;
@@ -23,6 +21,7 @@ export interface AssetPerformance {
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const BINANCE_API = 'https://api.binance.com/api/v3';
+const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
 /**
  * Resolves a ticker symbol to a CoinGecko ID.
@@ -96,40 +95,67 @@ async function getBinanceHistoricalPrice(symbol: string, date: Date): Promise<nu
 }
 
 /**
- * Fetches Stock data (Historical & Current) via Yahoo Finance v3.
- * Uses `chart` endpoint for history to avoid deprecated `historical` API issues.
+ * Fetches Stock data (Historical & Current) via Yahoo Finance v8 API (Fetch).
+ * Compatible with Edge Runtime.
  */
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     try {
+        let period1 = 0;
+        let period2 = 9999999999;
+
         if (date) {
-            // HISTORICAL
-            const from = date;
+            // Historical Window: Date -> Date + 3 days (to catch weekends/holidays)
+            period1 = Math.floor(date.getTime() / 1000);
             const to = new Date(date);
-            to.setDate(to.getDate() + 3); // 3-day wide window to ensure we catch a trading day (skip weekends)
-
-            // console.log(`[MarketData] Yahoo History: ${symbol} from ${from.toISOString()}`);
-
-            const result = await yahooFinance.chart(symbol, {
-                period1: from,
-                period2: to,
-                interval: '1d'
-            });
-
-            if (result && result.quotes && result.quotes.length > 0) {
-                return result.quotes[0].close;
-            } else {
-                console.warn(`[MarketData] Yahoo: No history for ${symbol} around ${from.toISOString()}`);
-            }
-
+            to.setDate(to.getDate() + 4);
+            period2 = Math.floor(to.getTime() / 1000);
         } else {
-            // CURRENT PRICE
-            const quote = await yahooFinance.quote(symbol);
-            if (quote && quote.regularMarketPrice) {
-                return quote.regularMarketPrice;
+            // Current Price: Look at last 2 days to ensure we get a quote
+            const now = new Date();
+            period2 = Math.floor(now.getTime() / 1000);
+            const from = new Date(now);
+            from.setDate(from.getDate() - 5);
+            period1 = Math.floor(from.getTime() / 1000);
+        }
+
+        const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
+        // console.log(`[MarketData] Fetching: ${url}`);
+
+        const res = await fetch(url);
+        if (!res.ok) {
+            // console.warn(`[MarketData] Yahoo Fetch failed: ${res.status}`);
+            return null;
+        }
+
+        const json = await res.json();
+        const result = json?.chart?.result?.[0];
+
+        if (!result) return null;
+
+        const quotes = result.indicators?.quote?.[0];
+
+        if (quotes && quotes.close && quotes.close.length > 0) {
+            // For historical, get the LAST price in the window? 
+            // Actually, we want the price CLOSEST to the start date.
+            // Since we set period1 to the date, the first element should be the correct day (or next trading day).
+
+            // Filter out nulls (holidays)
+            const validCloses = quotes.close.filter((p: number | null) => p !== null);
+
+            if (validCloses.length > 0) {
+                // If historical, we want the first valid close after the date.
+                // If current, we want the last available closing price (or current price if live, but chart API gives closes).
+                // API usually returns 'meta' with 'regularMarketPrice' for current
+                if (!date && result.meta && result.meta.regularMarketPrice) {
+                    return result.meta.regularMarketPrice;
+                }
+
+                // Fallback to chart data
+                return date ? validCloses[0] : validCloses[validCloses.length - 1];
             }
         }
     } catch (e: any) {
-        console.error('[MarketData] Yahoo Finance Error:', e.message);
+        console.error('[MarketData] Yahoo Finance Fetch Error:', e.message);
     }
     return null;
 }
