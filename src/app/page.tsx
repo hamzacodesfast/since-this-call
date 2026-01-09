@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Search, Loader2 } from 'lucide-react';
+import { ArrowRight, Search, Loader2, Sparkles, TrendingUp } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 // Cache duration: 5 minutes (in milliseconds)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -77,48 +80,74 @@ export default function Home() {
     }
 
     return (
-        <main className="min-h-screen bg-background flex flex-col items-center py-24 px-4 relative overflow-hidden">
+        <main className="min-h-screen bg-background flex flex-col items-center py-24 px-4 relative overflow-hidden text-center selection:bg-primary/20">
 
-            {/* Background Gradients */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-500/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
+            {/* Dynamic Background */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
+            </div>
 
             {/* Header */}
-            <div className="text-center mb-16 space-y-4 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-semibold tracking-wide uppercase">
+            <div className="mb-12 space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10">
+                    <Sparkles className="w-3 h-3 mr-2 text-yellow-500" />
                     Social Prediction Tracker
-                </div>
-                <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/50">
+                </Badge>
+
+                <h1 className="text-5xl md:text-8xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40 pb-2">
                     Since This Call
                 </h1>
-                <p className="text-xl text-muted-foreground">
-                    Paste a crypto or stock prediction from X/Twitter to see how it aged.
+
+                <p className="text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                    The ultimate lie detector for Crypto & Stock gurus. Paste a prediction tweet to see the <span className="text-foreground font-semibold">real receipts</span>.
                 </p>
             </div>
 
             {/* Input Form */}
-            <form onSubmit={handleAnalyze} className="w-full max-w-xl relative flex items-center mb-12 group">
-                <div className="absolute left-4 text-muted-foreground group-focus-within:text-foreground transition-colors">
-                    <Search className="w-5 h-5" />
-                </div>
-                <input
-                    type="url"
-                    placeholder="https://x.com/username/status/..."
-                    className="w-full h-14 pl-12 pr-32 rounded-2xl bg-secondary/50 border border-transparent focus:border-primary/50 focus:bg-background focus:ring-4 focus:ring-primary/10 transition-all outline-none text-lg"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                />
-                <button
-                    type="submit"
-                    disabled={isLoading || !url}
-                    className="absolute right-2 h-10 px-6 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                >
-                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Analyze'}
-                </button>
-            </form>
+            <div className="w-full max-w-xl relative mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+
+                <form onSubmit={handleAnalyze} className="relative flex gap-2 p-2 bg-card/80 backdrop-blur-md border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <div className="relative flex-1">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            <Search className="w-5 h-5" />
+                        </div>
+                        <Input
+                            type="url"
+                            placeholder="Paste Tweet URL (e.g. https://x.com/...)"
+                            className="w-full h-12 pl-10 bg-transparent border-none focus-visible:ring-0 text-base"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                        />
+                    </div>
+                    <Button
+                        type="submit"
+                        size="lg"
+                        disabled={isLoading || !url}
+                        className="h-12 px-8 rounded-xl font-bold text-md shadow-lg"
+                    >
+                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check Receipt'}
+                    </Button>
+                </form>
+
+                {/* Quick Prompts / Examples */}
+                {!data && !isLoading && (
+                    <div className="mt-6 flex flex-wrap justify-center gap-2 opacity-60">
+                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mr-2 pt-1">Try:</span>
+                        <Button variant="outline" size="sm" className="h-7 text-xs rounded-full bg-background/50 hover:bg-background" onClick={() => setUrl('https://x.com/nntaleb/status/1408395330471829504')}>
+                            $BTC Prediction
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs rounded-full bg-background/50 hover:bg-background" onClick={() => setUrl('https://x.com/jimcramer/status/2002112942054215875')}>
+                            Jim Cramer (Inverse)
+                        </Button>
+                    </div>
+                )}
+            </div>
 
             {/* Error Message */}
             {error && (
-                <div className="mb-12 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-3">
+                <div className="mb-12 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-3 animate-in hover:scale-105 transition-transform">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     {error}
                 </div>
@@ -126,6 +155,14 @@ export default function Home() {
 
             {/* Results */}
             {data && <AnalysisView data={data} />}
+
+            {/* Footer Branding */}
+            <div className="mt-auto py-12 text-center space-y-4 opacity-30 hover:opacity-100 transition-opacity duration-500">
+                <div className="flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Real Data • No Hype</span>
+                </div>
+            </div>
 
         </main>
     );
