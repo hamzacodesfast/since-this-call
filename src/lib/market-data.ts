@@ -182,20 +182,29 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
 
             // Secondary: CoinGecko (Free tier limitations apply)
             const coinId = await getCoinId(symbol);
-            if (!coinId) return null;
+            if (coinId) {
+                const d = date.getDate().toString().padStart(2, '0');
+                const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                const y = date.getFullYear();
+                const dateParam = `${d}-${m}-${y}`;
 
-            const d = date.getDate().toString().padStart(2, '0');
-            const m = (date.getMonth() + 1).toString().padStart(2, '0');
-            const y = date.getFullYear();
-            const dateParam = `${d}-${m}-${y}`;
+                const url = `${COINGECKO_API}/coins/${coinId}/history?date=${dateParam}`;
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
 
-            const url = `${COINGECKO_API}/coins/${coinId}/history?date=${dateParam}`;
-            const res = await fetch(url);
-            const data = await res.json();
-
-            if (data.market_data && data.market_data.current_price) {
-                return data.market_data.current_price.usd;
+                    if (data.market_data && data.market_data.current_price) {
+                        return data.market_data.current_price.usd;
+                    }
+                } catch (e) {
+                    console.error('[MarketData] CoinGecko History Error:', e);
+                }
             }
+
+            // Tertiary: Yahoo Finance (for major cryptos like BTC-USD, ETH-USD)
+            const yahooSymbol = `${symbol.toUpperCase()}-USD`;
+            const yahooPrice = await getYahooPrice(yahooSymbol, date);
+            if (yahooPrice !== null) return yahooPrice;
         } else {
             // CURRENT CRYPTO PRICE
 
