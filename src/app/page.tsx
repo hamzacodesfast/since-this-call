@@ -85,7 +85,7 @@ export default function Home() {
             {/* Header */}
             <div className="text-center mb-16 space-y-4 max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-semibold tracking-wide uppercase">
-                    Social Accountability Engine
+                    Social Prediction Tracker
                 </div>
                 <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/50">
                     Since This Call
@@ -126,18 +126,6 @@ export default function Home() {
 
             {/* Results */}
             {data && <AnalysisView data={data} />}
-
-            {/* Footer Branding */}
-            <div className="mt-auto py-8 text-center space-y-2 opacity-50 hover:opacity-100 transition-opacity">
-                <p className="text-sm font-medium">Powered by</p>
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-                        Google Gemini 2.0 Flash
-                    </span>
-                    <span>•</span>
-                    <span>v0.1.0</span>
-                </div>
-            </div>
 
         </main>
     );
