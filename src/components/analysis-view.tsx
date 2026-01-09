@@ -27,6 +27,7 @@ interface AnalysisViewProps {
             username: string;
             avatar?: string;
             date: string;
+            isEdited?: boolean;
         };
     };
 }
@@ -139,12 +140,19 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                                 </div>
                             )}
 
-                            <div className="leading-tight">
+                            <div className="leading-tight text-left">
                                 <div className="font-bold text-sm flex items-center gap-1">
                                     {data.tweet.author}
                                     <span className="text-blue-400 text-[10px]">Verify</span>
                                 </div>
-                                <div className="text-xs text-muted-foreground">@{data.tweet.username}</div>
+                                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    @{data.tweet.username}
+                                    {data.tweet.isEdited && (
+                                        <span className="text-yellow-500 text-[10px] ml-1 flex items-center gap-0.5 border border-yellow-500/30 px-1 rounded bg-yellow-500/10" title="Tweet was edited">
+                                            ⚠️ Edited
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="ml-auto">
