@@ -130,6 +130,7 @@ export async function GET(request: NextRequest) {
                 text: tweet.text,
                 author: tweet.user.name,
                 username: tweet.user.screen_name,
+                avatar: tweet.user.profile_image_url_https,
                 date: tweet.created_at,
                 media: tweet.mediaDetails
             }

@@ -25,6 +25,7 @@ interface AnalysisViewProps {
             text: string;
             author: string;
             username: string;
+            avatar?: string;
             date: string;
         };
     };
@@ -121,32 +122,50 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                         <TrendingUp className="w-24 h-24" />
                     </div>
 
-                    <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center mb-2">
-                            <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md">
-                                Official Receipt
-                            </Badge>
-                            <div className="text-xs font-mono opacity-50">
-                                #{data.tweet.id.slice(-6)}
+                    <CardHeader className="pb-4 relative z-10">
+                        {/* Static Tweet Header */}
+                        <div className="flex items-center gap-3 mb-4">
+                            {/* Avatar */}
+                            {data.tweet.avatar ? (
+                                <img
+                                    src={data.tweet.avatar}
+                                    alt={data.tweet.author}
+                                    className="w-10 h-10 rounded-full border border-white/10"
+                                    crossOrigin="anonymous" // Essential for html2canvas
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center border border-white/10">
+                                    <Quote className="w-4 h-4 text-muted-foreground" />
+                                </div>
+                            )}
+
+                            <div className="leading-tight">
+                                <div className="font-bold text-sm flex items-center gap-1">
+                                    {data.tweet.author}
+                                    <span className="text-blue-400 text-[10px]">Verify</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">@{data.tweet.username}</div>
+                            </div>
+
+                            <div className="ml-auto">
+                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px]">
+                                    {new Date(data.analysis.date).getFullYear()} Call
+                                </Badge>
                             </div>
                         </div>
-                        <CardTitle className="text-3xl font-light">
-                            {data.analysis.symbol} Call
-                        </CardTitle>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <Quote className="w-3 h-3" />
-                            <span>@{(data.tweet.username || 'unknown').toLowerCase()}</span>
-                            <span>•</span>
-                            <span>{new Date(data.analysis.date).toLocaleDateString()}</span>
+
+                        {/* Static Tweet Body */}
+                        <div className="text-base font-light text-foreground/90 leading-relaxed mb-4">
+                            "{data.tweet.text.length > 140 ? data.tweet.text.slice(0, 140) + '...' : data.tweet.text}"
                         </div>
                     </CardHeader>
 
-                    <CardContent className="space-y-8 pt-6">
+                    <CardContent className="space-y-6 pt-0 relative z-10">
 
                         {/* Main Verdict */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-background/40 backdrop-blur-md border border-white/5">
                             <div className="space-y-1">
-                                <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
+                                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
                                 <div className={cn("text-4xl font-black italic tracking-tighter flex items-center gap-2", colorClass)}>
                                     {isWin ? (
                                         <>
@@ -161,7 +180,7 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                             </div>
 
                             <div className="text-right space-y-1">
-                                <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider">ROI</div>
+                                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Move</div>
                                 <div className={cn("text-4xl font-black tracking-tighter tabular-nums", colorClass)}>
                                     {data.market.performance > 0 ? '+' : ''}{data.market.performance.toFixed(2)}%
                                 </div>
@@ -169,28 +188,22 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                         </div>
 
                         {/* Data Grid */}
-                        <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-background/40 backdrop-blur-md border border-white/5">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground flex items-center gap-1"><DollarSign className="w-3 h-3" /> Entry Price</div>
-                                <div className="text-lg font-mono font-medium">{formatPrice(data.market.callPrice)}</div>
+                                <div className="text-xs text-muted-foreground flex items-center gap-1"><DollarSign className="w-3 h-3" /> Cost Basis</div>
+                                <div className="text-lg font-mono font-medium tracking-tight whitespace-nowrap">{formatPrice(data.market.callPrice)}</div>
                             </div>
                             <div className="space-y-1 text-right">
                                 <div className="text-xs text-muted-foreground">Current Price</div>
-                                <div className="text-lg font-mono font-medium">{formatPrice(data.market.currentPrice)}</div>
-                            </div>
-                            <div className="col-span-2 pt-2 border-t border-white/5 flex justify-between items-center">
-                                <span className="text-xs text-muted-foreground">Prediction</span>
-                                <Badge variant={data.analysis.sentiment === 'BULLISH' ? 'default' : 'destructive'} className="font-bold">
-                                    {data.analysis.sentiment}
-                                </Badge>
+                                <div className="text-lg font-mono font-medium tracking-tight whitespace-nowrap">{formatPrice(data.market.currentPrice)}</div>
                             </div>
                         </div>
 
                     </CardContent>
 
-                    <CardFooter className="pt-2 pb-6 flex justify-between items-center opacity-50 text-[10px] uppercase tracking-widest font-semibold">
-                        <span>Since This Call</span>
-                        <span>Verified on Chain/Market</span>
+                    <CardFooter className="pt-4 pb-6 flex justify-between items-center opacity-40 text-[10px] uppercase tracking-widest font-semibold border-t border-white/5 mx-6">
+                        <span>SinceThisCall.com</span>
+                        <span>#{data.tweet.id.slice(-6)}</span>
                     </CardFooter>
                 </Card>
 
