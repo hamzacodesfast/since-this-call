@@ -4,7 +4,7 @@
 
 Paste a tweet URL, and the app will tell you exactly how that asset has performed since the moment the tweet was posted.
 
-![Screenshot Placeholder](public/screenshot.png)
+![Screenshot Placeholder](public/Screenshot from 2026-01-09 00-23-41.png)
 
 ## ✨ Features
 
