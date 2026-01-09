@@ -1,6 +1,6 @@
 # Since This Call 📉📈
 
-**Since This Call** is a "Social Accountability Engine" that tracks the performance of crypto and stock predictions ("calls") made on X (formerly Twitter).
+**Since This Call** is a "Social Prediction Tracker" that tracks the performance of crypto and stock predictions ("calls") made on X (formerly Twitter).
 
 Paste a tweet URL, and the app will tell you exactly how that asset has performed since the moment the tweet was posted.
 
