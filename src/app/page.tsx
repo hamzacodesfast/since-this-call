@@ -4,6 +4,38 @@ import { useState } from 'react';
 import { ArrowRight, Search, Loader2 } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
 
+// Cache duration: 5 minutes (in milliseconds)
+const CACHE_DURATION = 5 * 60 * 1000;
+
+// Helper to get cached data
+function getCachedData(url: string) {
+    try {
+        const cached = localStorage.getItem(`stc_cache_${url}`);
+        if (!cached) return null;
+
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp > CACHE_DURATION) {
+            localStorage.removeItem(`stc_cache_${url}`);
+            return null;
+        }
+        return data;
+    } catch {
+        return null;
+    }
+}
+
+// Helper to set cached data
+function setCachedData(url: string, data: any) {
+    try {
+        localStorage.setItem(`stc_cache_${url}`, JSON.stringify({
+            data,
+            timestamp: Date.now()
+        }));
+    } catch {
+        // Ignore storage errors (quota exceeded, etc.)
+    }
+}
+
 export default function Home() {
     const [url, setUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +50,14 @@ export default function Home() {
         setError(null);
         setData(null);
 
+        // Check cache first
+        const cached = getCachedData(url);
+        if (cached) {
+            setData(cached);
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch(`/api/analyze?url=${encodeURIComponent(url)}`);
             const json = await res.json();
@@ -26,6 +66,8 @@ export default function Home() {
                 throw new Error(json.error || 'Failed to analyze tweet');
             }
 
+            // Cache successful response
+            setCachedData(url, json);
             setData(json);
         } catch (err: any) {
             setError(err.message);
