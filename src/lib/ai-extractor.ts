@@ -102,14 +102,19 @@ export async function extractCallFromText(tweetText: string, tweetDate: string):
         Tweet Date: "${tweetDate}"
 
         Rules:
-        1. Identify the Main Asset.
+        1. Identify the Main Asset. Use these symbol mappings:
+           - **PRECIOUS METALS** (ALWAYS type="STOCK"):
+             - Silver, XAG, $SILVER -> symbol="SLV"
+             - Gold, XAU, $GOLD -> symbol="GLD"
+           - **CRYPTO** (type="CRYPTO"): BTC, ETH, SOL, DOGE, XRP, etc.
+           - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, etc.
         2. Determine Sentiment. Strict Rules:
            - **CRITICAL**: If the author is mocking "late buyers", "the crowd", "retail", or "calls them poop/shit", this is a TOP SIGNAL -> **BEARISH**.
            - **TIE-BREAKER**: If the tweet contains BOTH bullish words (like "generational", "parabolic") AND mocking of buyers, the MOCKING takes precedence. Mark as **BEARISH**.
            - "Parabolic" is Bullish ONLY if the author is participating.
            - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
         3. Use the Tweet Date as the Date.
-        4. Normalize Symbol.
+        4. Normalize Symbol to the mappings above.
       `,
         });
 
