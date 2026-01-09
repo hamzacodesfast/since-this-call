@@ -1,26 +1,37 @@
-import { LRUCache } from 'lru-cache';
+export interface RateLimitConfig {
+    interval: number; // Window size in ms
+    uniqueTokenPerInterval: number; // Max users to track (LRU-like)
+}
 
-type Options = {
-    uniqueTokenPerInterval?: number;
-    interval?: number;
-};
-
-export function rateLimit(options?: Options) {
-    const tokenCache = new LRUCache({
-        max: options?.uniqueTokenPerInterval || 500,
-        ttl: options?.interval || 60000,
-    });
+export function rateLimit(config: RateLimitConfig) {
+    const tokenCache = new Map<string, number[]>();
 
     return {
         check: (limit: number, token: string) => {
-            const tokenCount = (tokenCache.get(token) as number[]) || [0];
-            if (tokenCount[0] === 0) {
-                tokenCache.set(token, [1]);
-            } else {
-                tokenCount[0] += 1;
-                tokenCache.set(token, tokenCount);
+            const now = Date.now();
+            const windowStart = now - config.interval;
+
+            const timestampCache = tokenCache.get(token) || [];
+
+            // Filter out timestamps older than the window
+            const validTimestamps = timestampCache.filter(timestamp => timestamp > windowStart);
+
+            if (validTimestamps.length >= limit) {
+                return false;
             }
-            return tokenCount[0] <= limit;
-        },
+
+            // Valid request, record timestamp
+            validTimestamps.push(now);
+            tokenCache.set(token, validTimestamps);
+
+            // Basic cleanup (LRU-ish)
+            // If cache gets too big, simply clear it. 
+            // In a real serverless environment, this map is ephermeral anyway.
+            if (tokenCache.size > config.uniqueTokenPerInterval) {
+                tokenCache.clear();
+            }
+
+            return true;
+        }
     };
 }
