@@ -68,8 +68,8 @@ export default async function AnalysisPage({ params }: PageProps) {
             {/* Header */}
             <div className="mb-8">
                 <Link href="/">
-                    <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10 hover:bg-secondary/70 transition-colors cursor-pointer">
-                        <Sparkles className="w-3 h-3 mr-2 text-yellow-500" />
+                    <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10 hover:bg-secondary/70 transition-colors cursor-pointer flex items-center gap-2">
+                        <img src="/logo.png" alt="Logo" className="w-4 h-4" />
                         Since This Call
                     </Badge>
                 </Link>

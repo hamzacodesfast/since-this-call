@@ -120,7 +120,7 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                 <Card id="share-card" className={cn("w-full max-w-[500px] overflow-hidden border-2 relative backdrop-blur-xl", bgClass)}>
                     {/* Watermark / Branding visible only on share/card */}
                     <div className="absolute top-4 right-4 opacity-20 pointer-events-none">
-                        <TrendingUp className="w-24 h-24" />
+                        <img src="/logo.png" alt="Watermark" className="w-24 h-24" />
                     </div>
 
                     <CardHeader className="pb-4 relative z-10">
