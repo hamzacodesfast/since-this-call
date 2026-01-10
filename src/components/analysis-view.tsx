@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import html2canvas from 'html2canvas';
+
 
 interface AnalysisViewProps {
     data: {
@@ -74,6 +74,9 @@ export function AnalysisView({ data }: AnalysisViewProps) {
         if (!container) return;
 
         try {
+            // Lazy load html2canvas to save memory/bundle size
+            const html2canvas = (await import('html2canvas')).default;
+
             const canvas = await html2canvas(container, {
                 backgroundColor: '#030712', // Force dark bg
                 scale: 2,

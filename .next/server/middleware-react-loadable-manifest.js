@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}";
+self.__REACT_LOADABLE_MANIFEST='{"components/analysis-view.tsx -> html2canvas":{"id":4457,"files":["static/chunks/ad2866b8.a1343deb0eef8820.js"]}}';
