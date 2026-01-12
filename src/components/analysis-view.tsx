@@ -128,48 +128,49 @@ export function AnalysisView({ data }: AnalysisViewProps) {
 
                     <CardHeader className="pb-4 relative z-10">
                         {/* Static Tweet Header */}
-                        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                            <div className="flex items-center gap-3 flex-1">
-                                {/* Avatar */}
-                                {data.tweet.avatar ? (
-                                    <img
-                                        src={data.tweet.avatar}
-                                        alt={data.tweet.author}
-                                        className="w-10 h-10 rounded-full border border-white/10 flex-shrink-0"
-                                        crossOrigin="anonymous" // Essential for html2canvas
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center border border-white/10 flex-shrink-0">
-                                        <Quote className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                )}
+                        <div className="mb-4">
+                            {/* Top row: Avatar + Name + Badges */}
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                                <div className="flex items-center gap-3">
+                                    {/* Avatar */}
+                                    {data.tweet.avatar ? (
+                                        <img
+                                            src={data.tweet.avatar}
+                                            alt={data.tweet.author}
+                                            className="w-12 h-12 rounded-full border border-white/10"
+                                            crossOrigin="anonymous"
+                                        />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center border border-white/10">
+                                            <Quote className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                    )}
 
-                                <div className="leading-tight text-left min-w-0">
-                                    <div className="font-bold text-sm flex items-center gap-1">
-                                        <span className="truncate">{data.tweet.author}</span>
-                                        <span className="text-blue-400 text-[10px] flex-shrink-0">Verify</span>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <span className="truncate">@{data.tweet.username}</span>
-                                        {data.tweet.isEdited && (
-                                            <span className="text-yellow-500 text-[10px] ml-1 flex items-center gap-0.5 border border-yellow-500/30 px-1 rounded bg-yellow-500/10 flex-shrink-0" title="Tweet was edited">
-                                                ⚠️ Edited
-                                            </span>
-                                        )}
+                                    <div className="leading-tight text-left">
+                                        <div className="font-bold text-sm flex items-center gap-1.5">
+                                            {data.tweet.author}
+                                            <span className="text-blue-400 text-[10px]">Verify</span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            @{data.tweet.username}
+                                            {data.tweet.isEdited && (
+                                                <span className="text-yellow-500 text-[10px] ml-2">⚠️ Edited</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-2 flex-shrink-0 self-start sm:self-center flex-wrap sm:justify-end">
+                            {/* Badges row */}
+                            <div className="flex gap-2 flex-wrap">
                                 <div className={cn(
-                                    "flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-semibold whitespace-nowrap",
-                                    "opacity-80 bg-background/50 backdrop-blur-md",
-                                    data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/40" : "text-red-400 border-red-400/40"
+                                    "inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-semibold",
+                                    data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/40 bg-green-500/10" : "text-red-400 border-red-400/40 bg-red-500/10"
                                 )}>
-                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" /> : <TrendingDown className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />}
+                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1.5" /> : <TrendingDown className="w-3 h-3 mr-1.5" />}
                                     {data.analysis.sentiment}
                                 </div>
-                                <div className="flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-[11px] font-semibold whitespace-nowrap opacity-80 bg-background/50 backdrop-blur-md text-white/80">
+                                <div className="inline-flex items-center rounded-full border border-white/20 px-3 py-1.5 text-[11px] font-semibold text-white/70 bg-white/5">
                                     {new Date(data.analysis.date).getFullYear()} Call
                                 </div>
                             </div>
