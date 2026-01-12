@@ -185,25 +185,25 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                     <CardContent className="space-y-6 pt-0 relative z-10">
 
                         {/* Main Verdict */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-background/40 backdrop-blur-md border border-white/5">
-                            <div className="space-y-1 text-center sm:text-left w-full sm:w-auto">
+                        <div className="flex flex-row items-center justify-between p-4 rounded-xl bg-background/40 border border-white/5">
+                            <div className="space-y-1 text-left">
                                 <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
-                                <div className={cn("text-3xl sm:text-4xl font-black italic tracking-tighter flex items-center justify-center sm:justify-start gap-2", colorClass)}>
+                                <div className={cn("text-2xl font-black italic tracking-tighter flex items-center gap-2", colorClass)}>
                                     {isWin ? (
                                         <>
-                                            <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8" /> WIN
+                                            <CheckCircle2 className="w-6 h-6" /> WIN
                                         </>
                                     ) : (
                                         <>
-                                            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8" /> REKT
+                                            <AlertTriangle className="w-6 h-6" /> REKT
                                         </>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="text-center sm:text-right space-y-1 w-full sm:w-auto">
+                            <div className="text-right space-y-1">
                                 <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Move</div>
-                                <div className={cn("text-3xl sm:text-4xl font-black tracking-tighter tabular-nums", colorClass)}>
+                                <div className={cn("text-2xl font-black tracking-tighter tabular-nums", colorClass)}>
                                     {data.market.performance > 0 ? '+' : ''}{data.market.performance.toFixed(2)}%
                                 </div>
                             </div>
