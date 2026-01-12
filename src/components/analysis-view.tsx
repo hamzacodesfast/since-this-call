@@ -128,31 +128,31 @@ export function AnalysisView({ data }: AnalysisViewProps) {
 
                     <CardHeader className="pb-4 relative z-10">
                         {/* Static Tweet Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                            <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                            <div className="flex items-center gap-3 flex-1">
                                 {/* Avatar */}
                                 {data.tweet.avatar ? (
                                     <img
                                         src={data.tweet.avatar}
                                         alt={data.tweet.author}
-                                        className="w-10 h-10 rounded-full border border-white/10"
+                                        className="w-10 h-10 rounded-full border border-white/10 flex-shrink-0"
                                         crossOrigin="anonymous" // Essential for html2canvas
                                     />
                                 ) : (
-                                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center border border-white/10">
+                                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center border border-white/10 flex-shrink-0">
                                         <Quote className="w-4 h-4 text-muted-foreground" />
                                     </div>
                                 )}
 
-                                <div className="leading-tight text-left">
+                                <div className="leading-tight text-left min-w-0">
                                     <div className="font-bold text-sm flex items-center gap-1">
-                                        {data.tweet.author}
-                                        <span className="text-blue-400 text-[10px]">Verify</span>
+                                        <span className="truncate">{data.tweet.author}</span>
+                                        <span className="text-blue-400 text-[10px] flex-shrink-0">Verify</span>
                                     </div>
                                     <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                        @{data.tweet.username}
+                                        <span className="truncate">@{data.tweet.username}</span>
                                         {data.tweet.isEdited && (
-                                            <span className="text-yellow-500 text-[10px] ml-1 flex items-center gap-0.5 border border-yellow-500/30 px-1 rounded bg-yellow-500/10" title="Tweet was edited">
+                                            <span className="text-yellow-500 text-[10px] ml-1 flex items-center gap-0.5 border border-yellow-500/30 px-1 rounded bg-yellow-500/10 flex-shrink-0" title="Tweet was edited">
                                                 ⚠️ Edited
                                             </span>
                                         )}
@@ -160,14 +160,14 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                                 </div>
                             </div>
 
-                            <div className="flex gap-2 flex-shrink-0 self-start sm:self-auto flex-wrap">
-                                <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 py-1.5 min-h-[24px]",
+                            <div className="flex gap-2 flex-shrink-0 self-start sm:self-center flex-wrap sm:justify-end">
+                                <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 py-1.5 min-h-[26px] h-auto border",
                                     data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/30" : "text-red-400 border-red-400/30"
                                 )}>
                                     {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1.5 flex-shrink-0" /> : <TrendingDown className="w-3 h-3 mr-1.5 flex-shrink-0" />}
                                     {data.analysis.sentiment}
                                 </Badge>
-                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 py-1.5 min-h-[24px]">
+                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 py-1.5 min-h-[26px] h-auto border">
                                     {new Date(data.analysis.date).getFullYear()} Call
                                 </Badge>
                             </div>
