@@ -73,34 +73,38 @@ export function AnalysisView({ data }: AnalysisViewProps) {
         const container = document.getElementById('share-card');
         if (!container) return;
 
+
         try {
-            // Lazy load html2canvas to save memory/bundle size
-            const html2canvas = (await import('html2canvas')).default;
+            // Use html-to-image instead of html2canvas for better SVG/CSS support
+            const { toPng } = await import('html-to-image');
 
-            const canvas = await html2canvas(container, {
-                backgroundColor: '#030712', // Force dark bg
-                scale: 2,
-                useCORS: true,
-                allowTaint: true
-            });
-
-            canvas.toBlob(async (blob) => {
-                if (!blob) return;
-                try {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]);
-                    alert("📸 Receipt Copied! Paste it on X.");
-
-                    const text = `Verified by SinceThisCall.com 🧾\n\n${data.analysis.symbol} Call by @${data.tweet.username}:\n${isWin ? '✅ AGED WELL' : '❌ AGED POORLY'} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\nCheck your own prediction 👇`;
-                    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-                    window.open(url, '_blank');
-
-                } catch (e) {
-                    console.error('Clipboard failed', e);
-                    alert("Please allow clipboard access to copy the image.");
+            const dataUrl = await toPng(container, {
+                backgroundColor: '#030712',
+                pixelRatio: 2,
+                style: {
+                    // Force any backdrop-blur to be ignored for capture
+                    backdropFilter: 'none',
                 }
             });
+
+            // Convert data URL to blob
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                alert("📸 Receipt Copied! Paste it on X.");
+
+                const text = `Verified by SinceThisCall.com 🧾\n\n${data.analysis.symbol} Call by @${data.tweet.username}:\n${isWin ? '✅ AGED WELL' : '❌ AGED POORLY'} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\nCheck your own prediction 👇`;
+                const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
+                window.open(url, '_blank');
+
+            } catch (e) {
+                console.error('Clipboard failed', e);
+                alert("Please allow clipboard access to copy the image.");
+            }
 
         } catch (e) {
             console.error('Screenshot failed', e);
