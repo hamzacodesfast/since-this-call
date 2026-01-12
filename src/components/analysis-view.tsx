@@ -161,13 +161,13 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                             </div>
 
                             <div className="flex gap-2 flex-shrink-0 self-start sm:self-center flex-wrap sm:justify-end">
-                                <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 py-1.5 min-h-[26px] h-auto border",
+                                <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 h-8 flex items-center justify-center border",
                                     data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/30" : "text-red-400 border-red-400/30"
                                 )}>
                                     {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1.5 flex-shrink-0" /> : <TrendingDown className="w-3 h-3 mr-1.5 flex-shrink-0" />}
                                     {data.analysis.sentiment}
                                 </Badge>
-                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 py-1.5 min-h-[26px] h-auto border">
+                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap w-fit flex-none px-4 h-8 flex items-center justify-center border">
                                     {new Date(data.analysis.date).getFullYear()} Call
                                 </Badge>
                             </div>

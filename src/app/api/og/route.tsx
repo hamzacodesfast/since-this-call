@@ -92,8 +92,21 @@ export async function GET(request: NextRequest) {
                                 <div style={{ fontSize: 32, fontWeight: 700 }}>{data.tweet.author}</div>
                                 <div style={{ fontSize: 24, color: '#9ca3af' }}>@{data.tweet.username}</div>
                             </div>
-                            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.1)', padding: '8px 20px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <div style={{ fontSize: 20, fontWeight: 600, color: '#d1d5db' }}>{new Date(data.analysis.date).getFullYear()} Call</div>
+                            <div style={{ marginLeft: 'auto', display: 'flex', gap: 16 }}>
+                                <div style={{
+                                    display: 'flex', alignItems: 'center',
+                                    background: isWin ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                    padding: '8px 20px',
+                                    borderRadius: 999,
+                                    border: `1px solid ${isWin ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                                }}>
+                                    <div style={{ fontSize: 20, fontWeight: 600, color: isWin ? '#4ade80' : '#f87171', textTransform: 'uppercase' }}>
+                                        {data.analysis.sentiment}
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.1)', padding: '8px 20px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <div style={{ fontSize: 20, fontWeight: 600, color: '#d1d5db' }}>{new Date(data.analysis.date).getFullYear()} Call</div>
+                                </div>
                             </div>
                         </div>
 
