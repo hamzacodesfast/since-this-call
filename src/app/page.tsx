@@ -140,7 +140,7 @@ export default function Home() {
                             $BTC Prediction
                         </Button>
                         <Button variant="outline" size="sm" className="h-7 text-xs rounded-full bg-background/50 hover:bg-background" onClick={() => setUrl('https://x.com/jimcramer/status/2002112942054215875')}>
-                            Jim Cramer (Inverse)
+                            Jim Cramer
                         </Button>
                     </div>
                 )}
