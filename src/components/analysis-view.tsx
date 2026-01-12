@@ -122,54 +122,54 @@ export function AnalysisView({ data }: AnalysisViewProps) {
 
                 <Card id="share-card" className={cn("w-full max-w-[500px] overflow-hidden border-2 relative backdrop-blur-xl", bgClass)}>
                     {/* Watermark / Branding visible only on share/card */}
-                    <div className="absolute top-4 right-4 opacity-20 pointer-events-none">
+                    <div className="absolute top-4 right-4 opacity-10 pointer-events-none">
                         <img src="/logo.png" alt="Watermark" className="w-24 h-24" />
                     </div>
 
                     <CardHeader className="pb-4 relative z-10">
                         {/* Static Tweet Header */}
-                        <div className="flex items-center gap-3 mb-4">
-                            {/* Avatar */}
-                            {data.tweet.avatar ? (
-                                <img
-                                    src={data.tweet.avatar}
-                                    alt={data.tweet.author}
-                                    className="w-10 h-10 rounded-full border border-white/10"
-                                    crossOrigin="anonymous" // Essential for html2canvas
-                                />
-                            ) : (
-                                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center border border-white/10">
-                                    <Quote className="w-4 h-4 text-muted-foreground" />
-                                </div>
-                            )}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div className="flex items-center gap-3">
+                                {/* Avatar */}
+                                {data.tweet.avatar ? (
+                                    <img
+                                        src={data.tweet.avatar}
+                                        alt={data.tweet.author}
+                                        className="w-10 h-10 rounded-full border border-white/10"
+                                        crossOrigin="anonymous" // Essential for html2canvas
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center border border-white/10">
+                                        <Quote className="w-4 h-4 text-muted-foreground" />
+                                    </div>
+                                )}
 
-                            <div className="leading-tight text-left">
-                                <div className="font-bold text-sm flex items-center gap-1">
-                                    {data.tweet.author}
-                                    <span className="text-blue-400 text-[10px]">Verify</span>
-                                </div>
-                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                    @{data.tweet.username}
-                                    {data.tweet.isEdited && (
-                                        <span className="text-yellow-500 text-[10px] ml-1 flex items-center gap-0.5 border border-yellow-500/30 px-1 rounded bg-yellow-500/10" title="Tweet was edited">
-                                            ⚠️ Edited
-                                        </span>
-                                    )}
+                                <div className="leading-tight text-left">
+                                    <div className="font-bold text-sm flex items-center gap-1">
+                                        {data.tweet.author}
+                                        <span className="text-blue-400 text-[10px]">Verify</span>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                        @{data.tweet.username}
+                                        {data.tweet.isEdited && (
+                                            <span className="text-yellow-500 text-[10px] ml-1 flex items-center gap-0.5 border border-yellow-500/30 px-1 rounded bg-yellow-500/10" title="Tweet was edited">
+                                                ⚠️ Edited
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="ml-auto">
-                                <div className="flex gap-2 flex-shrink-0">
-                                    <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap",
-                                        data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/30" : "text-red-400 border-red-400/30"
-                                    )}>
-                                        {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                                        {data.analysis.sentiment}
-                                    </Badge>
-                                    <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap">
-                                        {new Date(data.analysis.date).getFullYear()} Call
-                                    </Badge>
-                                </div>
+                            <div className="flex gap-2 flex-shrink-0 self-start sm:self-auto">
+                                <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap",
+                                    data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/30" : "text-red-400 border-red-400/30"
+                                )}>
+                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                                    {data.analysis.sentiment}
+                                </Badge>
+                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px] whitespace-nowrap">
+                                    {new Date(data.analysis.date).getFullYear()} Call
+                                </Badge>
                             </div>
                         </div>
 
