@@ -159,9 +159,17 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                             </div>
 
                             <div className="ml-auto">
-                                <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px]">
-                                    {new Date(data.analysis.date).getFullYear()} Call
-                                </Badge>
+                                <div className="flex gap-2">
+                                    <Badge variant="outline" className={cn("opacity-70 bg-background/50 backdrop-blur-md text-[10px]",
+                                        data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/30" : "text-red-400 border-red-400/30"
+                                    )}>
+                                        {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                                        {data.analysis.sentiment}
+                                    </Badge>
+                                    <Badge variant="outline" className="opacity-70 bg-background/50 backdrop-blur-md text-[10px]">
+                                        {new Date(data.analysis.date).getFullYear()} Call
+                                    </Badge>
+                                </div>
                             </div>
                         </div>
 
