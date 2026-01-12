@@ -162,18 +162,18 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                             </div>
 
                             {/* Badges row */}
-                            <div className="flex gap-3 flex-wrap">
-                                <div className={cn(
-                                    "inline-flex items-center justify-center rounded-full border overflow-hidden",
-                                    "px-4 py-2 text-xs font-semibold leading-none",
-                                    data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-400/40 bg-green-500/10" : "text-red-400 border-red-400/40 bg-red-500/10"
+                            <div className="flex gap-3">
+                                <span className={cn(
+                                    "inline-flex items-center h-8 rounded-full border-2 box-border",
+                                    "pl-3 pr-4 text-xs font-bold",
+                                    data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-500/50 bg-green-500/15" : "text-red-400 border-red-500/50 bg-red-500/15"
                                 )}>
-                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3.5 h-3.5 mr-2" /> : <TrendingDown className="w-3.5 h-3.5 mr-2" />}
-                                    <span>{data.analysis.sentiment}</span>
-                                </div>
-                                <div className="inline-flex items-center justify-center rounded-full border border-white/30 overflow-hidden px-4 py-2 text-xs font-semibold text-white/80 bg-white/5 leading-none">
-                                    <span>{new Date(data.analysis.date).getFullYear()} Call</span>
-                                </div>
+                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-4 h-4 mr-2 flex-shrink-0" /> : <TrendingDown className="w-4 h-4 mr-2 flex-shrink-0" />}
+                                    {data.analysis.sentiment}
+                                </span>
+                                <span className="inline-flex items-center h-8 rounded-full border-2 border-white/30 box-border pl-3 pr-4 text-xs font-bold text-white/90 bg-white/10">
+                                    {new Date(data.analysis.date).getFullYear()} Call
+                                </span>
                             </div>
                         </div>
 
@@ -189,16 +189,13 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                         <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-background/40 border border-white/5">
                             <div className="space-y-1 text-left">
                                 <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
-                                <div className={cn("text-xl font-black italic tracking-tighter flex items-center gap-1", colorClass)}>
+                                <div className={cn("text-xl font-black italic tracking-tighter inline-flex items-center gap-2", colorClass)}>
                                     {isWin ? (
-                                        <>
-                                            <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> WIN
-                                        </>
+                                        <CheckCircle2 className="w-5 h-5" style={{ verticalAlign: 'middle' }} />
                                     ) : (
-                                        <>
-                                            <AlertTriangle className="w-5 h-5 flex-shrink-0" /> REKT
-                                        </>
+                                        <AlertTriangle className="w-5 h-5" style={{ verticalAlign: 'middle' }} />
                                     )}
+                                    <span className="leading-none">{isWin ? 'WIN' : 'REKT'}</span>
                                 </div>
                             </div>
 
