@@ -162,16 +162,38 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                             </div>
 
                             {/* Badges row */}
-                            <div className="flex gap-3">
-                                <span className={cn(
-                                    "inline-flex items-center h-8 rounded-full border-2 box-border",
-                                    "pl-3 pr-4 text-xs font-bold",
-                                    data.analysis.sentiment === 'BULLISH' ? "text-green-400 border-green-500/50 bg-green-500/15" : "text-red-400 border-red-500/50 bg-red-500/15"
-                                )}>
-                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-4 h-4 mr-2 flex-shrink-0" /> : <TrendingDown className="w-4 h-4 mr-2 flex-shrink-0" />}
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    height: '32px',
+                                    borderRadius: '16px',
+                                    border: data.analysis.sentiment === 'BULLISH' ? '2px solid rgba(34, 197, 94, 0.6)' : '2px solid rgba(239, 68, 68, 0.6)',
+                                    backgroundColor: data.analysis.sentiment === 'BULLISH' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                    color: data.analysis.sentiment === 'BULLISH' ? '#4ade80' : '#f87171',
+                                    paddingLeft: '12px',
+                                    paddingRight: '16px',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    boxSizing: 'border-box',
+                                }}>
+                                    {data.analysis.sentiment === 'BULLISH' ? <TrendingUp style={{ width: '16px', height: '16px', marginRight: '8px', flexShrink: 0 }} /> : <TrendingDown style={{ width: '16px', height: '16px', marginRight: '8px', flexShrink: 0 }} />}
                                     {data.analysis.sentiment}
                                 </span>
-                                <span className="inline-flex items-center h-8 rounded-full border-2 border-white/30 box-border pl-3 pr-4 text-xs font-bold text-white/90 bg-white/10">
+                                <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    height: '32px',
+                                    borderRadius: '16px',
+                                    border: '2px solid rgba(255, 255, 255, 0.35)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                    paddingLeft: '12px',
+                                    paddingRight: '16px',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    boxSizing: 'border-box',
+                                }}>
                                     {new Date(data.analysis.date).getFullYear()} Call
                                 </span>
                             </div>
@@ -189,15 +211,13 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                         <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-background/40 border border-white/5">
                             <div className="space-y-1 text-left">
                                 <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
-                                <div className={cn("text-xl font-black italic tracking-tighter", colorClass)}>
-                                    <span className="inline-block align-middle mr-1.5">
-                                        {isWin ? (
-                                            <CheckCircle2 className="w-5 h-5" />
-                                        ) : (
-                                            <AlertTriangle className="w-5 h-5" />
-                                        )}
-                                    </span>
-                                    <span className="inline-block align-middle">{isWin ? 'WIN' : 'REKT'}</span>
+                                <div className={cn("text-xl font-black italic tracking-tighter", colorClass)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    {isWin ? (
+                                        <CheckCircle2 style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                    ) : (
+                                        <AlertTriangle style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                    )}
+                                    <span>{isWin ? 'WIN' : 'REKT'}</span>
                                 </div>
                             </div>
 
