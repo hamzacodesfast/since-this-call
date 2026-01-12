@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { analyzeTweet } from '@/lib/analyzer';
 import { AnalysisView } from '@/components/analysis-view';
 import { Badge } from '@/components/ui/badge';
+import NextImage from 'next/image';
 import { Sparkles, TrendingUp, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -69,7 +70,7 @@ export default async function AnalysisPage({ params }: PageProps) {
             <div className="mb-8">
                 <Link href="/">
                     <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10 hover:bg-secondary/70 transition-colors cursor-pointer flex items-center gap-2">
-                        <img src="/logo.png" alt="Logo" className="w-4 h-4" />
+                        <NextImage src="/logo.png" alt="Logo" width={16} height={16} />
                         Since This Call
                     </Badge>
                 </Link>

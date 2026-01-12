@@ -6,6 +6,7 @@ import { AnalysisView } from '@/components/analysis-view';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import NextImage from 'next/image';
 
 // Cache duration: 5 minutes (in milliseconds)
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -91,7 +92,7 @@ export default function Home() {
             {/* Header */}
             <div className="mb-12 space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10">
-                    <img src="/logo.png" alt="Since This Call" className="w-4 h-4 mr-2" />
+                    <NextImage src="/logo.png" alt="Since This Call" width={16} height={16} className="mr-2" />
                     Social Prediction Tracker
                 </Badge>
 
