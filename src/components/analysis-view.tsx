@@ -189,13 +189,15 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                         <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-background/40 border border-white/5">
                             <div className="space-y-1 text-left">
                                 <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
-                                <div className={cn("text-xl font-black italic tracking-tighter inline-flex items-center gap-2", colorClass)}>
-                                    {isWin ? (
-                                        <CheckCircle2 className="w-5 h-5" style={{ verticalAlign: 'middle' }} />
-                                    ) : (
-                                        <AlertTriangle className="w-5 h-5" style={{ verticalAlign: 'middle' }} />
-                                    )}
-                                    <span className="leading-none">{isWin ? 'WIN' : 'REKT'}</span>
+                                <div className={cn("text-xl font-black italic tracking-tighter", colorClass)}>
+                                    <span className="inline-block align-middle mr-1.5">
+                                        {isWin ? (
+                                            <CheckCircle2 className="w-5 h-5" />
+                                        ) : (
+                                            <AlertTriangle className="w-5 h-5" />
+                                        )}
+                                    </span>
+                                    <span className="inline-block align-middle">{isWin ? 'WIN' : 'REKT'}</span>
                                 </div>
                             </div>
 
