@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Search, Loader2, Sparkles, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +74,26 @@ export default function Home() {
             // Cache successful response
             setCachedData(url, json);
             setData(json);
+
+            // Save to recent analyses (fire and forget)
+            const isWin = json.analysis.sentiment === 'BULLISH'
+                ? json.market.performance > 0
+                : json.market.performance < 0;
+
+            fetch('/api/recent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: json.tweet.id,
+                    username: json.tweet.username,
+                    author: json.tweet.author,
+                    avatar: json.tweet.avatar,
+                    symbol: json.analysis.symbol,
+                    sentiment: json.analysis.sentiment,
+                    performance: json.market.performance,
+                    isWin,
+                }),
+            }).catch(() => { }); // Ignore errors
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -158,8 +179,14 @@ export default function Home() {
             {data && <AnalysisView data={data} />}
 
             {/* Footer Branding */}
-            <div className="mt-auto py-12 text-center space-y-4 opacity-30 hover:opacity-100 transition-opacity duration-500">
-                <div className="flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            <div className="mt-auto py-12 text-center space-y-4">
+                <Link href="/recent">
+                    <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                        <Clock className="w-4 h-4 mr-2" />
+                        View Recent Analyses
+                    </Button>
+                </Link>
+                <div className="flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground opacity-30 hover:opacity-100 transition-opacity duration-500">
                     <TrendingUp className="w-3 h-3" />
                     <span>Real Data • No Hype</span>
                 </div>
