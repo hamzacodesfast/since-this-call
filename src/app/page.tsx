@@ -186,6 +186,9 @@ export default function Home() {
                         View Recent Analyses
                     </Button>
                 </Link>
+                <a href="https://www.producthunt.com/products/since-this-call?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-since-this-call" target="_blank" rel="noopener noreferrer">
+                    <img alt="Since This Call - Social Prediction Tracker | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1061889&theme=dark&t=1768292096979" className="mx-auto" />
+                </a>
                 <div className="flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground opacity-30 hover:opacity-100 transition-opacity duration-500">
                     <TrendingUp className="w-3 h-3" />
                     <span>Real Data • No Hype</span>
