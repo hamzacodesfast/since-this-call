@@ -88,34 +88,59 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
 
 /**
  * Main Extraction Function.
- * Tries Google Gemini Flash 2.0 first.
+ * Tries Google Gemini Flash 2.0 first (with optional image analysis).
  * If Rate Limited (429) or fails, falls back to Regex extraction.
  */
-export async function extractCallFromText(tweetText: string, tweetDate: string): Promise<CallData | null> {
+export async function extractCallFromText(tweetText: string, tweetDate: string, imageUrl?: string): Promise<CallData | null> {
     try {
-        const { object } = await generateObject({
-            model: google('models/gemini-2.0-flash-exp'),
-            schema: CallSchema,
-            prompt: `
+        // Build the prompt content - text + optional image
+        const promptText = `
         Analyze this tweet and extract the financial "Call" (Prediction).
         Tweet Content: "${tweetText}"
         Tweet Date: "${tweetDate}"
+        ${imageUrl ? '\nAn image/chart is attached. Use it to identify the asset if the text is ambiguous.' : ''}
 
         Rules:
         1. Identify the Main Asset. Use these symbol mappings:
            - **PRECIOUS METALS** (ALWAYS type="STOCK"):
-             - Silver, XAG, $SILVER -> symbol="SLV"
-             - Gold, XAU, $GOLD -> symbol="GLD"
+             - Silver, XAG, $SILVER, $SLV, "spot silver", silver chart, SI futures -> symbol="SLV"
+             - Gold, XAU, $GOLD, $GLD, "spot gold", gold chart, GC futures -> symbol="GLD"
+             - **CHART ANALYSIS**: If the attached image shows a TradingView chart, READ THE TICKER from the chart title. "COMEX:SI1!" or "SI" = Silver. "GC" = Gold.
+             - **PRICE DISAMBIGUATION**: Prices $20-$60 range = SILVER (SLV). Prices $1500-$3000 range = GOLD (GLD).
            - **CRYPTO** (type="CRYPTO"): BTC, ETH, SOL, DOGE, XRP, etc.
            - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, etc.
         2. Determine Sentiment. Strict Rules:
            - **CRITICAL**: If the author is mocking "late buyers", "the crowd", "retail", or "calls them poop/shit", this is a TOP SIGNAL -> **BEARISH**.
-           - **TIE-BREAKER**: If the tweet contains BOTH bullish words (like "generational", "parabolic") AND mocking of buyers, the MOCKING takes precedence. Mark as **BEARISH**.
-           - "Parabolic" is Bullish ONLY if the author is participating.
+           - If the author says "exit", "sold", "emptied", "took profits" -> **BEARISH** (they are OUT).
            - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
         3. Use the Tweet Date as the Date.
         4. Normalize Symbol to the mappings above.
-      `,
+      `;
+
+        // If we have an image, use multimodal prompt
+        if (imageUrl) {
+            console.log('[AI-Extractor] Using multimodal analysis with image:', imageUrl);
+            const { object } = await generateObject({
+                model: google('models/gemini-2.0-flash-exp'),
+                schema: CallSchema,
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: promptText },
+                            { type: 'image', image: new URL(imageUrl) }
+                        ]
+                    }
+                ]
+            });
+            return object;
+        }
+
+        // Text-only analysis
+        const { object } = await generateObject({
+            model: google('models/gemini-2.0-flash-exp'),
+            schema: CallSchema,
+            prompt: promptText,
         });
 
         return object;

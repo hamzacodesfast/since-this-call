@@ -37,8 +37,16 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
     // We detect if it was edited but now we allow it with a flag.
     const isEdited = (tweet as any).edit_info?.initial?.edit_tweet_ids?.length > 1 || (tweet as any).isEdited || false;
 
-    // 3. AI Extraction
-    const callData = await extractCallFromText(tweet.text, tweet.created_at);
+    // 3. Extract first image URL if available (for multimodal analysis)
+    const mediaDetails = (tweet as any).mediaDetails || [];
+    const firstImageUrl = mediaDetails.find((m: any) => m.type === 'photo')?.media_url_https;
+
+    if (firstImageUrl) {
+        console.log('[Analyzer] Found attached image:', firstImageUrl);
+    }
+
+    // 4. AI Extraction (with optional image for chart analysis)
+    const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl);
 
     if (!callData) {
         throw new Error('Could not identify financial call');

@@ -77,3 +77,36 @@ export async function getRandomAnalysis(): Promise<StoredAnalysis | null> {
         return null;
     }
 }
+
+export async function removeAnalysisByTweetId(tweetId: string): Promise<boolean> {
+    try {
+        // Get all items
+        const allItems = await redis.lrange(RECENT_KEY, 0, -1);
+
+        // Filter out the item with matching tweet ID
+        const filtered = allItems.filter((item: any) => {
+            const parsed = typeof item === 'string' ? JSON.parse(item) : item;
+            return parsed.id !== tweetId;
+        });
+
+        if (filtered.length === allItems.length) {
+            console.log('[AnalysisStore] Tweet ID not found:', tweetId);
+            return false;
+        }
+
+        // Clear and repopulate the list
+        await redis.del(RECENT_KEY);
+        if (filtered.length > 0) {
+            // rpush to maintain order (oldest first, then we'll reverse)
+            for (const item of filtered.reverse()) {
+                await redis.lpush(RECENT_KEY, typeof item === 'string' ? item : JSON.stringify(item));
+            }
+        }
+
+        console.log('[AnalysisStore] Removed tweet:', tweetId);
+        return true;
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to remove analysis:', error);
+        return false;
+    }
+}
