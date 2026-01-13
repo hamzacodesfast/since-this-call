@@ -48,7 +48,8 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
     let type: 'CRYPTO' | 'STOCK' = 'STOCK';
     const cryptoList = [
         'BTC', 'ETH', 'SOL', 'DOGE', 'DOT', 'ADA', 'XRP', 'LINK', 'AVAX', 'MATIC',
-        'PEPE', 'WOJAK', 'SHIB', 'BONK', 'WIF', 'FLOKI', 'BRETT', 'MOG', 'TURBO'
+        'PEPE', 'WOJAK', 'SHIB', 'BONK', 'WIF', 'FLOKI', 'BRETT', 'MOG', 'TURBO',
+        'SPX', 'SPX6900' // Meme coin, NOT S&P 500
     ];
     if (cryptoList.includes(symbol)) {
         type = 'CRYPTO';
@@ -107,8 +108,11 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
              - Gold, XAU, $GOLD, $GLD, "spot gold", gold chart, GC futures -> symbol="GLD"
              - **CHART ANALYSIS**: If the attached image shows a TradingView chart, READ THE TICKER from the chart title. "COMEX:SI1!" or "SI" = Silver. "GC" = Gold.
              - **PRICE DISAMBIGUATION**: Prices $20-$60 range = SILVER (SLV). Prices $1500-$3000 range = GOLD (GLD).
-           - **CRYPTO** (type="CRYPTO"): BTC, ETH, SOL, DOGE, XRP, etc.
-           - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, etc.
+           - **MEME COINS** (type="CRYPTO"):
+             - SPX6900, $SPX (in crypto context) -> symbol="SPX6900", type="CRYPTO". This is a MEME COIN, NOT the S&P 500 index.
+             - If the tweet mentions "Cryptocurrency", "crypto", "meme coin", "degen", it is ALWAYS type="CRYPTO".
+           - **CRYPTO** (type="CRYPTO"): BTC, ETH, SOL, DOGE, XRP, PEPE, etc.
+           - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, SPY (S&P 500 ETF), etc.
         2. Determine Sentiment. Strict Rules:
            - **CRITICAL**: If the author is mocking "late buyers", "the crowd", "retail", or "calls them poop/shit", this is a TOP SIGNAL -> **BEARISH**.
            - If the author says "exit", "sold", "emptied", "took profits" -> **BEARISH** (they are OUT).
