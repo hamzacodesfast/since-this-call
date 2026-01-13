@@ -33,3 +33,9 @@ export function getRecentAnalyses(limit: number = 20): StoredAnalysis[] {
 export function getAnalysisCount(): number {
     return recentAnalyses.length;
 }
+
+export function getRandomAnalysis(): StoredAnalysis | null {
+    if (recentAnalyses.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * recentAnalyses.length);
+    return recentAnalyses[randomIndex];
+}
