@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, RefreshCw, Shuffle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import NextImage from 'next/image';
@@ -23,8 +22,6 @@ interface StoredAnalysis {
 export default function RecentPage() {
     const [analyses, setAnalyses] = useState<StoredAnalysis[]>([]);
     const [loading, setLoading] = useState(true);
-    const [randomLoading, setRandomLoading] = useState(false);
-    const router = useRouter();
 
     const fetchRecent = async () => {
         setLoading(true);
@@ -52,23 +49,6 @@ export default function RecentPage() {
         if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
         return `${days}d ago`;
-    };
-
-    const handleRandom = async () => {
-        setRandomLoading(true);
-        try {
-            const res = await fetch('/api/random');
-            const data = await res.json();
-            if (data.analysis) {
-                router.push(`/analysis/${data.analysis.id}`);
-            } else {
-                alert('No analyses available yet. Try analyzing some tweets first!');
-            }
-        } catch (e) {
-            console.error('Failed to get random analysis:', e);
-        } finally {
-            setRandomLoading(false);
-        }
     };
 
     return (
@@ -100,16 +80,10 @@ export default function RecentPage() {
                             <h1 className="text-2xl font-bold">Recent Analyses</h1>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={handleRandom} disabled={randomLoading || analyses.length === 0}>
-                            <Shuffle className={`w-4 h-4 mr-2 ${randomLoading ? 'animate-spin' : ''}`} />
-                            Random
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={fetchRecent} disabled={loading}>
-                            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                            Refresh
-                        </Button>
-                    </div>
+                    <Button variant="outline" size="sm" onClick={fetchRecent} disabled={loading}>
+                        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
                 </div>
 
                 {/* Content */}
