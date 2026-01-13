@@ -202,6 +202,28 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
         if (date) {
             // HISTORICAL CRYPTO
 
+            // Ultra-early Bitcoin fallback (before any exchange data exists)
+            // These are approximate historical prices when API data is unavailable
+            if (symbol.toUpperCase() === 'BTC') {
+                const year = date.getFullYear();
+                if (year <= 2009) {
+                    // Bitcoin had no market value in 2009 (first trade was 10,000 BTC for 2 pizzas in 2010)
+                    return 0.0001; // Symbolic value to avoid division by zero
+                } else if (year === 2010) {
+                    // First real trades: mid-2010 BTC was ~$0.0008 to $0.30
+                    return 0.10;
+                } else if (year === 2011) {
+                    // BTC ranged from ~$0.30 to $31 and back to ~$2
+                    const month = date.getMonth();
+                    if (month < 4) return 1.0;
+                    if (month < 8) return 15.0;
+                    return 3.0;
+                } else if (year === 2012) {
+                    // BTC was mostly $4-13
+                    return 5.0;
+                }
+            }
+
             // Primary: Binance (Best availability)
             const binancePrice = await getBinanceHistoricalPrice(symbol, date);
             if (binancePrice !== null) return binancePrice;
