@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addAnalysis, getRecentAnalyses, StoredAnalysis } from '@/lib/analysis-store';
 
-// Use Node runtime for persistent in-memory storage
-export const runtime = 'nodejs';
+// Edge runtime works with Upstash Redis REST API
+export const runtime = 'edge';
 
 // GET - Fetch recent analyses
 export async function GET() {
-    const analyses = getRecentAnalyses(20);
+    const analyses = await getRecentAnalyses(20);
     return NextResponse.json({ analyses });
 }
 
@@ -27,10 +27,11 @@ export async function POST(request: NextRequest) {
             timestamp: Date.now(),
         };
 
-        addAnalysis(analysis);
+        await addAnalysis(analysis);
 
         return NextResponse.json({ success: true });
     } catch (error) {
+        console.error('[API Recent] Error:', error);
         return NextResponse.json({ error: 'Failed to save analysis' }, { status: 400 });
     }
 }
