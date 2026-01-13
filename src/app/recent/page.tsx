@@ -103,7 +103,7 @@ export default function RecentPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {analyses.map((analysis) => (
-                            <Link key={`${analysis.id}-${analysis.timestamp}`} href={`/analysis/${analysis.id}`}>
+                            <a key={`${analysis.id}-${analysis.timestamp}`} href={`https://x.com/${analysis.username}/status/${analysis.id}`} target="_blank" rel="noopener noreferrer">
                                 <Card className={`hover:scale-[1.02] transition-transform cursor-pointer border-2 ${analysis.isWin ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
                                     <CardContent className="p-4">
                                         {/* Header */}
@@ -149,7 +149,7 @@ export default function RecentPage() {
                                         </div>
                                     </CardContent>
                                 </Card>
-                            </Link>
+                            </a>
                         ))}
                     </div>
                 )}
