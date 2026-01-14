@@ -104,6 +104,56 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         let period2 = 9999999999;
 
         if (date) {
+            // Check if date is recent (within 730 days) to use Hourly data for better precision
+            const now = new Date();
+            const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+            const isRecent = diffDays < 700; // Safe buffer for Yahoo's 730 day limit
+
+            if (isRecent) {
+                // Use Hourly Data
+                // Fetch window around the target time (e.g. -12h to +12h) to find closest candle
+                period1 = Math.floor(date.getTime() / 1000) - (12 * 3600);
+                period2 = Math.floor(date.getTime() / 1000) + (12 * 3600);
+
+                // Construct URL with 1h interval
+                const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1h&events=history`;
+
+                const res = await fetch(url);
+                if (!res.ok) {
+                    console.warn(`[MarketData] Yahoo Hourly Fetch failed: ${res.status}, falling back to daily fallback logic`);
+                    // If hourly fails, let it fall through to generic error handling or retry with daily?
+                    // Actually, let's try daily immediately below if this fails or returns empty
+                } else {
+                    const json = await res.json();
+                    const result = json?.chart?.result?.[0];
+                    const quotes = result?.indicators?.quote?.[0];
+                    const timestamps = result?.timestamp;
+
+                    if (timestamps && quotes && quotes.close && quotes.close.length > 0) {
+                        // Find the candle timestamp closest to the target date
+                        let closestPrice = null;
+                        let minDiff = Infinity;
+
+                        const targetTime = date.getTime() / 1000;
+
+                        for (let i = 0; i < timestamps.length; i++) {
+                            const t = timestamps[i];
+                            const diff = Math.abs(t - targetTime);
+
+                            if (diff < minDiff && quotes.close[i] !== null) {
+                                minDiff = diff;
+                                closestPrice = quotes.close[i];
+                            }
+                        }
+
+                        if (closestPrice !== null) {
+                            return closestPrice;
+                        }
+                    }
+                }
+            }
+
+            // Fallback to Daily Logic (Original)
             // Historical Window: Date -> Date + 3 days (to catch weekends/holidays)
             period1 = Math.floor(date.getTime() / 1000);
             const to = new Date(date);

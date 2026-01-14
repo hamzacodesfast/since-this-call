@@ -51,7 +51,15 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
     }
 
     // 4. Market Data Fetch
-    const callDate = new Date(callData.date);
+    // Use the actual Tweet Timestamp for precision, unless AI suggests a different specific date
+    // But typically the "Call Date" is when the tweet was posted.
+    // tweet.created_at is correct (ISO string).
+    let callDate = new Date(tweet.created_at);
+
+    // Fallback to AI date if for some reason created_at is missing (unlikely)
+    if (isNaN(callDate.getTime())) {
+        callDate = new Date(callData.date);
+    }
 
     // Validation: Call Date cannot be in future (Timezones?)
     if (callDate > new Date()) {
