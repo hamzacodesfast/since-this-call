@@ -1,105 +1,77 @@
 
-// Removed yahoo-finance2 to ensure Vercel Edge Runtime compatibility
-// using direct fetch to Yahoo Finance unofficial API (standard practice for zero-cost)
+import { unstable_noStore as noStore } from 'next/cache';
 
-interface MarketData {
-    symbol: string;
-    price: number;
-    date: string;
-    currency: string;
-}
-
-export interface AssetPerformance {
-    symbol: string;
-    type: 'CRYPTO' | 'STOCK';
-    callDate: string;
-    callPrice: number;
-    currentPrice: number;
-    percentChange: number;
-}
-
-
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const BINANCE_API = 'https://api.binance.com/api/v3';
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
-/**
- * Resolves a ticker symbol to a CoinGecko ID.
- * Uses a hardcoded map for speed/stability, falls back to search API.
- */
-async function getCoinId(symbol: string): Promise<string | null> {
-    const normalized = symbol.toLowerCase();
+export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
+    if (type === 'CRYPTO') {
+        // Map common symbols to Yahoo format
+        const mapping: Record<string, string> = {
+            'BTC': 'BTC-USD',
+            'ETH': 'ETH-USD',
+            'SOL': 'SOL-USD',
+            'DOGE': 'DOGE-USD',
+            'XRP': 'XRP-USD',
+            'BNB': 'BNB-USD',
+            'DASH': 'DASH-USD',
+            'LTC': 'LTC-USD',
+            'ZEC': 'ZEC-USD',
+            'XMR': 'XMR-USD',
+        };
+        const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
+        return getYahooPrice(yahooSymbol, date);
+    } else {
+        return getYahooPrice(symbol, date);
+    }
+}
 
-    // Hardcoded constants for stability & performance
-    const COMMON_MAP: Record<string, string> = {
-        'btc': 'bitcoin',
-        'eth': 'ethereum',
-        'sol': 'solana',
-        'doge': 'dogecoin',
-        'dot': 'polkadot',
-        'ada': 'cardano',
-        'xrp': 'ripple',
-        'link': 'chainlink',
-        'avax': 'avalanche-2',
-        'matic': 'matic-network',
-        'shib': 'shiba-inu',
-        'bonk': 'bonk',
-        'pepe': 'pepe'
-    };
-
-    if (COMMON_MAP[normalized]) return COMMON_MAP[normalized];
-
-    // Fallback: Search API (Rate Limited)
+export async function getPriceByContractAddress(ca: string): Promise<any | null> {
     try {
-        const res = await fetch(`${COINGECKO_API}/search?query=${normalized}`);
-        const data = await res.json();
-        if (data.coins && data.coins.length > 0) {
-            // Prefer exact symbol match
-            const exact = data.coins.find((c: any) => c.symbol.toLowerCase() === normalized);
-            return exact ? exact.id : data.coins[0].id;
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`, { cache: 'no-store' });
+        const data = await response.json();
+
+        if (data.pairs && data.pairs.length > 0) {
+            // Sort by liquidity? or just take the first one (usually simplified)
+            const pair = data.pairs[0];
+            return {
+                price: parseFloat(pair.priceUsd),
+                symbol: pair.baseToken.symbol,
+                name: pair.baseToken.name,
+                liquidity: pair.liquidity?.usd,
+                marketCap: pair.fdv,
+                priceChange: pair.priceChange, // { h1: ..., h6: ..., h24: ... }
+                pairCreatedAt: pair.pairCreatedAt,
+            };
         }
     } catch (e) {
-        console.error('[MarketData] CoinGecko Search Error:', e);
+        console.error('DexScreener API Error:', e);
     }
-
     return null;
 }
 
 /**
- * Fetches historical crypto price from Binance Klines.
- * Primary source for historical data due to depth and uptime.
+ * Calculates percentage change
  */
-async function getBinanceHistoricalPrice(symbol: string, date: Date): Promise<number | null> {
-    try {
-        const pair = `${symbol.toUpperCase()}USDT`;
-        const startTime = date.getTime();
+export function calculatePerformance(callPrice: number, currentPrice: number, sentiment: 'BULLISH' | 'BEARISH'): number {
+    const rawChange = ((currentPrice - callPrice) / callPrice) * 100;
 
-        // Limit 1 candle at daily interval starting from the specific time
-        const url = `${BINANCE_API}/klines?symbol=${pair}&interval=1d&startTime=${startTime}&limit=1`;
-
-        const res = await fetch(url);
-        if (!res.ok) {
-            // Not a hard error, pair might just not exist on Binance
-            return null;
-        }
-
-        const data = await res.json();
-        // Binance Kline format: [Open time, Open, High, Low, Close, Volume, ...]
-        if (Array.isArray(data) && data.length > 0) {
-            return parseFloat(data[0][4]); // Close Price
-        }
-    } catch (error) {
-        console.error('[MarketData] Binance Fetch Error:', error);
+    // If Bearish, a drop in price (negative rawChange) is a WIN (positive performance)
+    // e.g. Call Price 100, Current 80. Raw = -20%. Performance = +20%.
+    if (sentiment === 'BEARISH') {
+        return -rawChange;
     }
-    return null;
+
+    return rawChange;
 }
 
 /**
- * Fetches Stock data (Historical & Current) via Yahoo Finance v8 API (Fetch).
- * Compatible with Edge Runtime.
+ * Fetches price from Yahoo Finance Chart API
+ * Supports precise Hourly resolution for recent tweets.
  */
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     try {
+        // noStore(); // Opt out of static caching for this function scope if needed
+
         let period1 = 0;
         let period2 = 9999999999;
 
@@ -110,19 +82,20 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
             const isRecent = diffDays < 700; // Safe buffer for Yahoo's 730 day limit
 
             if (isRecent) {
-                // Use Hourly Data
-                // Fetch window around the target time (e.g. -12h to +12h) to find closest candle
+                // Use Hourly Data for higher precision
+                // Fetch window around the target time (-12h to +12h) to find closest candle
                 period1 = Math.floor(date.getTime() / 1000) - (12 * 3600);
                 period2 = Math.floor(date.getTime() / 1000) + (12 * 3600);
 
                 // Construct URL with 1h interval
                 const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1h&events=history`;
 
-                const res = await fetch(url);
+                // Use no-store to prevent Next.js caching staled/failed requests
+                const res = await fetch(url, { cache: 'no-store' });
+
                 if (!res.ok) {
-                    console.warn(`[MarketData] Yahoo Hourly Fetch failed: ${res.status}, falling back to daily fallback logic`);
-                    // If hourly fails, let it fall through to generic error handling or retry with daily?
-                    // Actually, let's try daily immediately below if this fails or returns empty
+                    console.warn(`[MarketData] Yahoo Hourly Fetch failed: ${res.status}`);
+                    // Fall back to daily if hourly fails (e.g. rate limit specifically on hourly?)
                 } else {
                     const json = await res.json();
                     const result = json?.chart?.result?.[0];
@@ -130,7 +103,7 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
                     const timestamps = result?.timestamp;
 
                     if (timestamps && quotes && quotes.close && quotes.close.length > 0) {
-                        // Find the candle timestamp closest to the target date
+                        // Find the candle closest to target time
                         let closestPrice = null;
                         let minDiff = Infinity;
 
@@ -154,7 +127,7 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
             }
 
             // Fallback to Daily Logic (Original)
-            // Historical Window: Date -> Date + 3 days (to catch weekends/holidays)
+            // Historical Window: Date -> Date + 4 days (to catch weekends/holidays)
             period1 = Math.floor(date.getTime() / 1000);
             const to = new Date(date);
             to.setDate(to.getDate() + 4);
@@ -171,7 +144,7 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
         // console.log(`[MarketData] Fetching: ${url}`);
 
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) {
             // console.warn(`[MarketData] Yahoo Fetch failed: ${res.status}`);
             return null;
@@ -208,169 +181,4 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         console.error('[MarketData] Yahoo Finance Fetch Error:', e.message);
     }
     return null;
-}
-
-/**
- * Fetches current price for meme coins/tokens via DexScreener.
- * Acts as a fallback for CoinGecko.
- */
-async function getDexScreenerPrice(symbol: string): Promise<number | null> {
-    try {
-        // DexScreener search sorts by liquidity/volume by default
-        const url = `https://api.dexscreener.com/latest/dex/search?q=${symbol}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.pairs && data.pairs.length > 0) {
-            // Attempt to find loop for exact symbol match in baseToken
-            const match = data.pairs.find((p: any) => p.baseToken.symbol.toUpperCase() === symbol.toUpperCase());
-            const pair = match || data.pairs[0];
-
-            if (pair) {
-                // console.log(`[MarketData] DexScreener Found: ${pair.baseToken.symbol} @ $${pair.priceUsd}`);
-                return parseFloat(pair.priceUsd);
-            }
-        }
-    } catch (e) {
-        console.error('[MarketData] DexScreener Error:', e);
-    }
-    return null;
-}
-
-/**
- * Fetches price by Solana contract address using DexScreener.
- * Used for pump.fun tokens and other Solana meme coins.
- * Returns current price and price change data for historical estimation.
- */
-export interface ContractPriceData {
-    price: number;
-    symbol: string;
-    priceChange?: {
-        m5?: number;
-        h1?: number;
-        h6?: number;
-        h24?: number;
-    };
-    pairCreatedAt?: number; // Unix timestamp in ms
-}
-
-export async function getPriceByContractAddress(contractAddress: string): Promise<ContractPriceData | null> {
-    try {
-        // DexScreener supports direct CA lookup for Solana tokens
-        const url = `https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.pairs && data.pairs.length > 0) {
-            // Get the pair with highest liquidity
-            const pair = data.pairs.sort((a: any, b: any) =>
-                (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0)
-            )[0];
-
-            if (pair && pair.priceUsd) {
-                return {
-                    price: parseFloat(pair.priceUsd),
-                    symbol: pair.baseToken?.symbol || 'UNKNOWN',
-                    priceChange: pair.priceChange,
-                    pairCreatedAt: pair.pairCreatedAt,
-                };
-            }
-        }
-    } catch (e) {
-        console.error('[MarketData] DexScreener CA Lookup Error:', e);
-    }
-    return null;
-}
-
-/**
- * Main entry point for price data.
- * Routes to appropriate provider based on Asset Type and Date needs.
- */
-export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
-    // 1. Stocks -> Yahoo Finance (One-stop shop)
-    if (type === 'STOCK') {
-        return getYahooPrice(symbol, date);
-    }
-
-    // 2. Crypto Logic
-    try {
-        if (date) {
-            // HISTORICAL CRYPTO
-
-            // Ultra-early Bitcoin fallback (before any exchange data exists)
-            // These are approximate historical prices when API data is unavailable
-            if (symbol.toUpperCase() === 'BTC') {
-                const year = date.getFullYear();
-                if (year <= 2009) {
-                    // Bitcoin had no market value in 2009 (first trade was 10,000 BTC for 2 pizzas in 2010)
-                    return 0.0001; // Symbolic value to avoid division by zero
-                } else if (year === 2010) {
-                    // First real trades: mid-2010 BTC was ~$0.0008 to $0.30
-                    return 0.10;
-                } else if (year === 2011) {
-                    // BTC ranged from ~$0.30 to $31 and back to ~$2
-                    const month = date.getMonth();
-                    if (month < 4) return 1.0;
-                    if (month < 8) return 15.0;
-                    return 3.0;
-                } else if (year === 2012) {
-                    // BTC was mostly $4-13
-                    return 5.0;
-                }
-            }
-
-            // Primary: Binance (Best availability)
-            const binancePrice = await getBinanceHistoricalPrice(symbol, date);
-            if (binancePrice !== null) return binancePrice;
-
-            // Secondary: CoinGecko (Free tier limitations apply)
-            const coinId = await getCoinId(symbol);
-            if (coinId) {
-                const d = date.getDate().toString().padStart(2, '0');
-                const m = (date.getMonth() + 1).toString().padStart(2, '0');
-                const y = date.getFullYear();
-                const dateParam = `${d}-${m}-${y}`;
-
-                const url = `${COINGECKO_API}/coins/${coinId}/history?date=${dateParam}`;
-                try {
-                    const res = await fetch(url);
-                    const data = await res.json();
-
-                    if (data.market_data && data.market_data.current_price) {
-                        return data.market_data.current_price.usd;
-                    }
-                } catch (e) {
-                    console.error('[MarketData] CoinGecko History Error:', e);
-                }
-            }
-
-            // Tertiary: Yahoo Finance (for major cryptos like BTC-USD, ETH-USD)
-            const yahooSymbol = `${symbol.toUpperCase()}-USD`;
-            const yahooPrice = await getYahooPrice(yahooSymbol, date);
-            if (yahooPrice !== null) return yahooPrice;
-        } else {
-            // CURRENT CRYPTO PRICE
-
-            // Primary: CoinGecko
-            const coinId = await getCoinId(symbol);
-            if (coinId) {
-                const res = await fetch(`${COINGECKO_API}/simple/price?ids=${coinId}&vs_currencies=usd`);
-                const data = await res.json();
-                if (data[coinId] && data[coinId].usd) {
-                    return data[coinId].usd;
-                }
-            }
-
-            // Fallback: DexScreener (Essential for Meme Coins missing on Gecko)
-            return await getDexScreenerPrice(symbol);
-        }
-    } catch (error) {
-        console.error('[MarketData] General Error:', error);
-    }
-    return null;
-}
-
-export function calculatePerformance(callPrice: number, currentPrice: number): number {
-    if (callPrice === 0) return 0;
-    return ((currentPrice - callPrice) / callPrice) * 100;
 }
