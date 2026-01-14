@@ -105,9 +105,11 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
                     }
                     // NOTE: We do NOT fall back to h24 for older tweets - that would be incorrect!
 
-                    if (percentChange !== undefined && percentChange !== 0) {
+                    if (percentChange !== undefined && percentChange !== 0 && currentPrice !== null) {
                         // Calculate historical price from priceChange
                         callPrice = currentPrice / (1 + percentChange / 100);
+                    } else if (currentPrice === null) {
+                        throw new Error(`Current price unavailable for pump.fun token ${finalSymbol}.`);
                     } else {
                         // Tweet is too old for DexScreener price change data
                         throw new Error(`Historical data unavailable for pump.fun token ${finalSymbol}. Only tweets < 24 hours old can be analyzed. This tweet is ${Math.round(tweetAgeHours)} hours old.`);
@@ -118,7 +120,9 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
             }
 
             // STEP 3: Store current price for future lookups (only if new)
-            await storePumpfunPrice(callData.contractAddress, currentPrice, finalSymbol);
+            if (currentPrice !== null) {
+                await storePumpfunPrice(callData.contractAddress, currentPrice, finalSymbol);
+            }
         }
     }
 
@@ -138,7 +142,7 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
     }
 
     // 5. Calculate Performance
-    const performance = calculatePerformance(callPrice, currentPrice);
+    const performance = calculatePerformance(callPrice, currentPrice, callData.sentiment);
 
     return {
         analysis: {
