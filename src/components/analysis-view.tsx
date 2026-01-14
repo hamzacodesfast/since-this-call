@@ -1,5 +1,5 @@
 import { Tweet } from 'react-tweet';
-import { Quote, TrendingUp, TrendingDown, Calendar, DollarSign, Share, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Quote, TrendingUp, TrendingDown, Calendar, DollarSign, Share, CheckCircle2, AlertTriangle, MinusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,15 +46,20 @@ export function AnalysisView({ data }: AnalysisViewProps) {
     // If Price goes DOWN, performance is negative.
 
     let isWin = false;
-    if (data.analysis.sentiment === 'BULLISH') {
-        isWin = data.market.performance > 0;
-    } else {
-        // Bearish means we wanted price to drop (performance < 0)
-        isWin = data.market.performance < 0;
+    // Consider values very close to 0% (including -0.00%) as neutral
+    let isNeutral = Math.abs(data.market.performance) < 0.01;
+
+    if (!isNeutral) {
+        if (data.analysis.sentiment === 'BULLISH') {
+            isWin = data.market.performance > 0;
+        } else {
+            // Bearish means we wanted price to drop (performance < 0)
+            isWin = data.market.performance < 0;
+        }
     }
 
-    const colorClass = isWin ? 'text-green-500' : 'text-red-500';
-    const bgClass = isWin ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20';
+    const colorClass = isNeutral ? 'text-yellow-500' : (isWin ? 'text-green-500' : 'text-red-500');
+    const bgClass = isNeutral ? 'bg-yellow-500/10 border-yellow-500/20' : (isWin ? 'bg-green-500/10 border-green-500/20' : 'bg-red-500/10 border-red-500/20');
     const badgeVariant = isWin ? "default" : "destructive"; // Green (default sort of) or Red
 
     // Performace string: Always show ABSOLUTE change for formatting, but handle direction
@@ -97,7 +102,8 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                 ]);
                 alert("📸 Receipt Copied! Paste it on X.");
 
-                const text = `Verified by @sincethiscall 🧾\n\n${data.analysis.symbol} Call:\n${isWin ? '✅ AGED WELL' : '❌ AGED POORLY'} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\nCheck your own prediction 👇 ${window.location.href}`;
+                const verdictText = isNeutral ? '➖ FLAT' : (isWin ? '✅ AGED WELL' : '❌ AGED POORLY');
+                const text = `Verified by @sincethiscall 🧾\n\n${data.analysis.symbol} Call:\n${verdictText} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\nCheck your own prediction 👇 ${window.location.href}`;
                 const url = `https://twitter.com/intent/tweet?in_reply_to=${data.tweet.id}&text=${encodeURIComponent(text)}`;
                 window.open(url, '_blank');
 
@@ -216,12 +222,14 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                             <div className="space-y-1 text-left">
                                 <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Verdict</div>
                                 <div className={cn("text-xl font-black italic tracking-tighter", colorClass)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    {isWin ? (
+                                    {isNeutral ? (
+                                        <MinusCircle style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+                                    ) : isWin ? (
                                         <CheckCircle2 style={{ width: '20px', height: '20px', flexShrink: 0 }} />
                                     ) : (
                                         <AlertTriangle style={{ width: '20px', height: '20px', flexShrink: 0 }} />
                                     )}
-                                    <span>{isWin ? 'WIN' : 'REKT'}</span>
+                                    <span>{isNeutral ? 'NEUTRAL' : (isWin ? 'WIN' : 'REKT')}</span>
                                 </div>
                             </div>
 

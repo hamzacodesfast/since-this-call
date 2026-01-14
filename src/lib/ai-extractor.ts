@@ -3,19 +3,25 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const CallSchema = z.object({
-    symbol: z.string().describe('The stock ticker or crypto symbol (e.g. BTC, NVDA, ETH).'),
+    symbol: z.string().describe('The stock ticker or crypto symbol (e.g. BTC, NVDA, ETH). For pump.fun tokens, use the token name/symbol if known.'),
     type: z.enum(['CRYPTO', 'STOCK']).describe('The type of asset.'),
     sentiment: z.enum(['BULLISH', 'BEARISH']).describe('The sentiment of the call.'),
     date: z.string().describe('The date of the tweet/call in ISO format (YYYY-MM-DD).'),
+    contractAddress: z.string().optional().describe('Optional: Solana contract address for pump.fun or meme tokens (32-44 char base58 string).'),
 });
 
 export type CallData = z.infer<typeof CallSchema>;
+
+// Solana base58 address regex (32-44 characters, base58 alphabet)
+const SOLANA_CA_REGEX = /\b([1-9A-HJ-NP-Za-km-z]{32,44})\b/g;
+
+// Known pump.fun indicators
+const PUMP_FUN_INDICATORS = ['pump.fun', 'pumpfun', 'bonding curve', 'launched on pump', 'CA:'];
 
 
 // Basic Regex Extraction Fallback if AI fails (Rate Limited)
 // This serves as a critical safety net to keep the app functional during AI outages.
 function extractWithRegex(text: string, dateStr: string): CallData | null {
-    console.log('[AI-Extractor] Attempting Regex Fallback...');
 
     // 1. Find Ticker/Symbol
     // Look for $BTC, $ETH, $AAPL or common names like "Bitcoin", "Apple"
@@ -79,11 +85,32 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
     // Special case for Taleb's famous "worth 0" tweet or similar definitive statements
     if (text.includes('worth 0')) sentiment = 'BEARISH';
 
+    // Check for Solana contract address (pump.fun tokens)
+    let contractAddress: string | undefined;
+    const caMatches = [...text.matchAll(SOLANA_CA_REGEX)];
+    if (caMatches.length > 0) {
+        // Filter out common false positives (short strings that aren't CAs)
+        const validCAs = caMatches.map(m => m[1]).filter(ca =>
+            ca.length >= 32 &&
+            ca.length <= 44 &&
+            !/^[0-9]+$/.test(ca) // Not all numbers
+        );
+        if (validCAs.length > 0) {
+            contractAddress = validCAs[0];
+            // If we found a CA but no symbol, use a placeholder
+            if (!symbol) {
+                symbol = 'PUMPFUN';
+                type = 'CRYPTO';
+            }
+        }
+    }
+
     return {
         symbol,
         type,
         sentiment,
-        date: dateStr // Use tweet date
+        date: dateStr,
+        contractAddress,
     };
 }
 
@@ -103,6 +130,7 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
 
         Rules:
         1. Identify the Main Asset. Use these symbol mappings:
+           - **PUMP.FUN TOKENS**: If the tweet contains a Solana contract address (32-44 character base58 string) or mentions pump.fun, extract the contract address. Use the token name as symbol if mentioned, otherwise use the token's ticker.
            - **PRECIOUS METALS** (ALWAYS type="STOCK"):
              - Silver, XAG, $SILVER, $SLV, "spot silver", silver chart, SI futures -> symbol="SLV"
              - Gold, XAU, $GOLD, $GLD, "spot gold", gold chart, GC futures -> symbol="GLD"
@@ -119,11 +147,11 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
            - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
         3. Use the Tweet Date as the Date.
         4. Normalize Symbol to the mappings above.
+        5. If a Solana contract address is present, include it in contractAddress field.
       `;
 
         // If we have an image, use multimodal prompt
         if (imageUrl) {
-            console.log('[AI-Extractor] Using multimodal analysis with image:', imageUrl);
             const { object } = await generateObject({
                 model: google('models/gemini-2.0-flash-exp'),
                 schema: CallSchema,
@@ -137,7 +165,8 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
                     }
                 ]
             });
-            return object;
+            // Post-process: ensure CA is extracted from raw text if AI missed it
+            return ensureContractAddress(object, tweetText);
         }
 
         // Text-only analysis
@@ -147,10 +176,39 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
             prompt: promptText,
         });
 
-        return object;
+        // Post-process: ensure CA is extracted from raw text if AI missed it
+        return ensureContractAddress(object, tweetText);
     } catch (error) {
         console.error('AI Extraction Failed:', error);
         // Fallback to regex if AI fails (e.g. 429 Rate Limit)
         return extractWithRegex(tweetText, tweetDate);
     }
 }
+
+/**
+ * Post-process AI result to ensure CA is extracted from raw tweet text.
+ * AI sometimes misses the CA even when it's clearly in the tweet.
+ */
+function ensureContractAddress(result: CallData, rawText: string): CallData {
+    if (result.contractAddress) return result; // Already has CA
+
+    // Try to extract CA from raw text
+    const caMatches = [...rawText.matchAll(SOLANA_CA_REGEX)];
+    if (caMatches.length > 0) {
+        const validCAs = caMatches.map(m => m[1]).filter(ca =>
+            ca.length >= 32 &&
+            ca.length <= 44 &&
+            !/^[0-9]+$/.test(ca) // Not all numbers
+        );
+        if (validCAs.length > 0) {
+            return {
+                ...result,
+                contractAddress: validCAs[0],
+                type: 'CRYPTO', // Force CRYPTO type for CA tokens
+            };
+        }
+    }
+
+    return result;
+}
+

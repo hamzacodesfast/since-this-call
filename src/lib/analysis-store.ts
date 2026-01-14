@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis';
+import { z } from 'zod';
 
 // Initialize Upstash Redis client
 const redis = new Redis({
@@ -20,6 +21,19 @@ export interface StoredAnalysis {
     isWin: boolean;
     timestamp: number;
 }
+
+// Zod schema for input validation
+export const StoredAnalysisSchema = z.object({
+    id: z.string(),
+    username: z.string(),
+    author: z.string(),
+    avatar: z.string().optional(),
+    symbol: z.string(),
+    sentiment: z.enum(['BULLISH', 'BEARISH']),
+    performance: z.number(),
+    isWin: z.boolean(),
+    timestamp: z.number(),
+});
 
 export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {
     try {
@@ -108,5 +122,63 @@ export async function removeAnalysisByTweetId(tweetId: string): Promise<boolean>
     } catch (error) {
         console.error('[AnalysisStore] Failed to remove analysis:', error);
         return false;
+    }
+}
+
+// ============================================
+// Pump.fun Price History Storage
+// ============================================
+
+const PUMPFUN_PRICE_PREFIX = 'pumpfun:price:';
+
+export interface StoredPumpfunPrice {
+    price: number;
+    symbol: string;
+    timestamp: number;
+}
+
+/**
+ * Store first-seen price for a pump.fun token.
+ * Only stores if no existing price record exists (preserves original price).
+ */
+export async function storePumpfunPrice(
+    contractAddress: string,
+    price: number,
+    symbol: string
+): Promise<boolean> {
+    try {
+        const key = `${PUMPFUN_PRICE_PREFIX}${contractAddress}`;
+
+        // Only set if key doesn't exist (NX = Not eXists)
+        const result = await redis.setnx(key, JSON.stringify({
+            price,
+            symbol,
+            timestamp: Date.now(),
+        } as StoredPumpfunPrice));
+
+        return result === 1; // Returns 1 if set, 0 if already exists
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to store pumpfun price:', error);
+        return false;
+    }
+}
+
+/**
+ * Get stored historical price for a pump.fun token.
+ */
+export async function getPumpfunPrice(contractAddress: string): Promise<StoredPumpfunPrice | null> {
+    try {
+        const key = `${PUMPFUN_PRICE_PREFIX}${contractAddress}`;
+        const data = await redis.get(key);
+
+        if (!data) return null;
+
+        if (typeof data === 'string') {
+            return JSON.parse(data);
+        }
+        return data as StoredPumpfunPrice;
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get pumpfun price:', error);
+        return null;
     }
 }

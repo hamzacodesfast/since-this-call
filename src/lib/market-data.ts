@@ -188,6 +188,51 @@ async function getDexScreenerPrice(symbol: string): Promise<number | null> {
 }
 
 /**
+ * Fetches price by Solana contract address using DexScreener.
+ * Used for pump.fun tokens and other Solana meme coins.
+ * Returns current price and price change data for historical estimation.
+ */
+export interface ContractPriceData {
+    price: number;
+    symbol: string;
+    priceChange?: {
+        m5?: number;
+        h1?: number;
+        h6?: number;
+        h24?: number;
+    };
+    pairCreatedAt?: number; // Unix timestamp in ms
+}
+
+export async function getPriceByContractAddress(contractAddress: string): Promise<ContractPriceData | null> {
+    try {
+        // DexScreener supports direct CA lookup for Solana tokens
+        const url = `https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.pairs && data.pairs.length > 0) {
+            // Get the pair with highest liquidity
+            const pair = data.pairs.sort((a: any, b: any) =>
+                (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0)
+            )[0];
+
+            if (pair && pair.priceUsd) {
+                return {
+                    price: parseFloat(pair.priceUsd),
+                    symbol: pair.baseToken?.symbol || 'UNKNOWN',
+                    priceChange: pair.priceChange,
+                    pairCreatedAt: pair.pairCreatedAt,
+                };
+            }
+        }
+    } catch (e) {
+        console.error('[MarketData] DexScreener CA Lookup Error:', e);
+    }
+    return null;
+}
+
+/**
  * Main entry point for price data.
  * Routes to appropriate provider based on Asset Type and Date needs.
  */
@@ -267,7 +312,6 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             }
 
             // Fallback: DexScreener (Essential for Meme Coins missing on Gecko)
-            console.log(`[MarketData] Falling back to DexScreener for ${symbol}`);
             return await getDexScreenerPrice(symbol);
         }
     } catch (error) {

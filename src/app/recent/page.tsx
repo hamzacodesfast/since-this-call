@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock, RefreshCw, MinusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import NextImage from 'next/image';
@@ -104,7 +104,7 @@ export default function RecentPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {analyses.map((analysis) => (
                             <a key={`${analysis.id}-${analysis.timestamp}`} href={`https://x.com/${analysis.username}/status/${analysis.id}`} target="_blank" rel="noopener noreferrer">
-                                <Card className={`hover:scale-[1.02] transition-transform cursor-pointer border-2 ${analysis.isWin ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}>
+                                <Card className={`hover:scale-[1.02] transition-transform cursor-pointer border-2 ${Math.abs(analysis.performance) < 0.01 ? 'border-yellow-500/30 bg-yellow-500/5' : (analysis.isWin ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5')}`}>
                                     <CardContent className="p-4">
                                         {/* Header */}
                                         <div className="flex items-center gap-3 mb-3">
@@ -139,11 +139,11 @@ export default function RecentPage() {
 
                                         {/* Result */}
                                         <div className="flex items-center justify-between">
-                                            <div className={`flex items-center gap-1.5 font-bold ${analysis.isWin ? 'text-green-500' : 'text-red-500'}`}>
-                                                {analysis.isWin ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-                                                {analysis.isWin ? 'WIN' : 'REKT'}
+                                            <div className={`flex items-center gap-1.5 font-bold ${Math.abs(analysis.performance) < 0.01 ? 'text-yellow-500' : (analysis.isWin ? 'text-green-500' : 'text-red-500')}`}>
+                                                {Math.abs(analysis.performance) < 0.01 ? <MinusCircle className="w-5 h-5" /> : (analysis.isWin ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />)}
+                                                {Math.abs(analysis.performance) < 0.01 ? 'NEUTRAL' : (analysis.isWin ? 'WIN' : 'REKT')}
                                             </div>
-                                            <div className={`font-mono font-bold ${analysis.performance > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            <div className={`font-mono font-bold ${Math.abs(analysis.performance) < 0.01 ? 'text-yellow-500' : (analysis.performance > 0 ? 'text-green-500' : 'text-red-500')}`}>
                                                 {analysis.performance > 0 ? '+' : ''}{analysis.performance.toFixed(2)}%
                                             </div>
                                         </div>
