@@ -3,68 +3,18 @@ import { unstable_noStore as noStore } from 'next/cache';
 
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
+// Optional: Custom CA mappings if search isn't enough
 const CUSTOM_CA_MAPPING: Record<string, string> = {
-    // 'HYPE': '0x13ba5fea7078ab3798fbce53b4d0721c' // Removed in favor of Yahoo Ticker HYPE32196-USD
+    // 'HYPE': '...', // Mapped via Yahoo Ticker below
 };
 
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
-    // 1. Check Custom CA Mapping (e.g. HYPE)
+    // 1. Check Custom CA Mapping
     if (CUSTOM_CA_MAPPING[symbol]) {
-        try {
-            const data = await getPriceByContractAddress(CUSTOM_CA_MAPPING[symbol]);
-            if (data) {
-                // If we need historical price (date provided)
-                if (date) {
-                    const now = new Date();
-                    const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-                    if (diffHours <= 24 && data.priceChange && data.priceChange.h24 !== undefined) {
-                        // Estimate historical from 24h change if within window
-                        // Note: This matches analyzer.ts logic but done here for "getPrice" transparency
-                        // Actually, getPrice usually expects exact candle. 
-                        // But for HYPE/Memes, approximate is better than Yahoo's null.
-
-                        // Interpolate? 
-                        // If diff is 24h, use h24. If 1h, use h1.
-                        // But here we might just return current price if we can't calc?
-                        // Analyzer.ts handles the calc. 
-                        // But getPrice is called by analyzer.ts only as fallback!
-
-                        // If analyzer calls getPrice, it implies it FAILED to extract CA or is doing verification.
-                        // Usage in analyzer.ts:
-                        // if (callPrice === null) callPrice = await getPrice(...)
-
-                        // So if we return Current Price here, analysis will show 0% return.
-                        // We should try to calculate it if possible.
-
-                        // Let's simpler: Just return current price for now, or let analyzer logic handle CA?
-                        // Ideally `analyzer.ts` should pick up "HYPE" and treat it as a Token with CA.
-                        // But `analyzer.ts` relies on `ensureContractAddress`.
-
-                        // Better fix: ensureContractAddress should return this CA for HYPE!
-                        // But ensureContractAddress is in `ai-extractor.ts`.
-
-                        // If I update `market-data.ts` to return current price, at least it shows a price.
-                        // Calculating historical here:
-                        let change = 0;
-                        if (diffHours <= 1) change = data.priceChange.h1;
-                        else if (diffHours <= 6) change = data.priceChange.h6;
-                        else change = data.priceChange.h24;
-
-                        return data.price / (1 + change / 100);
-                    } else if (diffHours > 24) {
-                        // Can't get history for >24h from DexScreener
-                        // Logic falls through to Yahoo or returns null?
-                        // Yahoo has bad data.
-                    }
-                }
-                return data.price;
-            }
-        } catch (e) {
-            console.warn('[MarketData] Custom CA fetch failed:', e);
-        }
+        return getDexPriceWithHistory(CUSTOM_CA_MAPPING[symbol], date);
     }
 
+    // 2. Try Yahoo Finance
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
             'BTC': 'BTC-USD',
@@ -73,17 +23,93 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             'DOGE': 'DOGE-USD',
             'XRP': 'XRP-USD',
             'BNB': 'BNB-USD',
-            'DASH': 'DASH-USD',
             'LTC': 'LTC-USD',
             'ZEC': 'ZEC-USD',
             'XMR': 'XMR-USD',
-            'HYPE': 'HYPE32196-USD', // Hyperliquid
+            'HYPE': 'HYPE32196-USD', // Hyperliquid (Yahoo Ticker)
         };
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
-        return getYahooPrice(yahooSymbol, date);
+        const yahooPrice = await getYahooPrice(yahooSymbol, date);
+
+        if (yahooPrice !== null) return yahooPrice;
+
+        // 3. Fallback: DexScreener Search (Generic)
+        // If Yahoo failed, try searching DexScreener for the symbol
+        console.log(`[MarketData] Yahoo failed for ${symbol}, trying DexScreener Search...`);
+        const ca = await searchDexScreenerCA(symbol);
+        if (ca) {
+            console.log(`[MarketData] Found CA for ${symbol}: ${ca}`);
+            return getDexPriceWithHistory(ca, date);
+        }
     } else {
         return getYahooPrice(symbol, date);
     }
+
+    return null;
+}
+
+// Helper to get price (current or estimated historical) from DexScreener
+async function getDexPriceWithHistory(ca: string, date?: Date): Promise<number | null> {
+    try {
+        const data = await getPriceByContractAddress(ca);
+        if (data) {
+            // If we need historical price (date provided)
+            if (date) {
+                const now = new Date();
+                const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+                // Allow estimation for tweets up to 24h old (using h24 change)
+                if (diffHours <= 24 && data.priceChange && data.priceChange.h24 !== undefined) {
+                    let change = 0;
+                    if (diffHours <= 1) change = data.priceChange.h1;
+                    else if (diffHours <= 6) change = data.priceChange.h6;
+                    else change = data.priceChange.h24;
+
+                    return data.price / (1 + change / 100);
+                } else if (diffHours > 24) {
+                    // Start of day fallback? No, DexScreener doesn't give candles.
+                    // Just return current price? Or null?
+                    // Returning current gives 0% gain/loss. Better than error?
+                    // Returning null prevents analysis.
+                    // Let's return current ONLY if it's "close enough"? 
+                    // No, for "Market Data Not Found", getting current price is confusing for old tweets.
+                    // But for "bag of 67" tweet, if it's new, it works.
+                }
+            }
+            return data.price;
+        }
+    } catch (e) {
+        console.warn('[MarketData] Dex Price fetch failed:', e);
+    }
+    return null;
+}
+
+async function searchDexScreenerCA(symbol: string): Promise<string | null> {
+    try {
+        const url = `https://api.dexscreener.com/latest/dex/search/?q=${symbol}`;
+        const res = await fetch(url, { cache: 'no-store' } as any);
+        const json = await res.json();
+
+        if (json.pairs && json.pairs.length > 0) {
+            // Filter for exact symbol match (case-insensitive) to avoid noise
+            // e.g. searching "AI" -> "AIX", "AIM". We want "AI".
+            const matches = json.pairs.filter((p: any) => p.baseToken.symbol.toUpperCase() === symbol.toUpperCase());
+
+            if (matches.length > 0) {
+                // Sort by liquidity
+                matches.sort((a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+                return matches[0].baseToken.address;
+            }
+
+            // If no exact match, maybe take top result if query was specific? 
+            // "67" query -> "67" symbol.
+            // If query "Trump" -> symbol "TRUMP". 
+            // Let's be strict on Symbol match to avoid returning random tokens for common words.
+        }
+    } catch (e) {
+        console.error('[MarketData] Search failed:', e);
+    }
+    return null;
 }
 
 export async function getPriceByContractAddress(ca: string): Promise<any | null> {
@@ -117,14 +143,6 @@ export function calculatePerformance(callPrice: number, currentPrice: number, se
     return rawChange;
 }
 
-/**
- * Fetches price from Yahoo Finance Chart API using cascading precision for recent dates.
- * Strategies:
- * 1. < 7 days: 1-minute interval
- * 2. < 55 days: 5-minute interval
- * 3. < 700 days: 1-hour interval
- * 4. Default: Daily
- */
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     try {
         let period1 = 0;
@@ -135,17 +153,13 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
             const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
             const targetTime = Math.floor(date.getTime() / 1000);
 
-            // Strategy: Try highest precision first
             let strategy: { interval: string, range: number } | null = null;
 
             if (diffDays < 7) {
-                // < 7 days: Try 1-minute interval (Range: +/- 30 mins)
                 strategy = { interval: '1m', range: 1800 };
             } else if (diffDays < 55) {
-                // < 55 days: Try 5-minute interval (Range: +/- 2 hours)
                 strategy = { interval: '5m', range: 7200 };
             } else if (diffDays < 700) {
-                // < 700 days: Try 1-hour interval (Range: +/- 24 hours)
                 strategy = { interval: '1h', range: 86400 };
             }
 
@@ -163,10 +177,8 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
                         const timestamps = result?.timestamp;
 
                         if (timestamps && quotes && quotes.close && quotes.close.length > 0) {
-                            // Find closest price
                             let closestPrice = null;
                             let minDiff = Infinity;
-
                             for (let i = 0; i < timestamps.length; i++) {
                                 const t = timestamps[i];
                                 const diff = Math.abs(t - targetTime);
@@ -177,21 +189,16 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
                             }
                             if (closestPrice !== null) return closestPrice;
                         }
-                    } else {
-                        console.warn(`[MarketData] High precision (${strategy.interval}) fetch failed: ${res.status}`);
                     }
-                } catch (e) {
-                    console.warn(`[MarketData] High precision (${strategy.interval}) fetch error`, e);
-                }
+                } catch (e) { }
             }
 
-            // Fallback to Daily Logic (Original)
+            // Fallback to Daily
             period1 = Math.floor(date.getTime() / 1000);
             const to = new Date(date);
             to.setDate(to.getDate() + 4);
             period2 = Math.floor(to.getTime() / 1000);
         } else {
-            // Current Price: Look at last 2 days
             const now = new Date();
             period2 = Math.floor(now.getTime() / 1000);
             const from = new Date(now);
@@ -213,7 +220,6 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
 
         if (quotes && quotes.close && quotes.close.length > 0) {
             const validCloses = quotes.close.filter((p: number | null) => p !== null);
-
             if (validCloses.length > 0) {
                 if (!date && result.meta && result.meta.regularMarketPrice) {
                     return result.meta.regularMarketPrice;
