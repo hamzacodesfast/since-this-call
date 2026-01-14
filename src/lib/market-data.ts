@@ -5,7 +5,6 @@ const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
     if (type === 'CRYPTO') {
-        // Map common symbols to Yahoo format
         const mapping: Record<string, string> = {
             'BTC': 'BTC-USD',
             'ETH': 'ETH-USD',
@@ -31,7 +30,6 @@ export async function getPriceByContractAddress(ca: string): Promise<any | null>
         const data = await response.json();
 
         if (data.pairs && data.pairs.length > 0) {
-            // Sort by liquidity? or just take the first one (usually simplified)
             const pair = data.pairs[0];
             return {
                 price: parseFloat(pair.priceUsd),
@@ -39,7 +37,7 @@ export async function getPriceByContractAddress(ca: string): Promise<any | null>
                 name: pair.baseToken.name,
                 liquidity: pair.liquidity?.usd,
                 marketCap: pair.fdv,
-                priceChange: pair.priceChange, // { h1: ..., h6: ..., h24: ... }
+                priceChange: pair.priceChange,
                 pairCreatedAt: pair.pairCreatedAt,
             };
         }
@@ -49,91 +47,89 @@ export async function getPriceByContractAddress(ca: string): Promise<any | null>
     return null;
 }
 
-/**
- * Calculates percentage change
- */
 export function calculatePerformance(callPrice: number, currentPrice: number, sentiment: 'BULLISH' | 'BEARISH'): number {
     const rawChange = ((currentPrice - callPrice) / callPrice) * 100;
-
-    // If Bearish, a drop in price (negative rawChange) is a WIN (positive performance)
-    // e.g. Call Price 100, Current 80. Raw = -20%. Performance = +20%.
     if (sentiment === 'BEARISH') {
         return -rawChange;
     }
-
     return rawChange;
 }
 
 /**
- * Fetches price from Yahoo Finance Chart API
- * Supports precise Hourly resolution for recent tweets.
+ * Fetches price from Yahoo Finance Chart API using cascading precision for recent dates.
+ * Strategies:
+ * 1. < 7 days: 1-minute interval
+ * 2. < 55 days: 5-minute interval
+ * 3. < 700 days: 1-hour interval
+ * 4. Default: Daily
  */
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     try {
-        // noStore(); // Opt out of static caching for this function scope if needed
-
         let period1 = 0;
         let period2 = 9999999999;
 
         if (date) {
-            // Check if date is recent (within 730 days) to use Hourly data for better precision
             const now = new Date();
             const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
-            const isRecent = diffDays < 700; // Safe buffer for Yahoo's 730 day limit
+            const targetTime = Math.floor(date.getTime() / 1000);
 
-            if (isRecent) {
-                // Use Hourly Data for higher precision
-                // Fetch window around the target time (-12h to +12h) to find closest candle
-                period1 = Math.floor(date.getTime() / 1000) - (12 * 3600);
-                period2 = Math.floor(date.getTime() / 1000) + (12 * 3600);
+            // Strategy: Try highest precision first
+            let strategy: { interval: string, range: number } | null = null;
 
-                // Construct URL with 1h interval
-                const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1h&events=history`;
+            if (diffDays < 7) {
+                // < 7 days: Try 1-minute interval (Range: +/- 30 mins)
+                strategy = { interval: '1m', range: 1800 };
+            } else if (diffDays < 55) {
+                // < 55 days: Try 5-minute interval (Range: +/- 2 hours)
+                strategy = { interval: '5m', range: 7200 };
+            } else if (diffDays < 700) {
+                // < 700 days: Try 1-hour interval (Range: +/- 24 hours)
+                strategy = { interval: '1h', range: 86400 };
+            }
 
-                // Use no-store to prevent Next.js caching staled/failed requests
-                const res = await fetch(url, { cache: 'no-store' });
+            if (strategy) {
+                const p1 = targetTime - strategy.range;
+                const p2 = targetTime + strategy.range;
+                const url = `${YAHOO_BASE}/${symbol}?period1=${p1}&period2=${p2}&interval=${strategy.interval}&events=history`;
 
-                if (!res.ok) {
-                    console.warn(`[MarketData] Yahoo Hourly Fetch failed: ${res.status}`);
-                    // Fall back to daily if hourly fails (e.g. rate limit specifically on hourly?)
-                } else {
-                    const json = await res.json();
-                    const result = json?.chart?.result?.[0];
-                    const quotes = result?.indicators?.quote?.[0];
-                    const timestamps = result?.timestamp;
+                try {
+                    const res = await fetch(url, { cache: 'no-store' });
+                    if (res.ok) {
+                        const json = await res.json();
+                        const result = json?.chart?.result?.[0];
+                        const quotes = result?.indicators?.quote?.[0];
+                        const timestamps = result?.timestamp;
 
-                    if (timestamps && quotes && quotes.close && quotes.close.length > 0) {
-                        // Find the candle closest to target time
-                        let closestPrice = null;
-                        let minDiff = Infinity;
+                        if (timestamps && quotes && quotes.close && quotes.close.length > 0) {
+                            // Find closest price
+                            let closestPrice = null;
+                            let minDiff = Infinity;
 
-                        const targetTime = date.getTime() / 1000;
-
-                        for (let i = 0; i < timestamps.length; i++) {
-                            const t = timestamps[i];
-                            const diff = Math.abs(t - targetTime);
-
-                            if (diff < minDiff && quotes.close[i] !== null) {
-                                minDiff = diff;
-                                closestPrice = quotes.close[i];
+                            for (let i = 0; i < timestamps.length; i++) {
+                                const t = timestamps[i];
+                                const diff = Math.abs(t - targetTime);
+                                if (diff < minDiff && quotes.close[i] !== null) {
+                                    minDiff = diff;
+                                    closestPrice = quotes.close[i];
+                                }
                             }
+                            if (closestPrice !== null) return closestPrice;
                         }
-
-                        if (closestPrice !== null) {
-                            return closestPrice;
-                        }
+                    } else {
+                        console.warn(`[MarketData] High precision (${strategy.interval}) fetch failed: ${res.status}`);
                     }
+                } catch (e) {
+                    console.warn(`[MarketData] High precision (${strategy.interval}) fetch error`, e);
                 }
             }
 
             // Fallback to Daily Logic (Original)
-            // Historical Window: Date -> Date + 4 days (to catch weekends/holidays)
             period1 = Math.floor(date.getTime() / 1000);
             const to = new Date(date);
             to.setDate(to.getDate() + 4);
             period2 = Math.floor(to.getTime() / 1000);
         } else {
-            // Current Price: Look at last 2 days to ensure we get a quote
+            // Current Price: Look at last 2 days
             const now = new Date();
             period2 = Math.floor(now.getTime() / 1000);
             const from = new Date(now);
@@ -142,13 +138,9 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         }
 
         const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
-        // console.log(`[MarketData] Fetching: ${url}`);
-
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) {
-            // console.warn(`[MarketData] Yahoo Fetch failed: ${res.status}`);
-            return null;
-        }
+
+        if (!res.ok) return null;
 
         const json = await res.json();
         const result = json?.chart?.result?.[0];
@@ -158,22 +150,12 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         const quotes = result.indicators?.quote?.[0];
 
         if (quotes && quotes.close && quotes.close.length > 0) {
-            // For historical, get the LAST price in the window? 
-            // Actually, we want the price CLOSEST to the start date.
-            // Since we set period1 to the date, the first element should be the correct day (or next trading day).
-
-            // Filter out nulls (holidays)
             const validCloses = quotes.close.filter((p: number | null) => p !== null);
 
             if (validCloses.length > 0) {
-                // If historical, we want the first valid close after the date.
-                // If current, we want the last available closing price (or current price if live, but chart API gives closes).
-                // API usually returns 'meta' with 'regularMarketPrice' for current
                 if (!date && result.meta && result.meta.regularMarketPrice) {
                     return result.meta.regularMarketPrice;
                 }
-
-                // Fallback to chart data
                 return date ? validCloses[0] : validCloses[validCloses.length - 1];
             }
         }
