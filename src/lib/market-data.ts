@@ -3,6 +3,11 @@ import { unstable_noStore as noStore } from 'next/cache';
 
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
+// Known contract addresses for tokens with fake/imposter pairs
+const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
+    'ME': { ca: 'MEFNBXixkEbait3xn9bkm8WsJzXtVsaJEn4c8Sam21u', chainId: 'solana' }, // Magic Eden
+};
+
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
     // 1. Try Yahoo Finance first (Best for Stocks & Major Crypto)
     if (type === 'CRYPTO') {
@@ -23,7 +28,15 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
 
         if (yahooPrice !== null) return yahooPrice;
 
-        // 2. Fallback: DexScreener Search (Generic)
+        // 2. Check if we have a known CA for this symbol
+        const knownToken = KNOWN_CAS[symbol.toUpperCase()];
+        if (knownToken) {
+            console.log(`[MarketData] Using known CA for ${symbol}: ${knownToken.ca}`);
+            const data = await getPriceByContractAddress(knownToken.ca);
+            if (data) return data.price;
+        }
+
+        // 3. Fallback: DexScreener Search (Generic)
         console.log(`[MarketData] Yahoo failed for ${symbol}, trying DexScreener Search...`);
         // Sanitize symbol (e.g. "67/SOL" -> "67", "$67" -> "67")
         const cleanSymbol = symbol.split('/')[0].replace(/^[$]/, '').trim();
