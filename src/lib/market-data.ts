@@ -122,6 +122,7 @@ const COINGECKO_IDS: Record<string, string> = {
     'GRIFFAIN': 'griffain',
     'SWARMS': 'swarms',
     'PUMP': 'pump-fun',
+    'ASTER': 'aster-2',
 };
 
 // Launch dates and initial prices for major assets
