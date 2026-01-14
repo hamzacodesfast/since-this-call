@@ -3,18 +3,8 @@ import { unstable_noStore as noStore } from 'next/cache';
 
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
-// Optional: Custom CA mappings if search isn't enough
-const CUSTOM_CA_MAPPING: Record<string, string> = {
-    // 'HYPE': '...', // Mapped via Yahoo Ticker below
-};
-
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
-    // 1. Check Custom CA Mapping
-    if (CUSTOM_CA_MAPPING[symbol]) {
-        return getDexPriceWithHistory(CUSTOM_CA_MAPPING[symbol], date);
-    }
-
-    // 2. Try Yahoo Finance
+    // 1. Try Yahoo Finance first (Best for Stocks & Major Crypto)
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
             'BTC': 'BTC-USD',
@@ -26,20 +16,28 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             'LTC': 'LTC-USD',
             'ZEC': 'ZEC-USD',
             'XMR': 'XMR-USD',
-            'HYPE': 'HYPE32196-USD', // Hyperliquid (Yahoo Ticker)
+            'HYPE': 'HYPE32196-USD', // Hyperliquid
         };
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
         const yahooPrice = await getYahooPrice(yahooSymbol, date);
 
         if (yahooPrice !== null) return yahooPrice;
 
-        // 3. Fallback: DexScreener Search (Generic)
-        // If Yahoo failed, try searching DexScreener for the symbol
+        // 2. Fallback: DexScreener Search (Generic)
         console.log(`[MarketData] Yahoo failed for ${symbol}, trying DexScreener Search...`);
-        const ca = await searchDexScreenerCA(symbol);
-        if (ca) {
-            console.log(`[MarketData] Found CA for ${symbol}: ${ca}`);
-            return getDexPriceWithHistory(ca, date);
+        const result = await searchDexScreenerCA(symbol);
+        if (result) {
+            console.log(`[MarketData] Found Pair for ${symbol}: ${result.pairAddress} on ${result.chainId}`);
+
+            // 3. Try High-Precision GeckoTerminal OHLCV (1-5 min)
+            const precisePrice = await getGeckoTerminalPrice(result.chainId, result.pairAddress, date);
+            if (precisePrice !== null) {
+                console.log(`[MarketData] Used GeckoTerminal Precision Price: ${precisePrice}`);
+                return precisePrice;
+            }
+
+            // 4. Default DexScreener Estimation (h1/h6/h24 buckets)
+            return getDexPriceWithHistory(result.pairAddress, date); // Use Pair address directly
         }
     } else {
         return getYahooPrice(symbol, date);
@@ -48,63 +46,101 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
     return null;
 }
 
-// Helper to get price (current or estimated historical) from DexScreener
-async function getDexPriceWithHistory(ca: string, date?: Date): Promise<number | null> {
+// Map DexScreener chainId to GeckoTerminal networkId
+const GT_NETWORKS: Record<string, string> = {
+    'solana': 'solana',
+    'ethereum': 'eth',
+    'bsc': 'bsc',
+    'base': 'base',
+    'arbitrum': 'arbitrum',
+    'polygon': 'polygon_pos',
+    'optimism': 'optimism',
+    'avalanche': 'avax',
+};
+
+async function getGeckoTerminalPrice(chainId: string, poolAddress: string, date?: Date): Promise<number | null> {
+    const network = GT_NETWORKS[chainId];
+    if (!network || !date) return null; // Can't do precise history without supported net or date
+
     try {
-        const data = await getPriceByContractAddress(ca);
-        if (data) {
-            // If we need historical price (date provided)
-            if (date) {
-                const now = new Date();
-                const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+        const targetTime = Math.floor(date.getTime() / 1000);
+        const now = Math.floor(Date.now() / 1000);
+        const diffHours = (now - targetTime) / 3600;
 
-                // Allow estimation for tweets up to 24h old (using h24 change)
-                if (diffHours <= 24 && data.priceChange && data.priceChange.h24 !== undefined) {
-                    let change = 0;
-                    if (diffHours <= 1) change = data.priceChange.h1;
-                    else if (diffHours <= 6) change = data.priceChange.h6;
-                    else change = data.priceChange.h24;
+        // Strategy: 
+        // < 24h: Try Minute candles (limit 1000 covers ~16h, maybe enough?)
+        // > 24h: Try Hour candles
 
-                    return data.price / (1 + change / 100);
-                } else if (diffHours > 24) {
-                    // Start of day fallback? No, DexScreener doesn't give candles.
-                    // Just return current price? Or null?
-                    // Returning current gives 0% gain/loss. Better than error?
-                    // Returning null prevents analysis.
-                    // Let's return current ONLY if it's "close enough"? 
-                    // No, for "Market Data Not Found", getting current price is confusing for old tweets.
-                    // But for "bag of 67" tweet, if it's new, it works.
-                }
-            }
-            return data.price;
+        let timeframe = 'minute';
+        let limit = 1000;
+        let aggregate = 1;
+
+        if (diffHours > 16) {
+            timeframe = 'hour';
+            limit = 168; // 1 week coverage
         }
+
+        const url = `https://api.geckoterminal.com/api/v2/networks/${network}/pools/${poolAddress}/ohlcv/${timeframe}?aggregate=${aggregate}&limit=${limit}`;
+
+        const res = await fetch(url, { cache: 'no-store' } as any);
+        if (!res.ok) return null; // Rate limit or 404
+
+        const json = await res.json();
+        const candles = json?.data?.attributes?.ohlcv_list; // [[time, open, high, low, close, vol], ...]
+
+        if (!candles || candles.length === 0) return null;
+
+        // Find closest candle
+        let closestPrice = null;
+        let minDiff = Infinity;
+
+        for (const c of candles) {
+            const t = c[0];
+            const close = c[4];
+            const diff = Math.abs(t - targetTime);
+
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestPrice = close;
+            }
+        }
+
+        // Acceptable tolerance?
+        // For minute candles: within 15 mins?
+        // For hour candles: within 2 hours?
+        // Currently just taking best match.
+        // If best match is > 24h away, maybe reject?
+        // Let's rely on finding *something* better than h24 est.
+
+        return closestPrice;
+
     } catch (e) {
-        console.warn('[MarketData] Dex Price fetch failed:', e);
+        console.warn(`[MarketData] GT fetch failed:`, e);
     }
     return null;
 }
 
-async function searchDexScreenerCA(symbol: string): Promise<string | null> {
+
+
+
+// Updating to return object
+async function searchDexScreenerCA(symbol: string): Promise<{ baseTokenAddress: string, pairAddress: string, chainId: string } | null> {
     try {
         const url = `https://api.dexscreener.com/latest/dex/search/?q=${symbol}`;
         const res = await fetch(url, { cache: 'no-store' } as any);
         const json = await res.json();
 
         if (json.pairs && json.pairs.length > 0) {
-            // Filter for exact symbol match (case-insensitive) to avoid noise
-            // e.g. searching "AI" -> "AIX", "AIM". We want "AI".
             const matches = json.pairs.filter((p: any) => p.baseToken.symbol.toUpperCase() === symbol.toUpperCase());
-
             if (matches.length > 0) {
-                // Sort by liquidity
                 matches.sort((a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
-                return matches[0].baseToken.address;
+                const top = matches[0];
+                return {
+                    baseTokenAddress: top.baseToken.address,
+                    pairAddress: top.pairAddress,
+                    chainId: top.chainId
+                };
             }
-
-            // If no exact match, maybe take top result if query was specific? 
-            // "67" query -> "67" symbol.
-            // If query "Trump" -> symbol "TRUMP". 
-            // Let's be strict on Symbol match to avoid returning random tokens for common words.
         }
     } catch (e) {
         console.error('[MarketData] Search failed:', e);
@@ -112,11 +148,39 @@ async function searchDexScreenerCA(symbol: string): Promise<string | null> {
     return null;
 }
 
+// Refactored Helper (formerly getDexPriceWithHistory)
+async function getDexPriceWithHistory(result: any, date?: Date): Promise<number | null> {
+    // result is { baseTokenAddress, pairAddress, chainId }
+    // Or simpler: pass CA (baseTokenAddress)
+
+    try {
+        const ca = typeof result === 'string' ? result : result.baseTokenAddress;
+
+        const data = await getPriceByContractAddress(ca);
+        if (data) {
+            if (date) {
+                const now = new Date();
+                const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+                if (diffHours <= 24 && data.priceChange && data.priceChange.h24 !== undefined) {
+                    let change = 0;
+                    if (diffHours <= 1) change = data.priceChange.h1;
+                    else if (diffHours <= 6) change = data.priceChange.h6;
+                    else change = data.priceChange.h24;
+
+                    return data.price / (1 + change / 100);
+                }
+            }
+            return data.price;
+        }
+    } catch (e) { }
+    return null;
+}
+
 export async function getPriceByContractAddress(ca: string): Promise<any | null> {
     try {
         const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`, { cache: 'no-store' });
         const data = await response.json();
-
         if (data.pairs && data.pairs.length > 0) {
             const pair = data.pairs[0];
             return {
