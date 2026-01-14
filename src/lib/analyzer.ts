@@ -50,6 +50,13 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
         throw new Error('Could not identify financial call');
     }
 
+    // Force known stocks that might be misclassified as crypto (e.g. BMNR which has a garbage token on Base)
+    const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC'];
+    if (callData.symbol && FORCE_STOCKS.includes(callData.symbol.toUpperCase())) {
+        console.log(`[Analyzer] Forcing ${callData.symbol} to STOCK type`);
+        callData.type = 'STOCK';
+    }
+
     // 4. Market Data Fetch
     // Use the actual Tweet Timestamp for precision, unless AI suggests a different specific date
     // But typically the "Call Date" is when the tweet was posted.
