@@ -70,8 +70,12 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
     let currentPrice: number | null = null;
     let finalSymbol = callData.symbol;
 
-    // If we have a contract address (pump.fun token), use CA-based lookup
-    if (callData.contractAddress) {
+    // Known tokens with CoinGecko listings - skip CA lookup to avoid fake tokens
+    const COINGECKO_SYMBOLS = ['PUMP', 'ME', 'PEPE', 'WIF', 'BONK', 'PENGU', 'JUP', 'PYTH', 'JTO', 'RENDER', 'HYPE'];
+    const usesCoinGecko = COINGECKO_SYMBOLS.includes(finalSymbol.toUpperCase());
+
+    // If we have a contract address (pump.fun token) AND it's not a known CoinGecko token, use CA-based lookup
+    if (callData.contractAddress && !usesCoinGecko) {
         const caData = await getPriceByContractAddress(callData.contractAddress);
         if (caData) {
             currentPrice = caData.price;
@@ -103,20 +107,15 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
                     } else if (tweetAgeHours <= 24 && caData.priceChange.h24 !== undefined) {
                         percentChange = caData.priceChange.h24;
                     }
-                    // NOTE: We do NOT fall back to h24 for older tweets - that would be incorrect!
+                    // NOTE: For older tweets, we'll fall through to the CoinGecko/getPrice fallback below
 
                     if (percentChange !== undefined && percentChange !== 0 && currentPrice !== null) {
                         // Calculate historical price from priceChange
                         callPrice = currentPrice / (1 + percentChange / 100);
-                    } else if (currentPrice === null) {
-                        throw new Error(`Current price unavailable for pump.fun token ${finalSymbol}.`);
-                    } else {
-                        // Tweet is too old for DexScreener price change data
-                        throw new Error(`Historical data unavailable for pump.fun token ${finalSymbol}. Only tweets < 24 hours old can be analyzed. This tweet is ${Math.round(tweetAgeHours)} hours old.`);
                     }
-                } else {
-                    throw new Error(`Price history unavailable for pump.fun token ${finalSymbol}.`);
+                    // Don't throw - let it fall through to CoinGecko lookup below
                 }
+                // If DexScreener priceChange wasn't usable, callPrice stays null and we fall through
             }
 
             // STEP 3: Store current price for future lookups (only if new)

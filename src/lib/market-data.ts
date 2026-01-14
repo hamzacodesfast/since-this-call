@@ -228,6 +228,18 @@ async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | 
 
             // Find closest price to target date
             const targetTime = date.getTime();
+
+            // Sort prices by timestamp to ensure order
+            const sortedPrices = [...data.prices].sort((a: any, b: any) => a[0] - b[0]);
+            const oldestTimestamp = sortedPrices[0][0];
+            const oldestPrice = sortedPrices[0][1];
+
+            // If target date is before the oldest data point, use the oldest price
+            if (targetTime < oldestTimestamp) {
+                console.log(`[CoinGecko] Target date ${date.toISOString()} is before listing. Using oldest available price: $${oldestPrice}`);
+                return oldestPrice;
+            }
+
             let closestPrice = null;
             let minDiff = Infinity;
 
