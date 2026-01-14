@@ -4,7 +4,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
 const CUSTOM_CA_MAPPING: Record<string, string> = {
-    'HYPE': '0x13ba5fea7078ab3798fbce53b4d0721c' // Hyperliquid HYPE
+    // 'HYPE': '0x13ba5fea7078ab3798fbce53b4d0721c' // Removed in favor of Yahoo Ticker HYPE32196-USD
 };
 
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
@@ -77,6 +77,7 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             'LTC': 'LTC-USD',
             'ZEC': 'ZEC-USD',
             'XMR': 'XMR-USD',
+            'HYPE': 'HYPE32196-USD', // Hyperliquid
         };
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
         return getYahooPrice(yahooSymbol, date);
