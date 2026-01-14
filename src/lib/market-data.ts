@@ -25,7 +25,9 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
 
         // 2. Fallback: DexScreener Search (Generic)
         console.log(`[MarketData] Yahoo failed for ${symbol}, trying DexScreener Search...`);
-        const result = await searchDexScreenerCA(symbol);
+        // Sanitize symbol (e.g. "67/SOL" -> "67", "$67" -> "67")
+        const cleanSymbol = symbol.split('/')[0].replace(/^[$]/, '').trim();
+        const result = await searchDexScreenerCA(cleanSymbol);
         if (result) {
             console.log(`[MarketData] Found Pair for ${symbol}: ${result.pairAddress} on ${result.chainId}`);
 
@@ -37,7 +39,7 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             }
 
             // 4. Default DexScreener Estimation (h1/h6/h24 buckets)
-            return getDexPriceWithHistory(result.pairAddress, date); // Use Pair address directly
+            return getDexPriceWithHistory(result, date); // Use Token Address (via result obj)
         }
     } else {
         return getYahooPrice(symbol, date);
@@ -155,6 +157,7 @@ async function getDexPriceWithHistory(result: any, date?: Date): Promise<number 
 
     try {
         const ca = typeof result === 'string' ? result : result.baseTokenAddress;
+        console.log(`[MarketData] getDexPriceWithHistory CA: ${ca}`);
 
         const data = await getPriceByContractAddress(ca);
         if (data) {
@@ -172,8 +175,12 @@ async function getDexPriceWithHistory(result: any, date?: Date): Promise<number 
                 }
             }
             return data.price;
+        } else {
+            console.log(`[MarketData] getPriceByContractAddress returned null for ${ca}`);
         }
-    } catch (e) { }
+    } catch (e) {
+        console.error('[MarketData] getDexPriceWithHistory Error:', e);
+    }
     return null;
 }
 
