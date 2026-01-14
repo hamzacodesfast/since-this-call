@@ -6,6 +6,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, CheckCircle2, AlertTriangle, Clock
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import NextImage from 'next/image';
+import { AnalysisCard } from '@/components/analysis-card';
 
 interface StoredAnalysis {
     id: string;
@@ -17,6 +18,8 @@ interface StoredAnalysis {
     performance: number;
     isWin: boolean;
     timestamp: number;
+    entryPrice?: number;
+    currentPrice?: number;
 }
 
 export default function RecentPage() {
@@ -103,53 +106,7 @@ export default function RecentPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {analyses.map((analysis) => (
-                            <a key={`${analysis.id}-${analysis.timestamp}`} href={`https://x.com/${analysis.username}/status/${analysis.id}`} target="_blank" rel="noopener noreferrer">
-                                <Card className={`hover:scale-[1.02] transition-transform cursor-pointer border-2 ${Math.abs(analysis.performance) < 0.01 ? 'border-yellow-500/30 bg-yellow-500/5' : (analysis.performance > 0 ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5')}`}>
-                                    <CardContent className="p-4">
-                                        {/* Header */}
-                                        <div className="flex items-center gap-3 mb-3">
-                                            {analysis.avatar ? (
-                                                <img
-                                                    src={analysis.avatar}
-                                                    alt={analysis.author}
-                                                    className="w-10 h-10 rounded-full"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                                                    <span className="text-lg">👤</span>
-                                                </div>
-                                            )}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-semibold truncate">{analysis.author}</div>
-                                                <div className="text-sm text-muted-foreground">@{analysis.username}</div>
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {formatTimeAgo(analysis.timestamp)}
-                                            </div>
-                                        </div>
-
-                                        {/* Symbol & Sentiment */}
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="font-mono font-bold text-lg">{analysis.symbol}</span>
-                                            <span className={`inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full ${analysis.sentiment === 'BULLISH' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                                {analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                                                {analysis.sentiment}
-                                            </span>
-                                        </div>
-
-                                        {/* Result */}
-                                        <div className="flex items-center justify-between">
-                                            <div className={`flex items-center gap-1.5 font-bold ${Math.abs(analysis.performance) < 0.01 ? 'text-yellow-500' : (analysis.performance > 0 ? 'text-green-500' : 'text-red-500')}`}>
-                                                {Math.abs(analysis.performance) < 0.01 ? <MinusCircle className="w-5 h-5" /> : (analysis.performance > 0 ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />)}
-                                                {Math.abs(analysis.performance) < 0.01 ? 'NEUTRAL' : (analysis.performance > 0 ? 'WIN' : 'REKT')}
-                                            </div>
-                                            <div className={`font-mono font-bold ${Math.abs(analysis.performance) < 0.01 ? 'text-yellow-500' : (analysis.performance > 0 ? 'text-green-500' : 'text-red-500')}`}>
-                                                {analysis.performance > 0 ? '+' : ''}{analysis.performance.toFixed(2)}%
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </a>
+                            <AnalysisCard key={`${analysis.id}-${analysis.timestamp}`} analysis={analysis} />
                         ))}
                     </div>
                 )}

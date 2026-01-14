@@ -55,8 +55,28 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
     const cryptoList = [
         'BTC', 'ETH', 'SOL', 'DOGE', 'DOT', 'ADA', 'XRP', 'LINK', 'AVAX', 'MATIC',
         'PEPE', 'WOJAK', 'SHIB', 'BONK', 'WIF', 'FLOKI', 'BRETT', 'MOG', 'TURBO',
-        'SPX', 'SPX6900' // Meme coin, NOT S&P 500
+        'SPX', 'SPX6900', 'PENGU', 'MOODENG', 'POPCAT', 'GPY', 'HYPE', 'VIRTUAL', 'AI16Z'
     ];
+
+    if (!symbol) {
+        // Fallback: Check for uppercase words matching known crypto tickers
+        const words = text.split(/\s+/);
+        for (const word of words) {
+            // Remove punctuation
+            const clean = word.replace(/[^a-zA-Z0-9]/g, '');
+            if (cryptoList.includes(clean.toUpperCase())) {
+                symbol = clean.toUpperCase();
+                break;
+            }
+        }
+    }
+
+    if (!symbol) {
+        // console.warn('[AI-Extractor] Regex failed to find symbol');
+        // Don't fail silently, return null so caller knows.
+        return null;
+    }
+
     if (cryptoList.includes(symbol)) {
         type = 'CRYPTO';
     }

@@ -238,13 +238,13 @@ export function AnalysisView({ data }: AnalysisViewProps) {
 
                         {/* Data Grid */}
                         <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground flex items-center gap-1"><DollarSign className="w-3 h-3" /> Cost Basis</div>
-                                <div className="text-lg font-mono font-medium tracking-tight whitespace-nowrap">{formatPrice(data.market.callPrice)}</div>
+                            <div className="space-y-1 text-left">
+                                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">Entry</div>
+                                <div className="text-sm font-mono font-bold tracking-tight whitespace-nowrap">{formatPrice(data.market.callPrice)}</div>
                             </div>
                             <div className="space-y-1 text-right">
-                                <div className="text-xs text-muted-foreground">Current Price</div>
-                                <div className="text-lg font-mono font-medium tracking-tight whitespace-nowrap">{formatPrice(data.market.currentPrice)}</div>
+                                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">Current</div>
+                                <div className="text-sm font-mono font-bold tracking-tight whitespace-nowrap">{formatPrice(data.market.currentPrice)}</div>
                             </div>
                         </div>
 

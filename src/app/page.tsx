@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock } from 'lucide-react';
+import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock, Trophy } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,6 +90,9 @@ export default function Home() {
                     sentiment: json.analysis.sentiment,
                     performance: json.market.performance,
                     isWin,
+                    entryPrice: json.market.callPrice,
+                    currentPrice: json.market.currentPrice,
+                    type: json.analysis.type,
                 }),
             }).catch(() => { }); // Ignore errors
         } catch (err: any) {
@@ -245,12 +248,20 @@ export default function Home() {
 
             {/* Footer Branding */}
             <div className="mt-auto py-12 text-center space-y-4">
-                <Link href="/recent">
-                    <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-                        <Clock className="w-4 h-4 mr-2" />
-                        View Recent Analyses
-                    </Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <Link href="/recent">
+                        <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                            <Clock className="w-4 h-4 mr-2" />
+                            View Recent Analyses
+                        </Button>
+                    </Link>
+                    <Link href="/profiles">
+                        <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+                            <Trophy className="w-4 h-4 mr-2" />
+                            Trader Leaderboard
+                        </Button>
+                    </Link>
+                </div>
                 <div className="flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground opacity-30 hover:opacity-100 transition-opacity duration-500">
                     <TrendingUp className="w-3 h-3" />
                     <span>Real Data • No Hype</span>

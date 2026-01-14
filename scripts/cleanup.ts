@@ -15,9 +15,7 @@ const RECENT_KEY = 'recent_analyses';
 
 // Tweets to remove
 const BAD_TWEET_IDS = [
-    '2011253892592357470', // @druss113 - $dog lowcap coin misidentified
-    '2004218883092500890', // @cryptopop_ath - pumpfun CA
-    '2011252741792764397', // @milerozu - random babbling
+    '2011205566002008395', // 67 (Duplicates)
 ];
 
 async function cleanup() {

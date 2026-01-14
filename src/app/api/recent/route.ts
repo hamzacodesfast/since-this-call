@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addAnalysis, getRecentAnalyses, StoredAnalysisSchema } from '@/lib/analysis-store';
+import { addAnalysis, getRecentAnalyses, StoredAnalysisSchema, updateUserProfile } from '@/lib/analysis-store';
 import { rateLimit } from '@/lib/rate-limit';
 
 // Edge runtime works with Upstash Redis REST API
@@ -71,6 +71,11 @@ export async function POST(request: NextRequest) {
         }
 
         await addAnalysis(data);
+
+        // Update User Profile (fire and forget)
+        // Note: Edge functions might kill this early if not awaited, but usually okay for small tasks.
+        // Ideally we await it to ensure data consistency.
+        await updateUserProfile(data);
 
         return NextResponse.json({ success: true });
     } catch {

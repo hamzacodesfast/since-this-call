@@ -20,6 +20,9 @@ export interface StoredAnalysis {
     performance: number;
     isWin: boolean;
     timestamp: number;
+    entryPrice?: number; // Price at tweet time
+    currentPrice?: number; // Price at analysis time (or last update)
+    type?: 'CRYPTO' | 'STOCK';
 }
 
 // Zod schema for input validation
@@ -33,6 +36,9 @@ export const StoredAnalysisSchema = z.object({
     performance: z.number(),
     isWin: z.boolean(),
     timestamp: z.number(),
+    entryPrice: z.number().optional(),
+    currentPrice: z.number().optional(),
+    type: z.enum(['CRYPTO', 'STOCK']).optional(),
 });
 
 export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {
@@ -91,6 +97,177 @@ export async function getRandomAnalysis(): Promise<StoredAnalysis | null> {
         return null;
     }
 }
+
+// ============================================
+// User Profiles
+// ============================================
+
+const USER_PROFILE_PREFIX = 'user:profile:';
+const USER_HISTORY_PREFIX = 'user:history:';
+
+export interface UserProfile {
+    username: string;
+    avatar: string;
+    totalAnalyses: number;
+    wins: number;
+    losses: number;
+    neutral: number;
+    winRate: number;
+    lastAnalyzed: number;
+}
+
+const ALL_USERS_KEY = 'all_users';
+
+export async function updateUserProfile(analysis: StoredAnalysis): Promise<void> {
+    try {
+        const lowerUser = analysis.username.toLowerCase();
+        const profileKey = `${USER_PROFILE_PREFIX}${lowerUser}`;
+        const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
+
+        // Track user in global set
+        await redis.sadd(ALL_USERS_KEY, lowerUser);
+
+        // Get current history
+        const historyData = await redis.lrange(historyKey, 0, -1);
+        let history = historyData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
+
+        // Check if tweet already exists
+        const existingIndex = history.findIndex((h: StoredAnalysis) => h.id === analysis.id);
+
+        if (existingIndex !== -1) {
+            // Update existing entry
+            history[existingIndex] = analysis;
+        } else {
+            // Add new entry (prepend)
+            history.unshift(analysis);
+        }
+
+        // Limit history size (keep top 100 most recent unique calls)
+        if (history.length > 100) {
+            history = history.slice(0, 100);
+        }
+
+        // Recalculate Stats from History
+        let wins = 0;
+        let losses = 0;
+        let neutral = 0;
+        const total = history.length;
+
+        for (const item of history) {
+            if (Math.abs(item.performance) < 0.01) {
+                neutral++;
+            } else if (item.isWin) {
+                wins++;
+            } else {
+                losses++;
+            }
+        }
+
+        const winRate = total > 0 ? (wins / total) * 100 : 0;
+
+        // Update Hash
+        await redis.hset(profileKey, {
+            username: analysis.username,
+            avatar: analysis.avatar || '',
+            totalAnalyses: total,
+            wins,
+            losses,
+            neutral,
+            winRate,
+            lastAnalyzed: Date.now(),
+        });
+
+        // Replace History List
+        await redis.del(historyKey);
+        if (history.length > 0) {
+            for (let i = history.length - 1; i >= 0; i--) {
+                await redis.lpush(historyKey, JSON.stringify(history[i]));
+            }
+        }
+
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to update user profile:', error);
+    }
+}
+
+export async function getUserProfile(username: string): Promise<{ profile: UserProfile | null, history: StoredAnalysis[] }> {
+    try {
+        const lowerUser = username.toLowerCase();
+        const profileKey = `${USER_PROFILE_PREFIX}${lowerUser}`;
+        const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
+
+        const [profileData, historyData] = await Promise.all([
+            redis.hgetall(profileKey),
+            redis.lrange(historyKey, 0, -1)
+        ]);
+
+        if (!profileData || Object.keys(profileData).length === 0) {
+            return { profile: null, history: [] };
+        }
+
+        const history = historyData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
+
+        const safeProfile = profileData as Record<string, string>;
+
+        return {
+            profile: {
+                ...safeProfile,
+                totalAnalyses: parseInt(safeProfile.totalAnalyses || '0'),
+                wins: parseInt(safeProfile.wins || '0'),
+                losses: parseInt(safeProfile.losses || '0'),
+                neutral: parseInt(safeProfile.neutral || '0'),
+                winRate: parseFloat(safeProfile.winRate || '0'),
+                lastAnalyzed: parseInt(safeProfile.lastAnalyzed || '0'),
+            } as UserProfile,
+            history
+        };
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get user profile:', error);
+        return { profile: null, history: [] };
+    }
+}
+
+export async function getAllUserProfiles(): Promise<UserProfile[]> {
+    try {
+        const users = await redis.smembers(ALL_USERS_KEY);
+        if (users.length === 0) return [];
+
+        const pipeline = redis.pipeline();
+        users.forEach((user) => pipeline.hgetall(`${USER_PROFILE_PREFIX}${user}`));
+
+        const results = await pipeline.exec();
+
+        const profiles: UserProfile[] = [];
+        results.forEach((result) => {
+            if (result && Object.keys(result as object).length > 0) {
+                const safeProfile = result as Record<string, string>;
+                profiles.push({
+                    ...safeProfile,
+                    totalAnalyses: parseInt(safeProfile.totalAnalyses || '0'),
+                    wins: parseInt(safeProfile.wins || '0'),
+                    losses: parseInt(safeProfile.losses || '0'),
+                    neutral: parseInt(safeProfile.neutral || '0'),
+                    winRate: parseFloat(safeProfile.winRate || '0'),
+                    lastAnalyzed: parseInt(safeProfile.lastAnalyzed || '0'),
+                } as UserProfile);
+            }
+        });
+
+        // Sort by Total Analyses Descending
+        return profiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get all profiles:', error);
+        return [];
+    }
+}
+
+// Re-export existing remover for compatibility, or update it to remove from profile too?
+// Removing individual analysis from profile history is hard (requires scanning list).
+// For now, assume removal is rare/admin only.
 
 export async function removeAnalysisByTweetId(tweetId: string): Promise<boolean> {
     try {
