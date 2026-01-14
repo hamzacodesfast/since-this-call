@@ -167,6 +167,73 @@ export default function Home() {
                 )}
             </div>
 
+            {/* Features & Limitations */}
+            <div className="w-full max-w-2xl text-left space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Features */}
+                    <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
+                        <div className="flex items-center gap-2 text-primary">
+                            <Sparkles className="w-5 h-5" />
+                            <h3 className="font-semibold text-lg">Supported Assets</h3>
+                        </div>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                            <li className="flex items-start gap-2">
+                                <span className="text-green-500 mt-0.5">✓</span>
+                                <div>
+                                    <strong className="text-foreground">Stocks & Major Crypto</strong>
+                                    <p className="text-xs opacity-80">Real-time Yahoo Finance data (1m precision)</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-green-500 mt-0.5">✓</span>
+                                <div>
+                                    <strong className="text-foreground">Meme Coins (SOL/Base/Arb)</strong>
+                                    <p className="text-xs opacity-80">GeckoTerminal minute-level candles</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-green-500 mt-0.5">✓</span>
+                                <div>
+                                    <strong className="text-foreground">Obscure Tokens</strong>
+                                    <p className="text-xs opacity-80">DexScreener auto-discovery & fallback</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Limitations */}
+                    <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
+                        <div className="flex items-center gap-2 text-amber-500">
+                            <TrendingUp className="w-5 h-5" />
+                            <h3 className="font-semibold text-lg">Limitations</h3>
+                        </div>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                            <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5">⚠</span>
+                                <div>
+                                    <strong className="text-foreground">Old Tweets (&gt;24h)</strong>
+                                    <p className="text-xs opacity-80">Requires major listing or cached history</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5">⚠</span>
+                                <div>
+                                    <strong className="text-foreground">Very New Tokens</strong>
+                                    <p className="text-xs opacity-80">Might lack sufficient history for analysis</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5">⚠</span>
+                                <div>
+                                    <strong className="text-foreground">Rate Limits</strong>
+                                    <p className="text-xs opacity-80">Public APIs may occasionally timeout</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             {/* Error Message */}
             {error && (
                 <div className="mb-12 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-3 animate-in hover:scale-105 transition-transform">
