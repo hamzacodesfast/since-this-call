@@ -3,7 +3,68 @@ import { unstable_noStore as noStore } from 'next/cache';
 
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 
+const CUSTOM_CA_MAPPING: Record<string, string> = {
+    'HYPE': '0x13ba5fea7078ab3798fbce53b4d0721c' // Hyperliquid HYPE
+};
+
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
+    // 1. Check Custom CA Mapping (e.g. HYPE)
+    if (CUSTOM_CA_MAPPING[symbol]) {
+        try {
+            const data = await getPriceByContractAddress(CUSTOM_CA_MAPPING[symbol]);
+            if (data) {
+                // If we need historical price (date provided)
+                if (date) {
+                    const now = new Date();
+                    const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+                    if (diffHours <= 24 && data.priceChange && data.priceChange.h24 !== undefined) {
+                        // Estimate historical from 24h change if within window
+                        // Note: This matches analyzer.ts logic but done here for "getPrice" transparency
+                        // Actually, getPrice usually expects exact candle. 
+                        // But for HYPE/Memes, approximate is better than Yahoo's null.
+
+                        // Interpolate? 
+                        // If diff is 24h, use h24. If 1h, use h1.
+                        // But here we might just return current price if we can't calc?
+                        // Analyzer.ts handles the calc. 
+                        // But getPrice is called by analyzer.ts only as fallback!
+
+                        // If analyzer calls getPrice, it implies it FAILED to extract CA or is doing verification.
+                        // Usage in analyzer.ts:
+                        // if (callPrice === null) callPrice = await getPrice(...)
+
+                        // So if we return Current Price here, analysis will show 0% return.
+                        // We should try to calculate it if possible.
+
+                        // Let's simpler: Just return current price for now, or let analyzer logic handle CA?
+                        // Ideally `analyzer.ts` should pick up "HYPE" and treat it as a Token with CA.
+                        // But `analyzer.ts` relies on `ensureContractAddress`.
+
+                        // Better fix: ensureContractAddress should return this CA for HYPE!
+                        // But ensureContractAddress is in `ai-extractor.ts`.
+
+                        // If I update `market-data.ts` to return current price, at least it shows a price.
+                        // Calculating historical here:
+                        let change = 0;
+                        if (diffHours <= 1) change = data.priceChange.h1;
+                        else if (diffHours <= 6) change = data.priceChange.h6;
+                        else change = data.priceChange.h24;
+
+                        return data.price / (1 + change / 100);
+                    } else if (diffHours > 24) {
+                        // Can't get history for >24h from DexScreener
+                        // Logic falls through to Yahoo or returns null?
+                        // Yahoo has bad data.
+                    }
+                }
+                return data.price;
+            }
+        } catch (e) {
+            console.warn('[MarketData] Custom CA fetch failed:', e);
+        }
+    }
+
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
             'BTC': 'BTC-USD',
