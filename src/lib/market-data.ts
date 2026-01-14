@@ -7,6 +7,7 @@ const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 // Known contract addresses for tokens with fake/imposter pairs
 const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
     'ME': { ca: 'MEFNBXixkEbait3xn9bkm8WsJzXtVsaJEn4c8Sam21u', chainId: 'solana' }, // Magic Eden
+    'PUMP': { ca: 'pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn', chainId: 'solana' }, // Pump.fun
 };
 
 // CoinGecko ID mapping for common tokens
@@ -120,6 +121,7 @@ const COINGECKO_IDS: Record<string, string> = {
     'AIXBT': 'aixbt',
     'GRIFFAIN': 'griffain',
     'SWARMS': 'swarms',
+    'PUMP': 'pump-fun',
 };
 
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
