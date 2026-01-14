@@ -97,9 +97,8 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                 ]);
                 alert("📸 Receipt Copied! Paste it on X.");
 
-                const text = `${isWin ? '✅ AGED WELL' : '❌ AGED POORLY'} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\n🧾 Verified by @sincethiscall`;
-                const tweetUrl = `https://x.com/${data.tweet.username}/status/${data.tweet.id}`;
-                const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(tweetUrl)}`;
+                const text = `Verified by @sincethiscall 🧾\n\n${data.analysis.symbol} Call:\n${isWin ? '✅ AGED WELL' : '❌ AGED POORLY'} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\nCheck your own prediction 👇 ${window.location.href}`;
+                const url = `https://twitter.com/intent/tweet?in_reply_to=${data.tweet.id}&text=${encodeURIComponent(text)}`;
                 window.open(url, '_blank');
 
             } catch (e) {
