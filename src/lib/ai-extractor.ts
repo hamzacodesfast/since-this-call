@@ -142,8 +142,13 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
            - **CRYPTO** (type="CRYPTO"): BTC, ETH, SOL, DOGE, XRP, PEPE, etc.
            - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, SPY (S&P 500 ETF), etc.
         2. Determine Sentiment. Strict Rules:
-           - **CRITICAL**: If the author is mocking "late buyers", "the crowd", "retail", or "calls them poop/shit", this is a TOP SIGNAL -> **BEARISH**.
-           - If the author says "exit", "sold", "emptied", "took profits" -> **BEARISH** (they are OUT).
+           - **TIMEFRAME**: Determine the IMMEDIATE direction from the tweet time.
+           - If they say "Pump THEN Dump", "Liquidation hunt above X", or "Squeeze to Y", it is **BULLISH** (calls for price increase first).
+           - "This pump is not mythologia" or "This is real" = **BULLISH**.
+           - If they describe "sidelined" people buying higher -> **BULLISH** (implies price is going up to them).
+           - **CRITICAL**: The word "liquidated" is only BEARISH if the author thinks price is crashing NOW. If they say "bears get liquidated" or "late longs get liquidated HIGHER", it is **BULLISH**.
+           - If the author is mocking "late buyers" or "sidelined bros" for MISSING the move, it is **BULLISH**.
+           - Only mark **BEARISH** if the IMMEDIATE next move is down.
            - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
         3. Use the Tweet Date as the Date.
         4. Normalize Symbol to the mappings above.

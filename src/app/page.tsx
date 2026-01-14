@@ -76,9 +76,7 @@ export default function Home() {
             setData(json);
 
             // Save to recent analyses (fire and forget)
-            const isWin = json.analysis.sentiment === 'BULLISH'
-                ? json.market.performance > 0
-                : json.market.performance < 0;
+            const isWin = json.market.performance > 0;
 
             fetch('/api/recent', {
                 method: 'POST',

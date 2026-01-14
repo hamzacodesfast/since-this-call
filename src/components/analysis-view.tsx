@@ -50,12 +50,7 @@ export function AnalysisView({ data }: AnalysisViewProps) {
     let isNeutral = Math.abs(data.market.performance) < 0.01;
 
     if (!isNeutral) {
-        if (data.analysis.sentiment === 'BULLISH') {
-            isWin = data.market.performance > 0;
-        } else {
-            // Bearish means we wanted price to drop (performance < 0)
-            isWin = data.market.performance < 0;
-        }
+        isWin = data.market.performance > 0;
     }
 
     const colorClass = isNeutral ? 'text-yellow-500' : (isWin ? 'text-green-500' : 'text-red-500');
