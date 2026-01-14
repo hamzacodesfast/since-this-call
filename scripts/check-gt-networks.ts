@@ -1,5 +1,6 @@
+export { };
 
-async function debug() {
+async function checkNetworks() {
     const url = 'https://api.geckoterminal.com/api/v2/networks?page=1';
     const res = await fetch(url);
     const json = await res.json();
@@ -14,4 +15,4 @@ async function debug() {
         console.log("Has base?", slugs.includes('base'));
     }
 }
-debug();
+checkNetworks();
