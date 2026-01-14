@@ -2,10 +2,124 @@
 import { unstable_noStore as noStore } from 'next/cache';
 
 const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
+const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
 // Known contract addresses for tokens with fake/imposter pairs
 const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
     'ME': { ca: 'MEFNBXixkEbait3xn9bkm8WsJzXtVsaJEn4c8Sam21u', chainId: 'solana' }, // Magic Eden
+};
+
+// CoinGecko ID mapping for common tokens
+const COINGECKO_IDS: Record<string, string> = {
+    'BTC': 'bitcoin',
+    'ETH': 'ethereum',
+    'SOL': 'solana',
+    'DOGE': 'dogecoin',
+    'XRP': 'ripple',
+    'BNB': 'binancecoin',
+    'LTC': 'litecoin',
+    'ADA': 'cardano',
+    'AVAX': 'avalanche-2',
+    'DOT': 'polkadot',
+    'MATIC': 'matic-network',
+    'LINK': 'chainlink',
+    'UNI': 'uniswap',
+    'ATOM': 'cosmos',
+    'NEAR': 'near',
+    'APT': 'aptos',
+    'SUI': 'sui',
+    'ARB': 'arbitrum',
+    'OP': 'optimism',
+    'PEPE': 'pepe',
+    'SHIB': 'shiba-inu',
+    'HYPE': 'hyperliquid',
+    'ME': 'magic-eden',
+    'PENGU': 'pudgy-penguins',
+    'WIF': 'dogwifcoin',
+    'BONK': 'bonk',
+    'JUP': 'jupiter-exchange-solana',
+    'RENDER': 'render-token',
+    'FET': 'fetch-ai',
+    'INJ': 'injective-protocol',
+    'TIA': 'celestia',
+    'SEI': 'sei-network',
+    'ONDO': 'ondo-finance',
+    'PYTH': 'pyth-network',
+    'JTO': 'jito-governance-token',
+    'AAVE': 'aave',
+    'MKR': 'maker',
+    'CRV': 'curve-dao-token',
+    'LDO': 'lido-dao',
+    'RUNE': 'thorchain',
+    'FTM': 'fantom',
+    'MANA': 'decentraland',
+    'SAND': 'the-sandbox',
+    'AXS': 'axie-infinity',
+    'GALA': 'gala',
+    'IMX': 'immutable-x',
+    'BLUR': 'blur',
+    'ENS': 'ethereum-name-service',
+    'APE': 'apecoin',
+    'CAKE': 'pancakeswap-token',
+    'GMT': 'stepn',
+    'FLOW': 'flow',
+    'EGLD': 'elrond-erd-2',
+    'XLM': 'stellar',
+    'ALGO': 'algorand',
+    'FIL': 'filecoin',
+    'VET': 'vechain',
+    'HBAR': 'hedera-hashgraph',
+    'ICP': 'internet-computer',
+    'KAVA': 'kava',
+    'XTZ': 'tezos',
+    'EOS': 'eos',
+    'THETA': 'theta-token',
+    'ZIL': 'zilliqa',
+    'KCS': 'kucoin-shares',
+    'NEO': 'neo',
+    'ONE': 'harmony',
+    'QTUM': 'qtum',
+    'ZRX': '0x',
+    'BAT': 'basic-attention-token',
+    'COMP': 'compound-governance-token',
+    'SNX': 'havven',
+    'YFI': 'yearn-finance',
+    'SUSHI': 'sushi',
+    '1INCH': '1inch',
+    'GRT': 'the-graph',
+    'FXS': 'frax-share',
+    'CVX': 'convex-finance',
+    'RPL': 'rocket-pool',
+    'GMX': 'gmx',
+    'DYDX': 'dydx',
+    'SSV': 'ssv-network',
+    'MAGIC': 'magic',
+    'STX': 'blockstack',
+    'MASK': 'mask-network',
+    'OCEAN': 'ocean-protocol',
+    'ROSE': 'oasis-network',
+    'CELO': 'celo',
+    'MINA': 'mina-protocol',
+    'KSM': 'kusama',
+    'WAVES': 'waves',
+    'DASH': 'dash',
+    'ZEC': 'zcash',
+    'XMR': 'monero',
+    'ETC': 'ethereum-classic',
+    'BCH': 'bitcoin-cash',
+    'TRX': 'tron',
+    'TON': 'the-open-network',
+    'AI16Z': 'ai16z',
+    'FARTCOIN': 'fartcoin',
+    'VIRTUAL': 'virtual-protocol',
+    'AI': 'artificial-intelligence',
+    'GOAT': 'goatseus-maximus',
+    'SPX6900': 'spx6900',
+    'ZEREBRO': 'zerebro',
+    'ARC': 'arc',
+    'AIXBT': 'aixbt',
+    'GRIFFAIN': 'griffain',
+    'SWARMS': 'swarms',
 };
 
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
@@ -28,7 +142,15 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
 
         if (yahooPrice !== null) return yahooPrice;
 
-        // 2. Check if we have a known CA for this symbol
+        // 2. Try CoinGecko (reliable for most listed tokens)
+        const coinGeckoId = COINGECKO_IDS[symbol.toUpperCase()];
+        if (coinGeckoId) {
+            console.log(`[MarketData] Trying CoinGecko for ${symbol} (${coinGeckoId})...`);
+            const cgPrice = await getCoinGeckoPrice(coinGeckoId, date);
+            if (cgPrice !== null) return cgPrice;
+        }
+
+        // 3. Check if we have a known CA for this symbol
         const knownToken = KNOWN_CAS[symbol.toUpperCase()];
         if (knownToken) {
             console.log(`[MarketData] Using known CA for ${symbol}: ${knownToken.ca}`);
@@ -36,28 +158,114 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             if (data) return data.price;
         }
 
-        // 3. Fallback: DexScreener Search (Generic)
-        console.log(`[MarketData] Yahoo failed for ${symbol}, trying DexScreener Search...`);
+        // 4. Fallback: DexScreener Search (Generic)
+        console.log(`[MarketData] Yahoo/CoinGecko failed for ${symbol}, trying DexScreener Search...`);
         // Sanitize symbol (e.g. "67/SOL" -> "67", "$67" -> "67")
         const cleanSymbol = symbol.split('/')[0].replace(/^[$]/, '').trim();
         const result = await searchDexScreenerCA(cleanSymbol);
         if (result) {
             console.log(`[MarketData] Found Pair for ${symbol}: ${result.pairAddress} on ${result.chainId}`);
 
-            // 3. Try High-Precision GeckoTerminal OHLCV (1-5 min)
+            // 5. Try High-Precision GeckoTerminal OHLCV (1-5 min)
             const precisePrice = await getGeckoTerminalPrice(result.chainId, result.pairAddress, date);
             if (precisePrice !== null) {
                 console.log(`[MarketData] Used GeckoTerminal Precision Price: ${precisePrice}`);
                 return precisePrice;
             }
 
-            // 4. Default DexScreener Estimation (h1/h6/h24 buckets)
+            // 6. Default DexScreener Estimation (h1/h6/h24 buckets)
             return getDexPriceWithHistory(result, date); // Use Token Address (via result obj)
         }
     } else {
         return getYahooPrice(symbol, date);
     }
 
+    return null;
+}
+
+// CoinGecko API - reliable for listed tokens
+async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | null> {
+    const apiKey = process.env.COINGECKO_API_KEY;
+    if (!apiKey) {
+        console.log('[MarketData] No CoinGecko API key configured');
+        return null;
+    }
+
+    try {
+        const headers: Record<string, string> = {
+            'x-cg-demo-api-key': apiKey,
+            'Accept': 'application/json',
+        };
+
+        if (date) {
+            // Historical price - use market_chart endpoint
+            const now = new Date();
+            const diffDays = Math.ceil((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 365) {
+                console.log(`[CoinGecko] Date too old for historical data: ${diffDays} days ago`);
+                return null;
+            }
+
+            // market_chart gives us historical prices
+            const days = Math.min(diffDays + 1, 365);
+            const url = `${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`;
+
+            const res = await fetch(url, {
+                headers,
+                cache: 'no-store'
+            } as any);
+
+            if (!res.ok) {
+                console.log(`[CoinGecko] API error: ${res.status}`);
+                return null;
+            }
+
+            const data = await res.json();
+            if (!data.prices || data.prices.length === 0) return null;
+
+            // Find closest price to target date
+            const targetTime = date.getTime();
+            let closestPrice = null;
+            let minDiff = Infinity;
+
+            for (const [timestamp, price] of data.prices) {
+                const diff = Math.abs(timestamp - targetTime);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestPrice = price;
+                }
+            }
+
+            if (closestPrice !== null) {
+                console.log(`[CoinGecko] Historical price for ${coinId}: $${closestPrice}`);
+            }
+            return closestPrice;
+        } else {
+            // Current price - use simple/price endpoint
+            const url = `${COINGECKO_BASE}/simple/price?ids=${coinId}&vs_currencies=usd`;
+
+            const res = await fetch(url, {
+                headers,
+                cache: 'no-store'
+            } as any);
+
+            if (!res.ok) {
+                console.log(`[CoinGecko] API error: ${res.status}`);
+                return null;
+            }
+
+            const data = await res.json();
+            const price = data[coinId]?.usd;
+
+            if (price !== undefined) {
+                console.log(`[CoinGecko] Current price for ${coinId}: $${price}`);
+                return price;
+            }
+        }
+    } catch (e) {
+        console.error('[CoinGecko] Error:', e);
+    }
     return null;
 }
 
