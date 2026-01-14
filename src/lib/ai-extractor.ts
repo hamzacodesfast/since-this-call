@@ -170,55 +170,60 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
            - If the author is mocking "late buyers" or "sidelined bros" for MISSING the move, it is **BULLISH**.
            - Only mark **BEARISH** if the IMMEDIATE next move is down.
            - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
-        3. Use the Tweet Date as the Date.
-        4. Normalize Symbol to the mappings above.
-        5. If a Solana contract address is present, include it in contractAddress field.
-      `;
+        2. Determine Sentiment (BULLISH or BEARISH):
+           - "Long", "Buy", "Moon", "Send it", "Higher", "Accumulate", "Breakout" -> BULLISH
+           - "Short", "Sell", "Dump", "Lower", "Top is in", "Crash" -> BEARISH
+           - **CAPITULATION/CLEANSE LANGUAGE**: Terms like "cleanse", "flush", "capitulation", "wipeout", "final drop", "sub-X price" (e.g. "3 fig eth") usually imply the price needs to go LOWER before a bottom. This is **BEARISH** in the short term, even if long-term bullish.
+           - "3 fig eth" means ETH < $1000. If current price is > $1000, this is a prediction of a ~70% drop -> BEARISH.
 
-        // If we have an image, use multimodal prompt
-        if (imageUrl) {
-            const { object } = await generateObject({
-                model: google('models/gemini-2.0-flash-exp'),
-                schema: CallSchema,
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            { type: 'text', text: promptText },
-                            { type: 'image', image: new URL(imageUrl) }
-                        ]
-                    }
+        3. Extract Date: Use the provided date.
+        4. Extract Contract Address (CA): If a Solana address (base58, 32-44 chars) is present, include it.
+        5. Asset Type:
+           - Crypto/Coins/Tokens -> CRYPTO
+           - Stocks/Indices/ETFs/Metals -> STOCK
+
+        Return a valid JSON object matching the schema.
+        `;
+
+        const messages: any[] = [
+            {
+                role: 'user', content: [
+                    { type: 'text', text: promptText },
+                    ...(imageUrl ? [{ type: 'image', image: imageUrl }] : [])
                 ]
-            });
-            // Post-process: ensure CA is extracted from raw text if AI missed it
-            return ensureContractAddress(object, tweetText);
-        }
+            }
+        ];
 
-        // Text-only analysis
         const { object } = await generateObject({
-            model: google('models/gemini-2.0-flash-exp'),
+            model: google('models/gemini-2.0-flash-exp'), // Revert to working model
             schema: CallSchema,
-            prompt: promptText,
+            messages: messages,
         });
 
-        // Post-process: ensure CA is extracted from raw text if AI missed it
-        return ensureContractAddress(object, tweetText);
+        // Post-processing for Solana CA to ensure it's captured
+        if (object && !object.contractAddress) {
+            const extractedCA = extractSolanaCA(tweetText);
+            if (extractedCA) {
+                console.log(`[AI-Extractor] AI missed CA, regex found it: ${extractedCA}`);
+                object.contractAddress = extractedCA;
+                // If AI got generic symbol like "SOL", try to refine it later (handled in analyzer)
+            }
+        }
+
+        return object;
+
     } catch (error) {
-        console.error('AI Extraction Failed:', error);
-        // Fallback to regex if AI fails (e.g. 429 Rate Limit)
+        console.error('[AI-Extractor] AI failed (Rate Limit or Error), falling back to Regex:', error);
+        // Fallback to Regex extraction
         return extractWithRegex(tweetText, tweetDate);
     }
 }
 
 /**
- * Post-process AI result to ensure CA is extracted from raw tweet text.
- * AI sometimes misses the CA even when it's clearly in the tweet.
+ * Helper function to extract Solana Contract Address using regex.
  */
-function ensureContractAddress(result: CallData, rawText: string): CallData {
-    if (result.contractAddress) return result; // Already has CA
-
-    // Try to extract CA from raw text
-    const caMatches = [...rawText.matchAll(SOLANA_CA_REGEX)];
+function extractSolanaCA(text: string): string | null {
+    const caMatches = [...text.matchAll(SOLANA_CA_REGEX)];
     if (caMatches.length > 0) {
         const validCAs = caMatches.map(m => m[1]).filter(ca =>
             ca.length >= 32 &&
@@ -226,14 +231,8 @@ function ensureContractAddress(result: CallData, rawText: string): CallData {
             !/^[0-9]+$/.test(ca) // Not all numbers
         );
         if (validCAs.length > 0) {
-            return {
-                ...result,
-                contractAddress: validCAs[0],
-                type: 'CRYPTO', // Force CRYPTO type for CA tokens
-            };
+            return validCAs[0];
         }
     }
-
-    return result;
+    return null;
 }
-

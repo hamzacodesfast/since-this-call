@@ -55,13 +55,13 @@ async function backup() {
 
     for (const username of usernames) {
         try {
-            // Backup profile
-            const profile = await redis.get(`user:profile:${username}`);
-            if (profile) {
-                data.userProfiles[username] = typeof profile === 'string' ? JSON.parse(profile) : profile;
+            // Backup profile (stored as Hash)
+            const profile = await redis.hgetall(`user:profile:${username}`);
+            if (profile && Object.keys(profile).length > 0) {
+                data.userProfiles[username] = profile;
             }
         } catch (e) {
-            console.log(`   ⚠️ Skipping profile for ${username} (different type)`);
+            console.log(`   ⚠️ Skipping profile for ${username} (error: ${e})`);
         }
 
         try {
