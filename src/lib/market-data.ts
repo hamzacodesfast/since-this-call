@@ -189,7 +189,11 @@ export async function getPriceByContractAddress(ca: string): Promise<any | null>
         const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`, { cache: 'no-store' });
         const data = await response.json();
         if (data.pairs && data.pairs.length > 0) {
-            const pair = data.pairs[0];
+            // Sort by liquidity to get the most liquid (real) pair
+            const sortedPairs = [...data.pairs].sort((a: any, b: any) =>
+                (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0)
+            );
+            const pair = sortedPairs[0];
             return {
                 price: parseFloat(pair.priceUsd),
                 symbol: pair.baseToken.symbol,
