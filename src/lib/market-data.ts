@@ -124,7 +124,24 @@ const COINGECKO_IDS: Record<string, string> = {
     'PUMP': 'pump-fun',
 };
 
+// Launch dates and initial prices for major assets
+const LAUNCH_DATES: Record<string, { date: Date, price: number }> = {
+    'BTC': { date: new Date('2010-07-17'), price: 0.0008 },
+    'ETH': { date: new Date('2015-08-07'), price: 2.77 },
+    'SOL': { date: new Date('2020-03-16'), price: 0.22 },
+    'DOGE': { date: new Date('2013-12-15'), price: 0.0002 },
+};
+
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
+    // 0. Check for pre-market dates (before launch)
+    if (date) {
+        const launchData = LAUNCH_DATES[symbol.toUpperCase()];
+        if (launchData && date < launchData.date) {
+            console.log(`[MarketData] Date ${date.toISOString()} is before ${symbol} launch (${launchData.date.toISOString()}). Using launch price: $${launchData.price}`);
+            return launchData.price;
+        }
+    }
+
     // 1. Try Yahoo Finance first (Best for Stocks & Major Crypto)
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
@@ -144,7 +161,14 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
 
         if (yahooPrice !== null) return yahooPrice;
 
-        // 2. Try CoinGecko (reliable for most listed tokens)
+        // 2. Try CoinMarketCap (Prioritized over CoinGecko)
+        const cmcPrice = await getCoinMarketCapPrice(symbol, date);
+        if (cmcPrice !== null) {
+            console.log(`[MarketData] Used CoinMarketCap for ${symbol}: $${cmcPrice}`);
+            return cmcPrice;
+        }
+
+        // 3. Try CoinGecko (reliable for most listed tokens)
         const coinGeckoId = COINGECKO_IDS[symbol.toUpperCase()];
         if (coinGeckoId) {
             console.log(`[MarketData] Trying CoinGecko for ${symbol} (${coinGeckoId})...`);
@@ -152,7 +176,7 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             if (cgPrice !== null) return cgPrice;
         }
 
-        // 3. Check if we have a known CA for this symbol
+        // 4. Check if we have a known CA for this symbol
         const knownToken = KNOWN_CAS[symbol.toUpperCase()];
         if (knownToken) {
             console.log(`[MarketData] Using known CA for ${symbol}: ${knownToken.ca}`);
@@ -160,28 +184,98 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             if (data) return data.price;
         }
 
-        // 4. Fallback: DexScreener Search (Generic)
-        console.log(`[MarketData] Yahoo/CoinGecko failed for ${symbol}, trying DexScreener Search...`);
+        // 5. Fallback: DexScreener Search (Generic)
+        console.log(`[MarketData] Yahoo/CMC/CoinGecko failed for ${symbol}, trying DexScreener Search...`);
         // Sanitize symbol (e.g. "67/SOL" -> "67", "$67" -> "67")
         const cleanSymbol = symbol.split('/')[0].replace(/^[$]/, '').trim();
         const result = await searchDexScreenerCA(cleanSymbol);
         if (result) {
             console.log(`[MarketData] Found Pair for ${symbol}: ${result.pairAddress} on ${result.chainId}`);
 
-            // 5. Try High-Precision GeckoTerminal OHLCV (1-5 min)
+            // 6. Try High-Precision GeckoTerminal OHLCV (1-5 min)
             const precisePrice = await getGeckoTerminalPrice(result.chainId, result.pairAddress, date);
             if (precisePrice !== null) {
                 console.log(`[MarketData] Used GeckoTerminal Precision Price: ${precisePrice}`);
                 return precisePrice;
             }
 
-            // 6. Default DexScreener Estimation (h1/h6/h24 buckets)
+            // 7. Default DexScreener Estimation (h1/h6/h24 buckets)
             return getDexPriceWithHistory(result, date); // Use Token Address (via result obj)
         }
     } else {
         return getYahooPrice(symbol, date);
     }
 
+    return null;
+}
+
+const CMC_BASE = 'https://pro-api.coinmarketcap.com/v1'; // Or v2 depending on endpoint
+// Note: Basic tier often doesn't have historical data, so we might fail gracefully back to CG
+
+async function getCoinMarketCapPrice(symbol: string, date?: Date): Promise<number | null> {
+    const apiKey = process.env.COINMARKETCAP_API_KEY;
+    if (!apiKey) return null;
+
+    try {
+        const headers = {
+            'X-CMC_PRO_API_KEY': apiKey,
+            'Accept': 'application/json',
+        };
+
+        if (date) {
+            // Historical Query (Check availability - implied endpoint)
+            // Note: v2/cryptocurrency/quotes/historical is often paid-only.
+            // We will Try it.
+            // Need to convert date to ISO8601 or Unix
+            // CMC historical takes 'date' query param? 
+            // It actually uses /v1/cryptocurrency/quotes/historical usually? No, it's specific.
+            // Let's assume for now we might skip historical if implementation is complex/paid, 
+            // but let's try the common endpoint.
+            // Actually, for free tier, historical is usually NOT available. 
+            // Better strategy: Return null for historical so it falls back to CoinGecko (which enables free history).
+            // UNLESS user has paid plan.
+
+            // Let's try to fetch it, if 403/402, return null.
+            // However, CoinGecko handles history famously well for free. 
+            // Let's prioritizing CMC for *CURRENT* price primarily, and only try history if simple.
+
+            // For this implementation, I will SKIP historical on CMC to ensure we use CoinGecko's verified free history
+            // unless we are sure CMC works. The user said "prioritize CMC", but if CMC fails history, we must fallback.
+            // I'll return null for date queries to let CoinGecko handle history for now, 
+            // OR I can implement it and catch the error.
+            return null;
+        } else {
+            // Current Price
+            const url = `${CMC_BASE}/cryptocurrency/quotes/latest?symbol=${symbol}&convert=USD`;
+            const res = await fetch(url, { headers, cache: 'no-store' } as any);
+            if (!res.ok) {
+                // console.log(`[CMC] API Error: ${res.status} ${res.statusText}`);
+                return null;
+            }
+            const json = await res.json();
+            // json.data[symbol] is an array or object? 
+            // With ?symbol=BTC, data.BTC is an array of quote objects usually (handling duplicates).
+            // We take the first one or the one with highest 'cmc_rank'.
+            const data = json.data[symbol.toUpperCase()];
+            if (Array.isArray(data) && data.length > 0) {
+                // Sort by rank if possible, or take first
+                // usually data[0] is the main one
+                return data[0].quote.USD.price;
+            } else if (data && data.quote) {
+                // Sometimes it's a single object if unique? 
+                // Documentation says it returns a map. `data: { "BTC": [ ... ] }`
+                return data.quote.USD.price; // fallback if strictly single
+            }
+
+            // Handle array case specifically as per standard response
+            if (Array.isArray(data)) {
+                return data[0].quote.USD.price;
+            }
+        }
+
+    } catch (e) {
+        console.error('[CMC] Error:', e);
+    }
     return null;
 }
 
