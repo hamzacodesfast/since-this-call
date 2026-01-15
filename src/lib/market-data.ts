@@ -641,8 +641,10 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
                 } catch (e) { }
             }
 
-            // Fallback to Daily
-            period1 = Math.floor(date.getTime() / 1000);
+            // Fallback to Daily - include previous day for pre-market tweets
+            const from = new Date(date);
+            from.setDate(from.getDate() - 1); // Start from day before tweet
+            period1 = Math.floor(from.getTime() / 1000);
             const to = new Date(date);
             to.setDate(to.getDate() + 4);
             period2 = Math.floor(to.getTime() / 1000);
@@ -667,12 +669,42 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         const quotes = result.indicators?.quote?.[0];
 
         if (quotes && quotes.close && quotes.close.length > 0) {
-            const validCloses = quotes.close.filter((p: number | null) => p !== null);
-            if (validCloses.length > 0) {
-                if (!date && result.meta && result.meta.regularMarketPrice) {
-                    return result.meta.regularMarketPrice;
+            const timestamps = result.timestamp;
+
+            if (!date && result.meta && result.meta.regularMarketPrice) {
+                return result.meta.regularMarketPrice;
+            }
+
+            if (date && timestamps && timestamps.length > 0) {
+                // Find the closest candle AT or BEFORE the tweet time
+                const targetTime = Math.floor(date.getTime() / 1000);
+                let closestPrice = null;
+                let closestTime = 0;
+
+                for (let i = 0; i < timestamps.length; i++) {
+                    const t = timestamps[i];
+                    const price = quotes.close[i];
+                    // Only consider candles before or at the tweet time
+                    if (t <= targetTime && price !== null) {
+                        if (t > closestTime) {
+                            closestTime = t;
+                            closestPrice = price;
+                        }
+                    }
                 }
-                return date ? validCloses[0] : validCloses[validCloses.length - 1];
+
+                if (closestPrice !== null) {
+                    console.log(`[Yahoo] Found daily close $${closestPrice} at ${new Date(closestTime * 1000).toISOString()} for tweet at ${date.toISOString()}`);
+                    return closestPrice;
+                }
+
+                // If no candle before tweet, use the first available (shouldn't happen often)
+                const validCloses = quotes.close.filter((p: number | null) => p !== null);
+                if (validCloses.length > 0) return validCloses[0];
+            } else {
+                // Current price - get most recent
+                const validCloses = quotes.close.filter((p: number | null) => p !== null);
+                if (validCloses.length > 0) return validCloses[validCloses.length - 1];
             }
         }
     } catch (e: any) {
