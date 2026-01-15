@@ -10,8 +10,8 @@ const redis = new Redis({
     token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
 });
 
-const TWEET_ID = '1972627524522795092';
-const USERNAME = 'jimcramer';
+const TWEET_ID = '2005862616426561654';
+const USERNAME = '__rud1nh0__';
 
 async function removeAnalysis(key: string, id: string) {
     const list = await redis.lrange(key, 0, -1);

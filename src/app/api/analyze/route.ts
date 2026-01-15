@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const tweetUrl = searchParams.get('url');
+    const pumpfunUrl = searchParams.get('pumpfun'); // Optional: pump.fun/coin/<CA> URL
+    const caParam = searchParams.get('ca'); // Optional: Direct CA override
 
     if (!tweetUrl) {
         return NextResponse.json({ error: 'Missing tweet URL' }, { status: 400 });
@@ -34,7 +36,17 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid tweet URL' }, { status: 400 });
         }
 
-        const result = await analyzeTweet(tweetId);
+        // Extract CA from pump.fun URL if provided
+        let contractAddress: string | undefined = caParam || undefined;
+        if (!contractAddress && pumpfunUrl) {
+            // Parse pump.fun/coin/<CA> format
+            const pumpMatch = pumpfunUrl.match(/pump\.fun\/coin\/([a-zA-Z0-9]+)/);
+            if (pumpMatch) {
+                contractAddress = pumpMatch[1];
+            }
+        }
+
+        const result = await analyzeTweet(tweetId, contractAddress);
 
         return NextResponse.json(result);
 

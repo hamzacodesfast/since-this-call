@@ -43,6 +43,7 @@ function setCachedData(url: string, data: any) {
 
 export default function Home() {
     const [url, setUrl] = useState('');
+    const [pumpfunUrl, setPumpfunUrl] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<any | null>(null);
@@ -64,7 +65,11 @@ export default function Home() {
         }
 
         try {
-            const res = await fetch(`/api/analyze?url=${encodeURIComponent(url)}`);
+            let apiUrl = `/api/analyze?url=${encodeURIComponent(url)}`;
+            if (pumpfunUrl) {
+                apiUrl += `&pumpfun=${encodeURIComponent(pumpfunUrl)}`;
+            }
+            const res = await fetch(apiUrl);
             const json = await res.json();
 
             if (!res.ok) {
@@ -131,27 +136,40 @@ export default function Home() {
             <div className="w-full max-w-xl relative mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
 
-                <form onSubmit={handleAnalyze} className="relative flex gap-2 p-2 bg-card/80 backdrop-blur-md border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                    <div className="relative flex-1">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                            <Search className="w-5 h-5" />
+                <form onSubmit={handleAnalyze} className="relative flex flex-col gap-2 p-2 bg-card/80 backdrop-blur-md border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                <Search className="w-5 h-5" />
+                            </div>
+                            <Input
+                                type="url"
+                                placeholder="Paste Tweet URL (e.g. https://x.com/...)"
+                                className="w-full h-12 pl-10 bg-transparent border-none focus-visible:ring-0 text-base"
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                            />
                         </div>
+                        <Button
+                            type="submit"
+                            size="lg"
+                            disabled={isLoading || !url}
+                            className="h-12 px-8 rounded-xl font-bold text-md shadow-lg"
+                        >
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check Receipt'}
+                        </Button>
+                    </div>
+
+                    {/* Optional Pump.fun URL for meme coins */}
+                    <div className="relative">
                         <Input
                             type="url"
-                            placeholder="Paste Tweet URL (e.g. https://x.com/...)"
-                            className="w-full h-12 pl-10 bg-transparent border-none focus-visible:ring-0 text-base"
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="Optional: pump.fun URL for meme coins (e.g. pump.fun/coin/...)"
+                            className="w-full h-10 pl-4 bg-secondary/30 border-none focus-visible:ring-0 text-sm rounded-lg placeholder:text-muted-foreground/50"
+                            value={pumpfunUrl}
+                            onChange={(e) => setPumpfunUrl(e.target.value)}
                         />
                     </div>
-                    <Button
-                        type="submit"
-                        size="lg"
-                        disabled={isLoading || !url}
-                        className="h-12 px-8 rounded-xl font-bold text-md shadow-lg"
-                    >
-                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check Receipt'}
-                    </Button>
                 </form>
 
                 {/* Quick Prompts / Examples */}

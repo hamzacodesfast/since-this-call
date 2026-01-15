@@ -390,7 +390,11 @@ const GT_NETWORKS: Record<string, string> = {
     'avalanche': 'avax',
 };
 
-async function getGeckoTerminalPrice(chainId: string, poolAddress: string, date?: Date): Promise<number | null> {
+/**
+ * Get historical price from GeckoTerminal OHLCV candles.
+ * Supports minute (up to 16h), hour (up to 7d), and day (up to 60d) timeframes.
+ */
+export async function getGeckoTerminalPrice(chainId: string, poolAddress: string, date?: Date): Promise<number | null> {
     const network = GT_NETWORKS[chainId];
     if (!network || !date) return null; // Can't do precise history without supported net or date
 
@@ -398,32 +402,47 @@ async function getGeckoTerminalPrice(chainId: string, poolAddress: string, date?
         const targetTime = Math.floor(date.getTime() / 1000);
         const now = Math.floor(Date.now() / 1000);
         const diffHours = (now - targetTime) / 3600;
+        const diffDays = diffHours / 24;
 
         // Strategy: 
-        // < 24h: Try Minute candles (limit 1000 covers ~16h, maybe enough?)
-        // > 24h: Try Hour candles
+        // < 16h: Minute candles (limit 1000 covers ~16h)
+        // 16h - 7d: Hour candles (limit 168 covers 7d)
+        // 7d - 60d: Day candles (limit 60 covers 60d)
 
         let timeframe = 'minute';
         let limit = 1000;
         let aggregate = 1;
 
-        if (diffHours > 16) {
+        if (diffDays > 7) {
+            timeframe = 'day';
+            limit = 60; // 60 days coverage
+        } else if (diffHours > 16) {
             timeframe = 'hour';
-            limit = 168; // 1 week coverage
+            limit = 168; // 7 days coverage
         }
 
         const url = `https://api.geckoterminal.com/api/v2/networks/${network}/pools/${poolAddress}/ohlcv/${timeframe}?aggregate=${aggregate}&limit=${limit}`;
+        console.log(`[GeckoTerminal] Fetching ${timeframe} candles for ${poolAddress} (${diffDays.toFixed(1)} days ago)`);
 
         const res = await fetch(url, { cache: 'no-store' } as any);
-        if (!res.ok) return null; // Rate limit or 404
+        if (!res.ok) {
+            console.log(`[GeckoTerminal] API error: ${res.status}`);
+            return null;
+        }
 
         const json = await res.json();
         const candles = json?.data?.attributes?.ohlcv_list; // [[time, open, high, low, close, vol], ...]
 
-        if (!candles || candles.length === 0) return null;
+        if (!candles || candles.length === 0) {
+            console.log(`[GeckoTerminal] No candles returned`);
+            return null;
+        }
 
-        // Find closest candle
+        console.log(`[GeckoTerminal] Got ${candles.length} ${timeframe} candles`);
+
+        // Find closest candle to target time
         let closestPrice = null;
+        let closestTime = 0;
         let minDiff = Infinity;
 
         for (const c of candles) {
@@ -434,20 +453,44 @@ async function getGeckoTerminalPrice(chainId: string, poolAddress: string, date?
             if (diff < minDiff) {
                 minDiff = diff;
                 closestPrice = close;
+                closestTime = t;
             }
         }
 
-        // Acceptable tolerance?
-        // For minute candles: within 15 mins?
-        // For hour candles: within 2 hours?
-        // Currently just taking best match.
-        // If best match is > 24h away, maybe reject?
-        // Let's rely on finding *something* better than h24 est.
+        if (closestPrice !== null) {
+            const closestDate = new Date(closestTime * 1000).toISOString();
+            console.log(`[GeckoTerminal] Found price $${closestPrice} at ${closestDate} (${(minDiff / 3600).toFixed(1)}h from target)`);
+        }
 
         return closestPrice;
 
     } catch (e) {
         console.warn(`[MarketData] GT fetch failed:`, e);
+    }
+    return null;
+}
+
+/**
+ * Get pair info (chainId, pairAddress) from DexScreener by contract address.
+ * This is needed to query GeckoTerminal for historical prices.
+ */
+export async function getPairInfoByCA(ca: string): Promise<{ chainId: string, pairAddress: string } | null> {
+    try {
+        const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`, { cache: 'no-store' });
+        const data = await response.json();
+        if (data.pairs && data.pairs.length > 0) {
+            // Sort by liquidity to get the most liquid (real) pair
+            const sortedPairs = [...data.pairs].sort((a: any, b: any) =>
+                (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0)
+            );
+            const pair = sortedPairs[0];
+            return {
+                chainId: pair.chainId,
+                pairAddress: pair.pairAddress,
+            };
+        }
+    } catch (e) {
+        console.error('[MarketData] getPairInfoByCA Error:', e);
     }
     return null;
 }

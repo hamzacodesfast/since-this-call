@@ -1,6 +1,6 @@
 import { getTweet } from 'react-tweet/api';
 import { extractCallFromText } from '@/lib/ai-extractor';
-import { getPrice, calculatePerformance, getPriceByContractAddress } from '@/lib/market-data';
+import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA } from '@/lib/market-data';
 import { getPumpfunPrice, storePumpfunPrice } from '@/lib/analysis-store';
 
 export interface AnalysisResult {
@@ -28,7 +28,7 @@ export interface AnalysisResult {
     };
 }
 
-export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
+export async function analyzeTweet(tweetId: string, contractAddressOverride?: string): Promise<AnalysisResult> {
     // 1. Fetch Tweet Content
     const tweet = await getTweet(tweetId);
     if (!tweet) {
@@ -50,9 +50,16 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
         throw new Error('Could not identify financial call');
     }
 
+    // If CA override provided (e.g., from pump.fun URL), use it
+    if (contractAddressOverride) {
+        console.log(`[Analyzer] Using CA override: ${contractAddressOverride}`);
+        callData.contractAddress = contractAddressOverride;
+        callData.type = 'CRYPTO'; // Pump.fun tokens are always crypto
+    }
+
     // Force known stocks that might be misclassified as crypto (e.g. BMNR which has a garbage token on Base)
     const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC'];
-    if (callData.symbol && FORCE_STOCKS.includes(callData.symbol.toUpperCase())) {
+    if (callData.symbol && FORCE_STOCKS.includes(callData.symbol.toUpperCase()) && !contractAddressOverride) {
         console.log(`[Analyzer] Forcing ${callData.symbol} to STOCK type`);
         callData.type = 'STOCK';
     }
@@ -92,40 +99,52 @@ export async function analyzeTweet(tweetId: string): Promise<AnalysisResult> {
                 finalSymbol = caData.symbol;
             }
 
-            // STEP 1: Check if we have a stored historical price in Redis
-            const storedPrice = await getPumpfunPrice(callData.contractAddress);
-            if (storedPrice) {
-                // Use stored first-seen price as call price
-                callPrice = storedPrice.price;
-            } else {
-                // STEP 2: No stored price - try DexScreener priceChange data
-                const tweetAgeMs = Date.now() - callDate.getTime();
-                const tweetAgeHours = tweetAgeMs / (1000 * 60 * 60);
+            const tweetAgeMs = Date.now() - callDate.getTime();
+            const tweetAgeHours = tweetAgeMs / (1000 * 60 * 60);
 
-                if (caData.priceChange) {
-                    let percentChange: number | undefined;
+            // STEP 1: For tweets >24h old, TRY GeckoTerminal historical data FIRST
+            // This ensures we get the actual tweet-time price, not a stored analysis-time price
+            if (tweetAgeHours > 24) {
+                console.log(`[Analyzer] Tweet is ${(tweetAgeHours / 24).toFixed(1)} days old, using GeckoTerminal for historical price`);
 
-                    // ONLY use priceChange if tweet is within the appropriate timeframe
-                    // Using h24 for a 20-day old tweet would give completely wrong data!
-                    if (tweetAgeHours <= 1 && caData.priceChange.h1 !== undefined) {
-                        percentChange = caData.priceChange.h1;
-                    } else if (tweetAgeHours <= 6 && caData.priceChange.h6 !== undefined) {
-                        percentChange = caData.priceChange.h6;
-                    } else if (tweetAgeHours <= 24 && caData.priceChange.h24 !== undefined) {
-                        percentChange = caData.priceChange.h24;
+                const pairInfo = await getPairInfoByCA(callData.contractAddress);
+                if (pairInfo) {
+                    const gtPrice = await getGeckoTerminalPrice(pairInfo.chainId, pairInfo.pairAddress, callDate);
+                    if (gtPrice !== null) {
+                        callPrice = gtPrice;
+                        console.log(`[Analyzer] GeckoTerminal historical price: $${callPrice}`);
                     }
-                    // NOTE: For older tweets, we'll fall through to the CoinGecko/getPrice fallback below
-
-                    if (percentChange !== undefined && percentChange !== 0 && currentPrice !== null) {
-                        // Calculate historical price from priceChange
-                        callPrice = currentPrice / (1 + percentChange / 100);
-                    }
-                    // Don't throw - let it fall through to CoinGecko lookup below
                 }
-                // If DexScreener priceChange wasn't usable, callPrice stays null and we fall through
             }
 
-            // STEP 3: Store current price for future lookups (only if new)
+            // STEP 2: For recent tweets (<=24h), use DexScreener priceChange data
+            if (callPrice === null && tweetAgeHours <= 24 && caData.priceChange) {
+                let percentChange: number | undefined;
+
+                if (tweetAgeHours <= 1 && caData.priceChange.h1 !== undefined) {
+                    percentChange = caData.priceChange.h1;
+                } else if (tweetAgeHours <= 6 && caData.priceChange.h6 !== undefined) {
+                    percentChange = caData.priceChange.h6;
+                } else if (tweetAgeHours <= 24 && caData.priceChange.h24 !== undefined) {
+                    percentChange = caData.priceChange.h24;
+                }
+
+                if (percentChange !== undefined && percentChange !== 0 && currentPrice !== null) {
+                    callPrice = currentPrice / (1 + percentChange / 100);
+                    console.log(`[Analyzer] Used DexScreener priceChange for call price: $${callPrice}`);
+                }
+            }
+
+            // STEP 3: Fall back to stored historical price if nothing else worked
+            if (callPrice === null) {
+                const storedPrice = await getPumpfunPrice(callData.contractAddress);
+                if (storedPrice) {
+                    callPrice = storedPrice.price;
+                    console.log(`[Analyzer] Using stored historical price: $${callPrice}`);
+                }
+            }
+
+            // STEP 4: Store current price for future lookups (only if new)
             if (currentPrice !== null) {
                 await storePumpfunPrice(callData.contractAddress, currentPrice, finalSymbol);
             }
