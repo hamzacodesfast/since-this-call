@@ -23,6 +23,7 @@ export interface StoredAnalysis {
     entryPrice?: number; // Price at tweet time
     currentPrice?: number; // Price at analysis time (or last update)
     type?: 'CRYPTO' | 'STOCK';
+    contractAddress?: string; // For pump.fun/DexScreener tokens
 }
 
 // Zod schema for input validation
@@ -39,6 +40,7 @@ export const StoredAnalysisSchema = z.object({
     entryPrice: z.number().optional(),
     currentPrice: z.number().optional(),
     type: z.enum(['CRYPTO', 'STOCK']).optional(),
+    contractAddress: z.string().optional(),
 });
 
 export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {

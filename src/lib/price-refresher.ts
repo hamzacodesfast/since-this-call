@@ -146,9 +146,45 @@ async function batchFetchDexScreenerPrices(cas: string[]): Promise<Map<string, n
     return prices;
 }
 
+const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
+
+/**
+ * Batch fetch stock prices from Yahoo Finance.
+ * Returns a map of symbol -> price.
+ */
+async function batchFetchYahooPrices(symbols: string[]): Promise<Map<string, number>> {
+    const prices = new Map<string, number>();
+
+    if (symbols.length === 0) return prices;
+
+    console.log(`[PriceRefresher] Fetching ${symbols.length} Yahoo prices...`);
+
+    // Yahoo doesn't have a true batch endpoint, so we fetch concurrently
+    const promises = symbols.map(async (symbol) => {
+        try {
+            const url = `${YAHOO_BASE}/${symbol}?interval=1d&range=1d`;
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) return;
+
+            const json = await res.json();
+            const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+            if (price) {
+                prices.set(symbol.toUpperCase(), price);
+            }
+        } catch (e) {
+            // Silently skip failed symbols
+        }
+    });
+
+    await Promise.all(promises);
+    console.log(`[PriceRefresher] Got ${prices.size} Yahoo prices`);
+    return prices;
+}
+
 /**
  * Main refresh function.
  * Fetches all active analyses, updates prices, and saves back.
+ * Supports: CoinGecko crypto, DexScreener tokens, and Yahoo stocks.
  */
 export async function refreshAllAnalyses(): Promise<RefreshResult> {
     const redis = new Redis({
@@ -171,31 +207,33 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
             return result;
         }
 
-        // 2. Collect unique symbols and CAs
-        const symbolsToFetch = new Set<string>();
-        const casToFetch = new Set<string>();
-        const analysisMap = new Map<string, StoredAnalysis>(); // id -> analysis
+        // 2. Categorize analyses by data source
+        const cgSymbols = new Set<string>();      // CoinGecko-listed crypto
+        const yahooSymbols = new Set<string>();   // Stocks
+        const dexCAs = new Set<string>();         // DexScreener tokens (by CA)
 
         for (const a of analyses) {
-            analysisMap.set(a.id, a);
+            const symbol = a.symbol?.toUpperCase();
 
-            // Determine if this is a CA-based token or symbol-based
-            if (a.symbol && !COINGECKO_IDS[a.symbol.toUpperCase()]) {
-                // Not in CoinGecko, might need DexScreener
-                // But we need the CA. Check if stored? 
-                // For now, skip if no CA info available
-                // TODO: Store CA in StoredAnalysis for refresh
-            } else if (a.symbol) {
-                symbolsToFetch.add(a.symbol.toUpperCase());
+            if (a.type === 'STOCK') {
+                // Stocks go to Yahoo
+                if (symbol) yahooSymbols.add(symbol);
+            } else if (a.contractAddress) {
+                // Has CA -> DexScreener
+                dexCAs.add(a.contractAddress);
+            } else if (symbol && COINGECKO_IDS[symbol]) {
+                // CoinGecko-listed crypto
+                cgSymbols.add(symbol);
             }
+            // Note: Crypto without CA and not in CoinGecko will be skipped
         }
 
-        // Note: We don't have CA stored in StoredAnalysis currently.
-        // For now, we'll refresh CoinGecko-listed tokens only.
-        // TODO: Extend StoredAnalysis to include contractAddress for full refresh.
-
-        // 3. Batch fetch prices
-        const cgPrices = await batchFetchCoinGeckoPrices([...symbolsToFetch]);
+        // 3. Batch fetch prices from all sources
+        const [cgPrices, yahooPrices, dexPrices] = await Promise.all([
+            batchFetchCoinGeckoPrices([...cgSymbols]),
+            batchFetchYahooPrices([...yahooSymbols]),
+            batchFetchDexScreenerPrices([...dexCAs]),
+        ]);
 
         // 4. Update analyses
         const updatedAnalyses: StoredAnalysis[] = [];
@@ -203,7 +241,16 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
 
         for (const a of analyses) {
             const symbol = a.symbol?.toUpperCase();
-            const newPrice = symbol ? cgPrices.get(symbol) : null;
+            let newPrice: number | null = null;
+
+            // Determine price source
+            if (a.type === 'STOCK' && symbol) {
+                newPrice = yahooPrices.get(symbol) || null;
+            } else if (a.contractAddress) {
+                newPrice = dexPrices.get(a.contractAddress) || null;
+            } else if (symbol && COINGECKO_IDS[symbol]) {
+                newPrice = cgPrices.get(symbol) || null;
+            }
 
             if (newPrice && a.entryPrice) {
                 const oldPerf = a.performance;
@@ -212,13 +259,17 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
 
                 // Only update if price actually changed
                 if (a.currentPrice !== newPrice) {
+                    const oldPrice = a.currentPrice;
                     a.currentPrice = newPrice;
                     a.performance = newPerf;
                     a.isWin = newIsWin;
                     result.updated++;
                     affectedUsers.add(a.username.toLowerCase());
 
-                    console.log(`[PriceRefresher] ${a.symbol}: $${a.currentPrice?.toFixed(4)} -> $${newPrice.toFixed(4)} (${oldPerf.toFixed(2)}% -> ${newPerf.toFixed(2)}%)`);
+                    // Log significant changes (badge flips)
+                    const badgeFlip = (oldPerf > 0) !== (newPerf > 0);
+                    const source = a.type === 'STOCK' ? 'Yahoo' : a.contractAddress ? 'DexScreener' : 'CoinGecko';
+                    console.log(`[PriceRefresher] ${a.symbol} (${source}): $${oldPrice?.toFixed(4)} -> $${newPrice.toFixed(4)} (${oldPerf.toFixed(2)}% -> ${newPerf.toFixed(2)}%)${badgeFlip ? ' 🔄 BADGE FLIP!' : ''}`);
                 } else {
                     result.skipped++;
                 }

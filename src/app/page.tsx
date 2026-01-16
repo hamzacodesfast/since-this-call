@@ -98,6 +98,7 @@ export default function Home() {
                     entryPrice: json.market.callPrice,
                     currentPrice: json.market.currentPrice,
                     type: json.analysis.type,
+                    contractAddress: json.analysis.contractAddress,
                 }),
             }).catch(() => { }); // Ignore errors
         } catch (err: any) {
