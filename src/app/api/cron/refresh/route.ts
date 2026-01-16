@@ -1,27 +1,53 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { refreshAllAnalyses } from '@/lib/price-refresher';
 
-import { NextResponse } from 'next/server';
-import { refreshAllProfiles } from '@/lib/price-updater';
+export const runtime = 'edge';
 
-export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 5 minutes
+// Vercel Cron sends a specific header to verify authenticity
+// Or use a secret for manual triggers
+const CRON_SECRET = process.env.CRON_SECRET;
 
-export async function GET(request: Request) {
-    // Basic auth check (optional, but good for cron)
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('key');
+export async function GET(request: NextRequest) {
+    // Verify the request is from Vercel Cron or has valid secret
+    const authHeader = request.headers.get('authorization');
+    const cronHeader = request.headers.get('x-vercel-cron');
 
-    // Simple protection if needed, or rely on Vercel Cron protection
-    if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Allow if:
+    // 1. It's a Vercel Cron request (has x-vercel-cron header)
+    // 2. Or has valid Bearer token matching CRON_SECRET
+    // 3. Or CRON_SECRET is not set (development mode)
+    const isVercelCron = cronHeader !== null;
+    const hasValidSecret = CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`;
+    const isDev = !CRON_SECRET;
+
+    if (!isVercelCron && !hasValidSecret && !isDev) {
+        return NextResponse.json(
+            { error: 'Unauthorized' },
+            { status: 401 }
+        );
     }
 
+    console.log('[Cron] Starting price refresh...');
+    const startTime = Date.now();
+
     try {
-        // Trigger background refresh
-        // We await here for simplicity but could be fire-and-forget
-        await refreshAllProfiles();
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('Cron failed:', error);
-        return NextResponse.json({ error: 'Failed' }, { status: 500 });
+        const result = await refreshAllAnalyses();
+        const duration = Date.now() - startTime;
+
+        console.log(`[Cron] Completed in ${duration}ms`);
+
+        return NextResponse.json({
+            success: true,
+            ...result,
+            durationMs: duration,
+        });
+
+    } catch (error: any) {
+        console.error('[Cron] Refresh failed:', error);
+
+        return NextResponse.json(
+            { error: error.message, success: false },
+            { status: 500 }
+        );
     }
 }

@@ -29,6 +29,13 @@
     - `scripts/backup-data.ts`: Uses `hgetall` for user profiles (stored as Redis Hashes). **Do not revert to `get`**.
 3.  **Share Receipt**:
     - Profile Page (`src/components/profile-view.tsx`) now has a "Share Receipt" button using `html-to-image`.
+4.  **Price Accuracy**:
+    - `market-data.ts`: CoinGecko now requests HOURLY granularity for 2-90 day old tweets (automatic via `days` param).
+5.  **Validation System**:
+    - `analyzer.ts`: Throws `Mismatch Error` if Tweet CA != User Provided CA, or if Tweet Symbol != Link Symbol (strict anti-hijack).
+6.  **Profile Sync**:
+    - `recalculateUserProfile`: Function added to `analysis-store.ts` to re-sync User Profile stats (wins/losses) from history list.
+    - Script: `scripts/sync-profile.ts` available for manual fix.
 
 ## 🚨 Known Issues / TODOs
 1.  **Price Refresh:** Currently prices are static from the moment of analysis. We need a Cron Job to refresh `currentPrice` for open calls.
