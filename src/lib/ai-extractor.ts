@@ -163,6 +163,7 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
            - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, SPY (S&P 500 ETF), etc.
         2. Determine Sentiment. Strict Rules:
            - **TIMEFRAME**: Determine the IMMEDIATE direction from the tweet time.
+           - **"IT'S X's TURN"**: Phrases like "It's ETH turn now", "ETH's turn", "X season" are **BULLISH** rotation calls. They predict the asset will outperform.
            - If they say "Pump THEN Dump", "Liquidation hunt above X", or "Squeeze to Y", it is **BULLISH** (calls for price increase first).
            - "This pump is not mythologia" or "This is real" = **BULLISH**.
            - If they describe "sidelined" people buying higher -> **BULLISH** (implies price is going up to them).
@@ -170,7 +171,7 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
            - If the author is mocking "late buyers" or "sidelined bros" for MISSING the move, it is **BULLISH**.
            - Only mark **BEARISH** if the IMMEDIATE next move is down.
            - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
-        2. Determine Sentiment (BULLISH or BEARISH):
+        3. Additional Sentiment Guidelines:
            - "Long", "Buy", "Moon", "Send it", "Higher", "Accumulate", "Breakout" -> BULLISH
            - "Short", "Sell", "Dump", "Lower", "Top is in", "Crash" -> BEARISH
            - **CAPITULATION/CLEANSE LANGUAGE**: Terms like "cleanse", "flush", "capitulation", "wipeout", "final drop", "sub-X price" (e.g. "3 fig eth") usually imply the price needs to go LOWER before a bottom. This is **BEARISH** in the short term, even if long-term bullish.

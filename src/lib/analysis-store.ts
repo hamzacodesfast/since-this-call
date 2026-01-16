@@ -192,6 +192,66 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
     }
 }
 
+export async function recalculateUserProfile(username: string): Promise<void> {
+    try {
+        const lowerUser = username.toLowerCase();
+        const profileKey = `${USER_PROFILE_PREFIX}${lowerUser}`;
+        const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
+
+        // Get current history
+        const historyData = await redis.lrange(historyKey, 0, -1);
+        const history = historyData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
+
+        // Recalculate Stats
+        let wins = 0;
+        let losses = 0;
+        let neutral = 0;
+        const total = history.length;
+
+        for (const item of history) {
+            if (Math.abs(item.performance) < 0.01) {
+                neutral++;
+            } else if (item.isWin) {
+                wins++;
+            } else {
+                losses++;
+            }
+        }
+
+        const winRate = total > 0 ? (wins / total) * 100 : 0;
+
+        // Get existing avatar/username from profile to preserve them if possible
+        // (or take from the first history item if profile empty)
+        const existingProfile = await redis.hgetall(profileKey);
+        let avatar = (existingProfile as any)?.avatar || '';
+        let displayUsername = (existingProfile as any)?.username || username;
+
+        if (!avatar && history.length > 0) {
+            avatar = history[0].avatar || '';
+            displayUsername = history[0].username;
+        }
+
+        // Update Hash
+        await redis.hset(profileKey, {
+            username: displayUsername,
+            avatar: avatar,
+            totalAnalyses: total,
+            wins,
+            losses,
+            neutral,
+            winRate,
+            lastAnalyzed: Date.now(),
+        });
+
+        console.log(`[AnalysisStore] Synced profile for ${username}: ${total} calls (${wins}W/${losses}L)`);
+
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to recalculate user profile:', error);
+    }
+}
+
 export async function getUserProfile(username: string): Promise<{ profile: UserProfile | null, history: StoredAnalysis[] }> {
     try {
         const lowerUser = username.toLowerCase();

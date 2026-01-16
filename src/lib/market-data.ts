@@ -281,6 +281,10 @@ async function getCoinMarketCapPrice(symbol: string, date?: Date): Promise<numbe
 }
 
 // CoinGecko API - reliable for listed tokens
+// Granularity is AUTOMATIC based on days requested:
+// - 1 day: 5-minute data
+// - 2-90 days: HOURLY data
+// - >90 days: Daily data
 async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | null> {
     const apiKey = process.env.COINGECKO_API_KEY;
     if (!apiKey) {
@@ -297,15 +301,31 @@ async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | 
         if (date) {
             // Historical price - use market_chart endpoint
             const now = new Date();
-            const diffDays = Math.ceil((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+            const diffMs = now.getTime() - date.getTime();
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
             if (diffDays > 365) {
-                console.log(`[CoinGecko] Date too old for historical data: ${diffDays} days ago`);
+                console.log(`[CoinGecko] Date too old for historical data: ${diffDays.toFixed(1)} days ago`);
                 return null;
             }
 
-            // market_chart gives us historical prices
-            const days = Math.min(diffDays + 1, 365);
+            // Request optimal days for granularity:
+            // - 2-90 days: CoinGecko auto-returns HOURLY data
+            // - <1 day: Returns 5-min data (best!)
+            // - >90 days: Only daily available
+            let days = Math.ceil(diffDays) + 1;
+
+            // Ensure minimum of 2 days to get hourly granularity for tweets 1-2 days old
+            if (diffDays >= 1 && days < 2) {
+                days = 2;
+            }
+
+            // Cap at 90 days to maintain hourly granularity
+            days = Math.min(days, 90);
+
+            const expectedGranularity = days <= 1 ? '5-min' : days <= 90 ? 'hourly' : 'daily';
+            console.log(`[CoinGecko] Requesting ${days} days of data for ${coinId} (expecting ${expectedGranularity} granularity)`);
+
             const url = `${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`;
 
             const res = await fetch(url, {
@@ -329,6 +349,12 @@ async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | 
             const oldestTimestamp = sortedPrices[0][0];
             const oldestPrice = sortedPrices[0][1];
 
+            // Log data point count and interval for debugging
+            if (sortedPrices.length >= 2) {
+                const interval = (sortedPrices[1][0] - sortedPrices[0][0]) / (1000 * 60);
+                console.log(`[CoinGecko] Got ${sortedPrices.length} data points, ~${interval.toFixed(0)}min intervals`);
+            }
+
             // If target date is before the oldest data point, use the oldest price
             if (targetTime < oldestTimestamp) {
                 console.log(`[CoinGecko] Target date ${date.toISOString()} is before listing. Using oldest available price: $${oldestPrice}`);
@@ -336,6 +362,7 @@ async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | 
             }
 
             let closestPrice = null;
+            let closestTimestamp = 0;
             let minDiff = Infinity;
 
             for (const [timestamp, price] of data.prices) {
@@ -343,11 +370,14 @@ async function getCoinGeckoPrice(coinId: string, date?: Date): Promise<number | 
                 if (diff < minDiff) {
                     minDiff = diff;
                     closestPrice = price;
+                    closestTimestamp = timestamp;
                 }
             }
 
             if (closestPrice !== null) {
-                console.log(`[CoinGecko] Historical price for ${coinId}: $${closestPrice}`);
+                const deltaMinutes = Math.round(minDiff / (1000 * 60));
+                const closestDate = new Date(closestTimestamp).toISOString();
+                console.log(`[CoinGecko] Found $${closestPrice.toFixed(4)} at ${closestDate} (${deltaMinutes}min from tweet)`);
             }
             return closestPrice;
         } else {

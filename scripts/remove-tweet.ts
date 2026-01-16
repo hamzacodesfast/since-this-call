@@ -10,19 +10,22 @@ const redis = new Redis({
     token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
 });
 
-const TWEET_ID = '2005862616426561654';
-const USERNAME = '__rud1nh0__';
+const TWEET_ID = '2011451167965127019';
+const USERNAME = 'trader1sz';
 
 async function removeAnalysis(key: string, id: string) {
     const list = await redis.lrange(key, 0, -1);
     const initialLen = list.length;
-
+    console.log(`Checking ${key}: ${initialLen} items found`);
     const filtered = list.filter((item) => {
         const p = typeof item === 'string' ? JSON.parse(item) : item;
-        return p.id !== id;
+        const match = p.id === id;
+        if (match) console.log(`Found match in ${key}`);
+        return !match;
     });
 
     if (filtered.length < initialLen) {
+        console.log(`Deleting and rewriting ${key} with ${filtered.length} items...`);
         await redis.del(key);
         // Push back in reverse order to maintain correct order (lpush reverses)
         if (filtered.length > 0) {

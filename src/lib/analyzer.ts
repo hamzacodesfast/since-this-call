@@ -50,11 +50,54 @@ export async function analyzeTweet(tweetId: string, contractAddressOverride?: st
         throw new Error('Could not identify financial call');
     }
 
-    // If CA override provided (e.g., from pump.fun URL), use it
+    // If CA override provided (e.g., from pump.fun URL), validate and use it
     if (contractAddressOverride) {
+        // Validation 1: CA Mismatch
+        // If tweet explicitly mentions a DIFFERENT contract address, reject it.
+        if (callData.contractAddress && callData.contractAddress !== contractAddressOverride) {
+            throw new Error(`Mismatch Error: Tweet mentions CA ${callData.contractAddress.slice(0, 6)}... but you provided ${contractAddressOverride.slice(0, 6)}...`);
+        }
+
+        // Validation 2: Symbol/Ticker Mismatch
+        // Fetch CA details to get the REAL symbol for this address
+        const overrideData = await getPriceByContractAddress(contractAddressOverride);
+        if (overrideData && callData.symbol) {
+            const tweetSymbol = callData.symbol.toUpperCase();
+            const caSymbol = overrideData.symbol.toUpperCase();
+            const caName = overrideData.name.toUpperCase();
+
+            // Allow match if:
+            // 1. Exact Symbol match (BRETT == BRETT)
+            // 2. CA Name contains Tweet Symbol (e.g. "Brett The Dog" contains "BRETT")
+            // 3. Tweet Symbol contains CA Symbol (e.g. "$BRETT" contains "BRETT")
+            // 4. Special Case: Tweet detected "SOL" (chain) often happens when people say "Buy on SOL". 
+            //    We strictly shouldn't allow "SOL" if the token is "APE", but "SOL" is often a false positive for the asset.
+            //    However, user wants strictness. Let's start strict.
+
+            const isMatch =
+                tweetSymbol === caSymbol ||
+                caName.includes(tweetSymbol) ||
+                tweetSymbol.includes(caSymbol);
+
+            if (!isMatch) {
+                // Ignore if tweet symbol is generic "CRYPTO" or "TOKEN" (if AI does that)
+                // But AI usually gives specific ticker.
+
+                // One exception: If Tweet says "SOL" (Chain) but user provides a Token.
+                // This is a common AI fallback. If callData.symbol is 'SOL', 'ETH', 'BASE', we might warn but allow if text implies a specific token?
+                // For now, adhere to User Rule: "mismatching should also output an error".
+                throw new Error(`Symbol Mismatch: Tweet is about $${tweetSymbol}, but the provided link is for $${caSymbol} (${overrideData.name}).`);
+            }
+        }
+
         console.log(`[Analyzer] Using CA override: ${contractAddressOverride}`);
         callData.contractAddress = contractAddressOverride;
         callData.type = 'CRYPTO'; // Pump.fun tokens are always crypto
+
+        // Update the symbol to the real one from the CA (fix "SOL" -> "MYTOKEN")
+        if (overrideData) {
+            callData.symbol = overrideData.symbol;
+        }
     }
 
     // Force known stocks that might be misclassified as crypto (e.g. BMNR which has a garbage token on Base)
