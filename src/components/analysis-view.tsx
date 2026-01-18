@@ -125,7 +125,7 @@ export function AnalysisView({ data }: AnalysisViewProps) {
             {/* Right: The Receipt */}
             <div className="flex-1 flex flex-col items-center xl:items-start justify-center">
 
-                <Card id="share-card" className={cn("w-full max-w-[500px] overflow-hidden border-2 relative backdrop-blur-xl", bgClass)}>
+                <Card id="share-card" className={cn("w-full max-w-[500px] overflow-hidden border-2 relative backdrop-blur-xl dark", bgClass)} style={{ backgroundColor: '#030712' }}>
                     {/* Watermark / Branding visible only on share/card */}
                     <div className="absolute top-4 right-4 opacity-10 pointer-events-none">
                         <img src="/logo.png" alt="Watermark" className="w-24 h-24" />
