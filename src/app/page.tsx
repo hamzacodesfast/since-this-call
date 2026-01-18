@@ -200,22 +200,29 @@ export default function Home() {
                             <li className="flex items-start gap-2">
                                 <span className="text-green-500 mt-0.5">✓</span>
                                 <div>
-                                    <strong className="text-foreground">Stocks & Major Crypto</strong>
-                                    <p className="text-xs opacity-80">Real-time Yahoo Finance data (1m precision)</p>
+                                    <strong className="text-foreground">Stocks</strong>
+                                    <p className="text-xs opacity-80">All tickers via Yahoo Finance (AAPL, TSLA, etc.)</p>
                                 </div>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-green-500 mt-0.5">✓</span>
                                 <div>
-                                    <strong className="text-foreground">Meme Coins (SOL/Base/Arb)</strong>
-                                    <p className="text-xs opacity-80">GeckoTerminal minute-level candles</p>
+                                    <strong className="text-foreground">Major Crypto</strong>
+                                    <p className="text-xs opacity-80">BTC, ETH, SOL, DOGE, XRP, BNB + 50 more via CoinGecko</p>
                                 </div>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-green-500 mt-0.5">✓</span>
                                 <div>
-                                    <strong className="text-foreground">Obscure Tokens</strong>
-                                    <p className="text-xs opacity-80">DexScreener auto-discovery & fallback</p>
+                                    <strong className="text-foreground">Meme Coins & Pump.fun</strong>
+                                    <p className="text-xs opacity-80">Auto-discovery via DexScreener & GeckoTerminal</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-green-500 mt-0.5">✓</span>
+                                <div>
+                                    <strong className="text-foreground">Live Tracking</strong>
+                                    <p className="text-xs opacity-80">Prices update automatically, badges flip in real-time</p>
                                 </div>
                             </li>
                         </ul>
@@ -231,22 +238,22 @@ export default function Home() {
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-500 mt-0.5">⚠</span>
                                 <div>
-                                    <strong className="text-foreground">Old Tweets (&gt;24h)</strong>
-                                    <p className="text-xs opacity-80">Requires major listing or cached history</p>
+                                    <strong className="text-foreground">Old Tweets (&gt;7 days)</strong>
+                                    <p className="text-xs opacity-80">May lack precise historical prices for obscure tokens</p>
                                 </div>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-500 mt-0.5">⚠</span>
                                 <div>
-                                    <strong className="text-foreground">Very New Tokens</strong>
-                                    <p className="text-xs opacity-80">Might lack sufficient history for analysis</p>
+                                    <strong className="text-foreground">Brand New Tokens</strong>
+                                    <p className="text-xs opacity-80">Need at least a few minutes of trading history</p>
                                 </div>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-500 mt-0.5">⚠</span>
                                 <div>
-                                    <strong className="text-foreground">Rate Limits</strong>
-                                    <p className="text-xs opacity-80">Public APIs may occasionally timeout</p>
+                                    <strong className="text-foreground">Ambiguous Calls</strong>
+                                    <p className="text-xs opacity-80">AI may misinterpret vague or sarcastic tweets</p>
                                 </div>
                             </li>
                         </ul>
