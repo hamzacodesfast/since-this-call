@@ -7,6 +7,7 @@ const DEXSCREENER_BASE = 'https://api.dexscreener.com/latest/dex';
 
 // CoinGecko ID mapping (same as market-data.ts)
 const COINGECKO_IDS: Record<string, string> = {
+    // Major Crypto
     'BTC': 'bitcoin',
     'ETH': 'ethereum',
     'SOL': 'solana',
@@ -19,18 +20,57 @@ const COINGECKO_IDS: Record<string, string> = {
     'DOT': 'polkadot',
     'MATIC': 'matic-network',
     'LINK': 'chainlink',
+    'TON': 'the-open-network',
+    'TRX': 'tron',
+    'UNI': 'uniswap',
+    'ATOM': 'cosmos',
+    'APT': 'aptos',
+    'ARB': 'arbitrum',
+    'OP': 'optimism',
+    'SUI': 'sui',
+    // L1s & L2s
+    'NEAR': 'near',
+    'SEI': 'sei-network',
+    'INJ': 'injective-protocol',
+    'FTM': 'fantom',
+    'ALGO': 'algorand',
+    'ICP': 'internet-computer',
+    'FIL': 'filecoin',
+    'HBAR': 'hedera-hashgraph',
+    'VET': 'vechain',
+    'GAS': 'gas',
+    // Meme & Trending
     'PEPE': 'pepe',
     'SHIB': 'shiba-inu',
     'HYPE': 'hyperliquid',
     'WIF': 'dogwifcoin',
     'BONK': 'bonk',
+    'FLOKI': 'floki',
+    'TRUMP': 'official-trump',
     'PENGU': 'pudgy-penguins',
-    'JUP': 'jupiter-exchange-solana',
-    'AI16Z': 'ai16z',
     'FARTCOIN': 'fartcoin',
-    'VIRTUAL': 'virtual-protocol',
     'SPX6900': 'spx6900',
-    'TON': 'the-open-network',
+    // DeFi & Gaming
+    'AAVE': 'aave',
+    'CRV': 'curve-dao-token',
+    'GALA': 'gala',
+    'AXS': 'axie-infinity',
+    'SAND': 'the-sandbox',
+    'MANA': 'decentraland',
+    'IMX': 'immutable-x',
+    'ENS': 'ethereum-name-service',
+    // AI & Data
+    'AI16Z': 'ai16z',
+    'VIRTUAL': 'virtual-protocol',
+    'RENDER': 'render-token',
+    'FET': 'fetch-ai',
+    'RNDR': 'render-token',
+    'TAO': 'bittensor',
+    // Misc
+    'AURA': 'aura-finance',
+    'LIT': 'litentry',
+    'ASTER': 'aster-2',
+    'JUP': 'jupiter-exchange-solana',
 };
 
 interface RefreshResult {
@@ -272,9 +312,23 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
                     console.log(`[PriceRefresher] ${a.symbol} (${source}): $${oldPrice?.toFixed(4)} -> $${newPrice.toFixed(4)} (${oldPerf.toFixed(2)}% -> ${newPerf.toFixed(2)}%)${badgeFlip ? ' 🔄 BADGE FLIP!' : ''}`);
                 } else {
                     result.skipped++;
+                    console.log(`[PriceRefresher] SKIP ${a.symbol}: price unchanged ($${newPrice.toFixed(4)})`);
                 }
             } else {
                 result.skipped++;
+                // Log skip reason
+                if (!a.entryPrice) {
+                    console.log(`[PriceRefresher] SKIP ${a.symbol}: no entryPrice`);
+                } else if (!newPrice) {
+                    const reason = a.type === 'STOCK'
+                        ? 'not found in Yahoo'
+                        : a.contractAddress
+                            ? 'not found in DexScreener'
+                            : COINGECKO_IDS[symbol || '']
+                                ? 'CoinGecko API error'
+                                : 'no price source (not in CoinGecko, no CA)';
+                    console.log(`[PriceRefresher] SKIP ${a.symbol}: ${reason}`);
+                }
             }
 
             updatedAnalyses.push(a);
