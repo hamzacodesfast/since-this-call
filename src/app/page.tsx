@@ -278,13 +278,18 @@ export default function Home() {
                     <Link href="/recent">
                         <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
                             <Clock className="w-4 h-4 mr-2" />
-                            View Recent Analyses
+                            Recent Analyses
+                        </Button>
+                    </Link>
+                    <Link href="/leaderboard">
+                        <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+                            <Trophy className="w-4 h-4 mr-2" />
+                            Leaderboard
                         </Button>
                     </Link>
                     <Link href="/profiles">
-                        <Button variant="ghost" className="text-muted-foreground hover:text-primary">
-                            <Trophy className="w-4 h-4 mr-2" />
-                            Trader Leaderboard
+                        <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                            All Profiles
                         </Button>
                     </Link>
                 </div>
