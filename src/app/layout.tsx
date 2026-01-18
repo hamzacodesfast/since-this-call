@@ -10,6 +10,8 @@ export const metadata: Metadata = {
     description: "Social Prediction Tracker",
 };
 
+import Script from "next/script";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -22,6 +24,16 @@ export default function RootLayout({
                     {children}
                 </div>
                 <Footer />
+                <Script src="https://www.googletagmanager.com/gtag/js?id=G-ZZQ656XHDP" strategy="afterInteractive" />
+                <Script id="google-analytics" strategy="afterInteractive">
+                    {`
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag('js', new Date());
+
+                    gtag('config', 'G-ZZQ656XHDP');
+                    `}
+                </Script>
             </body>
         </html>
     );
