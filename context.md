@@ -20,6 +20,16 @@
     5. **DexScreener:** Fallback for obscure Meme Coins (SOL/Base).
     6. **GeckoTerminal:** Fallback for DexScreener precision.
 
+## 🔄 Live Price Refresh Architecture
+To keep "Call Receipts" accurate, we run a **Batch Refresh System**:
+1.  **Refresher Lib/Endpoint**: `src/lib/price-refresher.ts` called by `/api/cron/refresh`.
+2.  **Batching**:
+    - **CoinGecko**: Batches up to 50 symbols per call (`simple/price`).
+    - **Yahoo Finance**: Parallel fetches for Stocks.
+    - **DexScreener**: Batches up to 30 CAs per call (using stored `contractAddress`).
+3.  **Trigger**: Vercel Cron (every 15m).
+4.  **Logic**: Fetches *active* analyses from Redis, updates `currentPrice`, recalculates `performance` & `isWin`, updates Redis List, then triggers `recalculateUserProfile`.
+
 ## 🛠️ Recent Fixes (CRITICAL - DO NOT BREAK)
 1.  **Pricing Integrity**:
     - **Aesthetics**: Dark mode, premium feel, green/red/yellow performance cards.
@@ -51,6 +61,8 @@
 
 ## 📂 Key Files
 - `src/lib/market-data.ts`: The source of truth for pricing.
+- `src/lib/price-refresher.ts`: The batch price update engine.
+- `src/app/api/cron/refresh/route.ts`: Vercel Cron endpoint.
 - `src/lib/ai-extractor.ts`: The brain (Prompt Engineering).
 - `src/app/page.tsx`: The main analysis UI.
 - `src/app/user/[username]/page.tsx`: The Profile Page.

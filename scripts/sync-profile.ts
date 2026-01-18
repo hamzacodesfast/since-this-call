@@ -4,7 +4,7 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const USERNAME = 'trader1sz';
+const USERNAME = 'aster_dex';
 
 async function main() {
     // Dynamic import to ensure env vars are loaded first

@@ -9,10 +9,11 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 ## ✨ Features
 
 - **AI-Powered Extraction**: Uses **Google Gemini** (Flash 2.0) to intelligently parse tweets, identifying the asset symbol (e.g., $BTC, $WOJAK, $NVDA), sentiment (Bullish/Bearish), and the prediction date.
+- **Live Price Updates**: Automatic 15-minute price refresh for active calls via Vercel Cron.
 - **Robust Fallback**: Includes a smart Regex safety net to handle AI rate limits ensuring high availability.
 - **Multi-Asset Support**:
   - **Crypto**: Real-time prices via **CoinGecko** & **DexScreener** (Meme coins supported!).
-  - **Crypto History**: Deep historical data via **Binance** API.
+  - **Crypto History**: Deep historical data via **Binance** & **CoinGecko**.
   - **Stocks**: Free, uncapped historical & current data via **Yahoo Finance**.
 - **Social Sharing**: One-click visual sharing generates a screenshot of the analysis + original tweet to share back on X.
 - **Premium UI**: Built with a sleek, dark-mode first design using Tailwind CSS and Next.js 14.
@@ -21,12 +22,12 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 
 - **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [Upstash Redis](https://upstash.com/) (Serverless)
 - **AI**: [Vercel AI SDK](https://sdk.vercel.ai/) + [Google Gemini](https://ai.google.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) + `lucide-react` icons
 - **Data Sources**:
   - [Yahoo Finance](https://github.com/gadicc/yahoo-finance2) (Stocks)
   - [CoinGecko](https://www.coingecko.com/en/api) (Crypto)
-  - [Binance](https://www.binance.com/en/binance-api) (Crypto History)
   - [DexScreener](https://dexscreener.com) (Meme Coins)
 
 ## 🚀 Getting Started
@@ -87,6 +88,7 @@ This project is optimized for deployment on [Vercel](https://vercel.com).
 2.  Import the project into Vercel.
 3.  Add your `GOOGLE_GENERATIVE_AI_API_KEY` in the Vercel Dashboard Settings -> Environment Variables.
 4.  Deploy!
+5.  **(Optional)** Setup Cron: On Pro plan, this works automatically. On Free tier, use an external cron service to hit `/api/cron/refresh` every 15m.
 
 ## 📄 License
 
