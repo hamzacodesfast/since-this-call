@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Clock, Trophy, Users } from 'lucide-react';
+import { ThemeToggle } from './theme-toggle';
 
 const navItems = [
     { href: '/', label: 'Home', icon: Home },
@@ -24,26 +25,29 @@ export function Navbar() {
                     <span className="sm:hidden">STC</span>
                 </Link>
 
-                {/* Nav Links */}
-                <nav className="flex items-center gap-1">
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        const Icon = item.icon;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                {/* Nav Links + Theme Toggle */}
+                <div className="flex items-center gap-1">
+                    <nav className="flex items-center gap-1">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href;
+                            const Icon = item.icon;
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
                                         ? 'bg-primary/10 text-primary'
                                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                                    }`}
-                            >
-                                <Icon className="w-4 h-4" />
-                                <span className="hidden sm:inline">{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
+                                        }`}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    <span className="hidden sm:inline">{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                    <ThemeToggle />
+                </div>
             </div>
         </header>
     );
