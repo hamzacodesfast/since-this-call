@@ -6,12 +6,12 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 async function main() {
     // Dynamic import to ensure env vars are loaded first
-    const { refreshAllAnalyses } = await import('../src/lib/price-refresher');
+    const { refreshByTicker } = await import('../src/lib/price-refresher');
 
-    console.log('🔄 Testing price refresh...\n');
+    console.log('🔄 Testing OPTIMIZED ticker-centric price refresh...\n');
 
     const startTime = Date.now();
-    const result = await refreshAllAnalyses();
+    const result = await refreshByTicker();
     const duration = Date.now() - startTime;
 
     console.log('\n📊 Results:');

@@ -10,6 +10,90 @@ const redis = new Redis({
 const RECENT_KEY = 'recent_analyses';
 const MAX_STORED = 50;
 
+// Ticker Tracking (for optimized price refresh)
+const TRACKED_TICKERS_KEY = 'tracked_tickers';
+const TICKER_INDEX_PREFIX = 'ticker_index:';
+
+/**
+ * Get the ticker key for an analysis.
+ * Format: "CRYPTO:BTC", "STOCK:AAPL", or "CA:abc123..." for contract addresses
+ */
+function getTickerKey(analysis: { symbol: string; type?: string; contractAddress?: string }): string {
+    if (analysis.contractAddress && analysis.contractAddress.length > 10) {
+        return `CA:${analysis.contractAddress}`;
+    }
+    const type = analysis.type || 'CRYPTO';
+    return `${type}:${analysis.symbol.toUpperCase()}`;
+}
+
+/**
+ * Add an analysis to the ticker index for efficient lookup during refresh.
+ */
+async function trackTicker(analysis: StoredAnalysis): Promise<void> {
+    try {
+        const tickerKey = getTickerKey(analysis);
+        const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
+        const analysisRef = `${analysis.username.toLowerCase()}:${analysis.id}`;
+
+        // Add to global ticker set
+        await redis.sadd(TRACKED_TICKERS_KEY, tickerKey);
+
+        // Add to ticker's analysis index
+        await redis.sadd(indexKey, analysisRef);
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to track ticker:', error);
+    }
+}
+
+/**
+ * Remove an analysis from the ticker index.
+ */
+async function untrackTicker(analysis: StoredAnalysis): Promise<void> {
+    try {
+        const tickerKey = getTickerKey(analysis);
+        const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
+        const analysisRef = `${analysis.username.toLowerCase()}:${analysis.id}`;
+
+        // Remove from ticker's analysis index
+        await redis.srem(indexKey, analysisRef);
+
+        // Check if ticker has any more analyses, if not remove from global set
+        const remaining = await redis.scard(indexKey);
+        if (remaining === 0) {
+            await redis.srem(TRACKED_TICKERS_KEY, tickerKey);
+            await redis.del(indexKey);
+        }
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to untrack ticker:', error);
+    }
+}
+
+/**
+ * Get all tracked tickers for efficient price refresh.
+ */
+export async function getTrackedTickers(): Promise<string[]> {
+    try {
+        return await redis.smembers(TRACKED_TICKERS_KEY) as string[];
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get tracked tickers:', error);
+        return [];
+    }
+}
+
+/**
+ * Get all analysis references for a ticker.
+ * Returns array of "username:tweetId" strings.
+ */
+export async function getTickerAnalyses(tickerKey: string): Promise<string[]> {
+    try {
+        const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
+        return await redis.smembers(indexKey) as string[];
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get ticker analyses:', error);
+        return [];
+    }
+}
+
 export interface StoredAnalysis {
     id: string;          // Tweet ID
     username: string;
@@ -144,6 +228,9 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
         } else {
             // Add new entry (prepend)
             history.unshift(analysis);
+
+            // Track the ticker for optimized price refresh
+            await trackTicker(analysis);
         }
 
         // Limit history size (keep top 100 most recent unique calls)

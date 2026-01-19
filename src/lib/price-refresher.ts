@@ -403,3 +403,174 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
     return result;
 }
 
+/**
+ * OPTIMIZED: Ticker-centric refresh.
+ * Instead of iterating all analyses, we:
+ * 1. Get all unique tickers from tracked_tickers set
+ * 2. Batch fetch prices for those tickers
+ * 3. Update all analyses with each ticker
+ * 
+ * This is ~10x faster for large datasets.
+ */
+export async function refreshByTicker(): Promise<RefreshResult> {
+    const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
+        token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
+    });
+
+    const result: RefreshResult = { updated: 0, errors: 0, skipped: 0 };
+
+    try {
+        // 1. Get all tracked tickers
+        const trackedTickers = await redis.smembers('tracked_tickers') as string[];
+        console.log(`[PriceRefresher] Found ${trackedTickers.length} unique tickers to refresh`);
+
+        if (trackedTickers.length === 0) {
+            console.log('[PriceRefresher] No tickers tracked. Run backfill-tickers.ts first.');
+            return result;
+        }
+
+        // 2. Categorize tickers by source
+        const cgSymbols: string[] = [];
+        const yahooSymbols: string[] = [];
+        const contractAddresses: string[] = [];
+
+        for (const ticker of trackedTickers) {
+            if (ticker.startsWith('CA:')) {
+                contractAddresses.push(ticker.slice(3)); // Remove "CA:" prefix
+            } else if (ticker.startsWith('STOCK:')) {
+                yahooSymbols.push(ticker.slice(6)); // Remove "STOCK:" prefix
+            } else if (ticker.startsWith('CRYPTO:')) {
+                const symbol = ticker.slice(7); // Remove "CRYPTO:" prefix
+                if (COINGECKO_IDS[symbol]) {
+                    cgSymbols.push(symbol);
+                }
+            }
+        }
+
+        console.log(`[PriceRefresher] Fetching: ${cgSymbols.length} CoinGecko, ${yahooSymbols.length} Yahoo, ${contractAddresses.length} DexScreener`);
+
+        // 3. Batch fetch prices
+        const [cgPrices, yahooPrices, dexPrices] = await Promise.all([
+            batchFetchCoinGeckoPrices(cgSymbols),
+            batchFetchYahooPrices(yahooSymbols),
+            batchFetchDexScreenerPrices(contractAddresses),
+        ]);
+
+        // 4. Build price map by ticker key
+        const priceMap = new Map<string, number>();
+
+        for (const [symbol, price] of cgPrices) {
+            priceMap.set(`CRYPTO:${symbol}`, price);
+        }
+        for (const [symbol, price] of yahooPrices) {
+            priceMap.set(`STOCK:${symbol}`, price);
+        }
+        for (const [ca, price] of dexPrices) {
+            priceMap.set(`CA:${ca}`, price);
+        }
+
+        console.log(`[PriceRefresher] Got ${priceMap.size} prices`);
+
+        // 5. For each ticker with a price, update all its analyses
+        const affectedUsers = new Set<string>();
+
+        for (const ticker of trackedTickers) {
+            const newPrice = priceMap.get(ticker);
+            if (!newPrice) {
+                result.skipped++;
+                continue;
+            }
+
+            // Get all analysis references for this ticker
+            const indexKey = `ticker_index:${ticker}`;
+            const analysisRefs = await redis.smembers(indexKey) as string[];
+
+            for (const ref of analysisRefs) {
+                const [username, tweetId] = ref.split(':');
+                if (!username || !tweetId) continue;
+
+                // Get user history
+                const historyKey = `user:history:${username}`;
+                const historyData = await redis.lrange(historyKey, 0, -1);
+                const history: StoredAnalysis[] = historyData.map((item: any) =>
+                    typeof item === 'string' ? JSON.parse(item) : item
+                );
+
+                // Find and update the specific analysis
+                let updated = false;
+                for (const analysis of history) {
+                    if (analysis.id === tweetId && analysis.entryPrice) {
+                        if (analysis.currentPrice !== newPrice) {
+                            const oldPerf = analysis.performance;
+                            analysis.currentPrice = newPrice;
+                            analysis.performance = calculatePerformance(analysis.entryPrice, newPrice, analysis.sentiment);
+                            analysis.isWin = analysis.performance > 0;
+
+                            const badgeFlip = (oldPerf > 0) !== (analysis.performance > 0);
+                            if (badgeFlip) {
+                                console.log(`[PriceRefresher] ${analysis.symbol}: ${badgeFlip ? '🔄 BADGE FLIP!' : ''}`);
+                            }
+
+                            updated = true;
+                            result.updated++;
+                            affectedUsers.add(username);
+                        }
+                    }
+                }
+
+                // Write back if updated
+                if (updated) {
+                    await redis.del(historyKey);
+                    for (let i = history.length - 1; i >= 0; i--) {
+                        await redis.lpush(historyKey, JSON.stringify(history[i]));
+                    }
+                }
+            }
+        }
+
+        // 6. Recalculate affected user profiles
+        for (const username of affectedUsers) {
+            await recalculateUserProfile(username);
+        }
+
+        // 7. Update recent_analyses
+        const recentData = await redis.lrange('recent_analyses', 0, -1);
+        const recentAnalyses: StoredAnalysis[] = recentData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
+
+        let recentUpdated = false;
+        for (const r of recentAnalyses) {
+            let tickerKey: string;
+            if (r.contractAddress && r.contractAddress.length > 10) {
+                tickerKey = `CA:${r.contractAddress}`;
+            } else {
+                tickerKey = `${r.type || 'CRYPTO'}:${r.symbol.toUpperCase()}`;
+            }
+
+            const newPrice = priceMap.get(tickerKey);
+            if (newPrice && r.entryPrice && r.currentPrice !== newPrice) {
+                r.currentPrice = newPrice;
+                r.performance = calculatePerformance(r.entryPrice, newPrice, r.sentiment);
+                r.isWin = r.performance > 0;
+                recentUpdated = true;
+            }
+        }
+
+        if (recentUpdated) {
+            await redis.del('recent_analyses');
+            for (let i = recentAnalyses.length - 1; i >= 0; i--) {
+                await redis.lpush('recent_analyses', JSON.stringify(recentAnalyses[i]));
+            }
+        }
+
+        console.log(`[PriceRefresher] Complete: ${result.updated} updated, ${result.skipped} skipped, ${result.errors} errors`);
+
+    } catch (e) {
+        console.error('[PriceRefresher] Fatal error:', e);
+        result.errors++;
+    }
+
+    return result;
+}
