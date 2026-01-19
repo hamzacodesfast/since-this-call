@@ -165,7 +165,7 @@ export default function Home() {
                     <div className="relative">
                         <Input
                             type="url"
-                            placeholder="Optional: pump.fun URL for meme coins (e.g. pump.fun/coin/...)"
+                            placeholder="Optional: pump.fun or dexscreener.com URL"
                             className="w-full h-10 pl-4 bg-secondary/30 border-none focus-visible:ring-0 text-sm rounded-lg placeholder:text-muted-foreground/50"
                             value={pumpfunUrl}
                             onChange={(e) => setPumpfunUrl(e.target.value)}
