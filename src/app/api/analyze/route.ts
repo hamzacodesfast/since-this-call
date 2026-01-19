@@ -43,22 +43,39 @@ export async function GET(request: NextRequest) {
             const pumpMatch = pumpfunUrl.match(/pump\.fun\/coin\/([a-zA-Z0-9]+)/);
             if (pumpMatch) {
                 contractAddress = pumpMatch[1];
+                console.log(`[API] Extracted CA from pump.fun: ${contractAddress}`);
             }
 
-            // Parse dexscreener.com/solana/<CA> format
+            // Parse dexscreener.com/solana/<pair_address> format
+            // DexScreener uses PAIR addresses in URLs, we need to fetch the actual token address
             if (!contractAddress) {
                 const dexMatch = pumpfunUrl.match(/dexscreener\.com\/solana\/([a-zA-Z0-9]+)/);
                 if (dexMatch) {
-                    contractAddress = dexMatch[1];
+                    const pairAddress = dexMatch[1];
+                    console.log(`[API] Found DexScreener pair address: ${pairAddress}`);
+
+                    // Fetch the pair info to get the base token address
+                    try {
+                        const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/pairs/solana/${pairAddress}`);
+                        if (dexRes.ok) {
+                            const dexData = await dexRes.json();
+                            if (dexData.pair?.baseToken?.address) {
+                                contractAddress = dexData.pair.baseToken.address;
+                                console.log(`[API] Resolved to token address: ${contractAddress} (${dexData.pair.baseToken.symbol})`);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('[API] Failed to resolve DexScreener pair:', e);
+                    }
                 }
             }
 
-            // Parse dexscreener.com/solana/<pair_address> - sometimes it's a pair, extract from URL
             // Also handle gecko terminal: geckoterminal.com/solana/pools/<CA>
             if (!contractAddress) {
                 const geckoMatch = pumpfunUrl.match(/geckoterminal\.com\/solana\/pools\/([a-zA-Z0-9]+)/);
                 if (geckoMatch) {
                     contractAddress = geckoMatch[1];
+                    console.log(`[API] Extracted CA from GeckoTerminal: ${contractAddress}`);
                 }
             }
         }
