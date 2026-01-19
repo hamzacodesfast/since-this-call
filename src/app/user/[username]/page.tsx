@@ -6,6 +6,7 @@ import { ArrowLeft, Trophy, XCircle, MinusCircle, User, Calendar } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnalysisCard } from '@/components/analysis-card';
+import { DisqusComments } from '@/components/disqus-comments';
 
 // Force dynamic rendering as we don't have ISR set up for profiles yet
 export const dynamic = 'force-dynamic';
@@ -120,6 +121,12 @@ export default async function UserProfilePage({ params }: { params: { username: 
                         </div>
                     )}
                 </div>
+
+                {/* Disqus Comments */}
+                <DisqusComments
+                    identifier={`user-${profile.username.toLowerCase()}`}
+                    title={`@${profile.username} - Since This Call`}
+                />
             </div>
         </main>
     );
