@@ -148,40 +148,45 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         Tweet Date: "${tweetDate}"
         ${imageUrl ? '\nAn image/chart is attached. Use it to identify the asset if the text is ambiguous.' : ''}
 
-        Rules:
-        1. Identify the Main Asset. Use these symbol mappings:
-           - **PUMP.FUN TOKENS**: If the tweet contains a Solana contract address (32-44 character base58 string) or mentions pump.fun, extract the contract address. Use the token name as symbol if mentioned, otherwise use the token's ticker.
-           - **PRECIOUS METALS** (ALWAYS type="STOCK"):
-             - Silver, XAG, $SILVER, $SLV, "spot silver", silver chart, SI futures -> symbol="SLV"
-             - Gold, XAU, $GOLD, $GLD, "spot gold", gold chart, GC futures -> symbol="GLD"
-             - **CHART ANALYSIS**: If the attached image shows a TradingView chart, READ THE TICKER from the chart title. "COMEX:SI1!" or "SI" = Silver. "GC" = Gold.
-             - **PRICE DISAMBIGUATION**: Prices $20-$60 range = SILVER (SLV). Prices $1500-$3000 range = GOLD (GLD).
-           - **MEME COINS** (type="CRYPTO"):
-             - SPX6900, $SPX (in crypto context) -> symbol="SPX6900", type="CRYPTO". This is a MEME COIN, NOT the S&P 500 index.
-             - If the tweet mentions "Cryptocurrency", "crypto", "meme coin", "degen", it is ALWAYS type="CRYPTO".
-           - **CRYPTO** (type="CRYPTO"): BTC, ETH, SOL, DOGE, XRP, PEPE, etc.
-           - **STOCKS** (type="STOCK"): AAPL, NVDA, TSLA, SPY (S&P 500 ETF), etc.
-        2. Determine Sentiment. Strict Rules:
-           - **TIMEFRAME**: Determine the IMMEDIATE direction from the tweet time.
-           - **"IT'S X's TURN"**: Phrases like "It's ETH turn now", "ETH's turn", "X season" are **BULLISH** rotation calls. They predict the asset will outperform.
-           - If they say "Pump THEN Dump", "Liquidation hunt above X", or "Squeeze to Y", it is **BULLISH** (calls for price increase first).
-           - "This pump is not mythologia" or "This is real" = **BULLISH**.
-           - If they describe "sidelined" people buying higher -> **BULLISH** (implies price is going up to them).
-           - **CRITICAL**: The word "liquidated" is only BEARISH if the author thinks price is crashing NOW. If they say "bears get liquidated" or "late longs get liquidated HIGHER", it is **BULLISH**.
-           - If the author is mocking "late buyers" or "sidelined bros" for MISSING the move, it is **BULLISH**.
-           - Only mark **BEARISH** if the IMMEDIATE next move is down.
-           - Simple "Buying", "Long", "Moon", "Send it" = BULLISH.
-        3. Additional Sentiment Guidelines:
-           - "Long", "Buy", "Moon", "Send it", "Higher", "Accumulate", "Breakout" -> BULLISH
-           - "Short", "Sell", "Dump", "Lower", "Top is in", "Crash" -> BEARISH
-           - **CAPITULATION/CLEANSE LANGUAGE**: Terms like "cleanse", "flush", "capitulation", "wipeout", "final drop", "sub-X price" (e.g. "3 fig eth") usually imply the price needs to go LOWER before a bottom. This is **BEARISH** in the short term, even if long-term bullish.
-           - "3 fig eth" means ETH < $1000. If current price is > $1000, this is a prediction of a ~70% drop -> BEARISH.
-
-        3. Extract Date: Use the provided date.
-        4. Extract Contract Address (CA): If a Solana address (base58, 32-44 chars) is present, include it.
-        5. Asset Type:
-           - Crypto/Coins/Tokens -> CRYPTO
-           - Stocks/Indices/ETFs/Metals -> STOCK
+        CRITICAL SENTIMENT RULES (READ CAREFULLY):
+        
+        **BEARISH INDICATORS** (mark as BEARISH if ANY of these are present):
+        - "short", "shorting", "shorted"
+        - "sell", "selling", "sold"
+        - "dump", "dumping"
+        - "crash", "crashing"
+        - "down", "going down", "lower", "drop"
+        - "top is in", "the top", "topped"
+        - "exit", "exiting", "closed my long"
+        - "taking profits", "time to leave"
+        - "overvalued", "worthless", "dead"
+        - "reject", "rejected", "rejection"
+        - "flush", "capitulation", "wipeout"
+        - Predicting price will go DOWN from current levels
+        - Calling for a correction or pullback
+        
+        **BULLISH INDICATORS** (mark as BULLISH only if expressing positive outlook):
+        - "long", "longing", "buy", "buying", "bought"
+        - "moon", "pump", "send it", "going up"
+        - "accumulate", "accumulating"
+        - "breakout", "breaking out"
+        - "bullish", "higher highs"
+        - Predicting price will go UP from current levels
+        
+        **KEY DISTINCTION**:
+        - If someone is CLOSING a position (long or short), determine what they EXPECT NEXT
+        - "Closed my long" = They expect DOWN = BEARISH
+        - "Closed my short" = They expect UP = BULLISH
+        - If someone says "NOT buying" or "staying out" = BEARISH stance
+        
+        **SYMBOL EXTRACTION**:
+        - Look for $SYMBOL cashtags first
+        - Common mappings: Silver/SLV, Gold/GLD, Bitcoin/BTC, Ethereum/ETH
+        - For pump.fun tokens, extract the contract address (32-44 char base58 string)
+        
+        **TYPE**:
+        - CRYPTO: BTC, ETH, SOL, DOGE, XRP, meme coins, tokens
+        - STOCK: AAPL, TSLA, SPY, GLD, SLV, individual stocks, ETFs, commodities
 
         Return a valid JSON object matching the schema.
         `;
