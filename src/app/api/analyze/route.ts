@@ -36,13 +36,30 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid tweet URL' }, { status: 400 });
         }
 
-        // Extract CA from pump.fun URL if provided
+        // Extract CA from pump.fun or DexScreener URL if provided
         let contractAddress: string | undefined = caParam || undefined;
         if (!contractAddress && pumpfunUrl) {
             // Parse pump.fun/coin/<CA> format
             const pumpMatch = pumpfunUrl.match(/pump\.fun\/coin\/([a-zA-Z0-9]+)/);
             if (pumpMatch) {
                 contractAddress = pumpMatch[1];
+            }
+
+            // Parse dexscreener.com/solana/<CA> format
+            if (!contractAddress) {
+                const dexMatch = pumpfunUrl.match(/dexscreener\.com\/solana\/([a-zA-Z0-9]+)/);
+                if (dexMatch) {
+                    contractAddress = dexMatch[1];
+                }
+            }
+
+            // Parse dexscreener.com/solana/<pair_address> - sometimes it's a pair, extract from URL
+            // Also handle gecko terminal: geckoterminal.com/solana/pools/<CA>
+            if (!contractAddress) {
+                const geckoMatch = pumpfunUrl.match(/geckoterminal\.com\/solana\/pools\/([a-zA-Z0-9]+)/);
+                if (geckoMatch) {
+                    contractAddress = geckoMatch[1];
+                }
             }
         }
 

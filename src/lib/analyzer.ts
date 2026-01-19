@@ -80,13 +80,9 @@ export async function analyzeTweet(tweetId: string, contractAddressOverride?: st
                 tweetSymbol.includes(caSymbol);
 
             if (!isMatch) {
-                // Ignore if tweet symbol is generic "CRYPTO" or "TOKEN" (if AI does that)
-                // But AI usually gives specific ticker.
-
-                // One exception: If Tweet says "SOL" (Chain) but user provides a Token.
-                // This is a common AI fallback. If callData.symbol is 'SOL', 'ETH', 'BASE', we might warn but allow if text implies a specific token?
-                // For now, adhere to User Rule: "mismatching should also output an error".
-                throw new Error(`Symbol Mismatch: Tweet is about $${tweetSymbol}, but the provided link is for $${caSymbol} (${overrideData.name}).`);
+                // User explicitly provided a link, so trust their intent
+                // Log warning but proceed with the user-provided token
+                console.log(`[Analyzer] Warning: Tweet mentions $${tweetSymbol}, but using user-provided token $${caSymbol} (${overrideData.name})`);
             }
         }
 
