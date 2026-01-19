@@ -150,34 +150,39 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
 
         CRITICAL SENTIMENT RULES (READ CAREFULLY):
         
+        **PRICE TARGET RULES** (MOST IMPORTANT):
+        - If tweet mentions a PRICE TARGET, determine if it's ABOVE or BELOW the TYPICAL current price
+        - BTC is currently around $90k-100k. A target of "65k", "60k", "50k" = BEARISH. A target of "150k", "200k" = BULLISH
+        - ETH is currently around $3000-4000. A target of "2k", "1500", "1000" = BEARISH. A target of "5k", "10k" = BULLISH
+        - If predicting a LOWER price target = BEARISH
+        - If predicting a HIGHER price target = BULLISH
+        - "Going to 65k", "target 65k", "expecting 65k", "retest 60k" on BTC = BEARISH (price going DOWN)
+        
         **BEARISH INDICATORS** (mark as BEARISH if ANY of these are present):
         - "short", "shorting", "shorted"
         - "sell", "selling", "sold"
-        - "dump", "dumping"
-        - "crash", "crashing"
+        - "dump", "dumping", "crash", "crashing"
         - "down", "going down", "lower", "drop"
         - "top is in", "the top", "topped"
         - "exit", "exiting", "closed my long"
         - "taking profits", "time to leave"
-        - "overvalued", "worthless", "dead"
         - "reject", "rejected", "rejection"
         - "flush", "capitulation", "wipeout"
-        - Predicting price will go DOWN from current levels
-        - Calling for a correction or pullback
+        - "retest", "fill the gap", "revisit" (when referring to a LOWER price)
+        - Any prediction of price going DOWN from current levels
         
         **BULLISH INDICATORS** (mark as BULLISH only if expressing positive outlook):
         - "long", "longing", "buy", "buying", "bought"
         - "moon", "pump", "send it", "going up"
         - "accumulate", "accumulating"
         - "breakout", "breaking out"
-        - "bullish", "higher highs"
+        - "bullish", "higher highs", "new ATH"
         - Predicting price will go UP from current levels
         
         **KEY DISTINCTION**:
-        - If someone is CLOSING a position (long or short), determine what they EXPECT NEXT
         - "Closed my long" = They expect DOWN = BEARISH
         - "Closed my short" = They expect UP = BULLISH
-        - If someone says "NOT buying" or "staying out" = BEARISH stance
+        - "NOT buying" or "staying out" = BEARISH stance
         
         **SYMBOL EXTRACTION**:
         - Look for $SYMBOL cashtags first
@@ -190,6 +195,10 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
 
         Return a valid JSON object matching the schema.
         `;
+
+        // DEBUG: Log what we're sending to the AI
+        console.log('[AI-Extractor] Tweet text:', tweetText);
+        console.log('[AI-Extractor] Has image:', !!imageUrl);
 
         const messages: any[] = [
             {
@@ -205,6 +214,9 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
             schema: CallSchema,
             messages: messages,
         });
+
+        // DEBUG: Log what AI returned
+        console.log('[AI-Extractor] AI returned:', JSON.stringify(object));
 
         // Post-processing for Solana CA to ensure it's captured
         if (object && !object.contractAddress) {
