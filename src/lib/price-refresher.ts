@@ -223,7 +223,8 @@ async function batchFetchYahooPrices(symbols: string[]): Promise<Map<string, num
 
 /**
  * Main refresh function.
- * Fetches all active analyses, updates prices, and saves back.
+ * Fetches ALL analyses from ALL user histories, updates prices, and saves back.
+ * Also updates recent_analyses for any matching entries.
  * Supports: CoinGecko crypto, DexScreener tokens, and Yahoo stocks.
  */
 export async function refreshAllAnalyses(): Promise<RefreshResult> {
@@ -235,55 +236,66 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
     const result: RefreshResult = { updated: 0, errors: 0, skipped: 0 };
 
     try {
-        // 1. Collect all analyses from recent_analyses
-        const recentData = await redis.lrange('recent_analyses', 0, -1);
-        const analyses: StoredAnalysis[] = recentData.map((item: any) =>
-            typeof item === 'string' ? JSON.parse(item) : item
-        );
+        // 1. Get all usernames from the set
+        const allUsernames = await redis.smembers('all_users') as string[];
+        console.log(`[PriceRefresher] Found ${allUsernames.length} users to process`);
 
-        console.log(`[PriceRefresher] Processing ${analyses.length} analyses...`);
+        // 2. Collect ALL analyses from ALL user histories
+        const allAnalysesMap = new Map<string, { analysis: StoredAnalysis; username: string }>();
 
-        if (analyses.length === 0) {
+        for (const username of allUsernames) {
+            const historyKey = `user:history:${username}`;
+            const historyData = await redis.lrange(historyKey, 0, -1);
+            const history: StoredAnalysis[] = historyData.map((item: any) =>
+                typeof item === 'string' ? JSON.parse(item) : item
+            );
+
+            for (const a of history) {
+                if (a.id && !allAnalysesMap.has(a.id)) {
+                    allAnalysesMap.set(a.id, { analysis: a, username });
+                }
+            }
+        }
+
+        const allAnalyses = Array.from(allAnalysesMap.values()).map(x => x.analysis);
+        console.log(`[PriceRefresher] Processing ${allAnalyses.length} unique analyses across all profiles...`);
+
+        if (allAnalyses.length === 0) {
             return result;
         }
 
-        // 2. Categorize analyses by data source
-        const cgSymbols = new Set<string>();      // CoinGecko-listed crypto
-        const yahooSymbols = new Set<string>();   // Stocks
-        const dexCAs = new Set<string>();         // DexScreener tokens (by CA)
+        // 3. Categorize analyses by data source
+        const cgSymbols = new Set<string>();
+        const yahooSymbols = new Set<string>();
+        const dexCAs = new Set<string>();
 
-        for (const a of analyses) {
+        for (const a of allAnalyses) {
             const symbol = a.symbol?.toUpperCase();
 
             if (a.type === 'STOCK') {
-                // Stocks go to Yahoo
                 if (symbol) yahooSymbols.add(symbol);
             } else if (a.contractAddress) {
-                // Has CA -> DexScreener
                 dexCAs.add(a.contractAddress);
             } else if (symbol && COINGECKO_IDS[symbol]) {
-                // CoinGecko-listed crypto
                 cgSymbols.add(symbol);
             }
-            // Note: Crypto without CA and not in CoinGecko will be skipped
         }
 
-        // 3. Batch fetch prices from all sources
+        // 4. Batch fetch prices from all sources
         const [cgPrices, yahooPrices, dexPrices] = await Promise.all([
             batchFetchCoinGeckoPrices([...cgSymbols]),
             batchFetchYahooPrices([...yahooSymbols]),
             batchFetchDexScreenerPrices([...dexCAs]),
         ]);
 
-        // 4. Update analyses
-        const updatedAnalyses: StoredAnalysis[] = [];
+        // 5. Update analyses and track which were updated
+        const updatedAnalysesById = new Map<string, StoredAnalysis>();
         const affectedUsers = new Set<string>();
 
-        for (const a of analyses) {
+        for (const a of allAnalyses) {
             const symbol = a.symbol?.toUpperCase();
             let newPrice: number | null = null;
 
-            // Determine price source
             if (a.type === 'STOCK' && symbol) {
                 newPrice = yahooPrices.get(symbol) || null;
             } else if (a.contractAddress) {
@@ -297,26 +309,23 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
                 const newPerf = calculatePerformance(a.entryPrice, newPrice, a.sentiment);
                 const newIsWin = newPerf > 0;
 
-                // Only update if price actually changed
                 if (a.currentPrice !== newPrice) {
                     const oldPrice = a.currentPrice;
                     a.currentPrice = newPrice;
                     a.performance = newPerf;
                     a.isWin = newIsWin;
                     result.updated++;
+                    updatedAnalysesById.set(a.id, a);
                     affectedUsers.add(a.username.toLowerCase());
 
-                    // Log significant changes (badge flips)
                     const badgeFlip = (oldPerf > 0) !== (newPerf > 0);
                     const source = a.type === 'STOCK' ? 'Yahoo' : a.contractAddress ? 'DexScreener' : 'CoinGecko';
                     console.log(`[PriceRefresher] ${a.symbol} (${source}): $${oldPrice?.toFixed(4)} -> $${newPrice.toFixed(4)} (${oldPerf.toFixed(2)}% -> ${newPerf.toFixed(2)}%)${badgeFlip ? ' 🔄 BADGE FLIP!' : ''}`);
                 } else {
                     result.skipped++;
-                    console.log(`[PriceRefresher] SKIP ${a.symbol}: price unchanged ($${newPrice.toFixed(4)})`);
                 }
             } else {
                 result.skipped++;
-                // Log skip reason
                 if (!a.entryPrice) {
                     console.log(`[PriceRefresher] SKIP ${a.symbol}: no entryPrice`);
                 } else if (!newPrice) {
@@ -330,44 +339,57 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
                     console.log(`[PriceRefresher] SKIP ${a.symbol}: ${reason}`);
                 }
             }
-
-            updatedAnalyses.push(a);
         }
 
-        // 5. Write back to recent_analyses
-        if (result.updated > 0) {
-            await redis.del('recent_analyses');
-            // Push in reverse order (oldest first, then lpush reverses to correct order)
-            for (let i = updatedAnalyses.length - 1; i >= 0; i--) {
-                await redis.lpush('recent_analyses', JSON.stringify(updatedAnalyses[i]));
+        // 6. Write back to user histories and recalculate profiles
+        for (const username of affectedUsers) {
+            const historyKey = `user:history:${username}`;
+            const historyData = await redis.lrange(historyKey, 0, -1);
+            const history: StoredAnalysis[] = historyData.map((item: any) =>
+                typeof item === 'string' ? JSON.parse(item) : item
+            );
+
+            let historyUpdated = false;
+            for (const h of history) {
+                const updated = updatedAnalysesById.get(h.id);
+                if (updated) {
+                    h.currentPrice = updated.currentPrice;
+                    h.performance = updated.performance;
+                    h.isWin = updated.isWin;
+                    historyUpdated = true;
+                }
             }
 
-            // 6. Update user histories and recalculate profiles
-            for (const username of affectedUsers) {
-                const historyKey = `user:history:${username}`;
-                const historyData = await redis.lrange(historyKey, 0, -1);
-                const history: StoredAnalysis[] = historyData.map((item: any) =>
-                    typeof item === 'string' ? JSON.parse(item) : item
-                );
-
-                let historyUpdated = false;
-                for (const h of history) {
-                    const updated = updatedAnalyses.find(u => u.id === h.id);
-                    if (updated) {
-                        h.currentPrice = updated.currentPrice;
-                        h.performance = updated.performance;
-                        h.isWin = updated.isWin;
-                        historyUpdated = true;
-                    }
+            if (historyUpdated) {
+                await redis.del(historyKey);
+                for (let i = history.length - 1; i >= 0; i--) {
+                    await redis.lpush(historyKey, JSON.stringify(history[i]));
                 }
+                await recalculateUserProfile(username);
+            }
+        }
 
-                if (historyUpdated) {
-                    await redis.del(historyKey);
-                    for (let i = history.length - 1; i >= 0; i--) {
-                        await redis.lpush(historyKey, JSON.stringify(history[i]));
-                    }
-                    await recalculateUserProfile(username);
-                }
+        // 7. Also update recent_analyses if any entries there were updated
+        const recentData = await redis.lrange('recent_analyses', 0, -1);
+        const recentAnalyses: StoredAnalysis[] = recentData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
+
+        let recentUpdated = false;
+        for (const r of recentAnalyses) {
+            const updated = updatedAnalysesById.get(r.id);
+            if (updated) {
+                r.currentPrice = updated.currentPrice;
+                r.performance = updated.performance;
+                r.isWin = updated.isWin;
+                recentUpdated = true;
+            }
+        }
+
+        if (recentUpdated) {
+            await redis.del('recent_analyses');
+            for (let i = recentAnalyses.length - 1; i >= 0; i--) {
+                await redis.lpush('recent_analyses', JSON.stringify(recentAnalyses[i]));
             }
         }
 
@@ -380,3 +402,4 @@ export async function refreshAllAnalyses(): Promise<RefreshResult> {
 
     return result;
 }
+
