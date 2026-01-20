@@ -179,10 +179,19 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         - "bullish", "higher highs", "new ATH"
         - Predicting price will go UP from current levels
         
+        **CRITICAL: ACTION vs DESCRIPTION**:
+        - FOCUS ON THE TRADER'S POSITION/ACTION, NOT THEIR DESCRIPTION OF PRICE
+        - "Chart looks horrible BUT I'm holding/buying/sticking with it" = BULLISH (they are LONG despite bad chart)
+        - "DCA", "accumulating", "adding", "staking" = BULLISH (they are buying more)
+        - "Sticking with the trade" = BULLISH (maintaining long position)
+        - Someone can describe price negatively while still being BULLISH on the trade
+        - The ACTUAL POSITION matters more than commentary on current price action
+        
         **KEY DISTINCTION**:
         - "Closed my long" = They expect DOWN = BEARISH
         - "Closed my short" = They expect UP = BULLISH
         - "NOT buying" or "staying out" = BEARISH stance
+        - "Chart looks bad but holding" = BULLISH (position is LONG)
         
         **SYMBOL EXTRACTION**:
         - Look for $SYMBOL cashtags first
