@@ -134,9 +134,12 @@ const LAUNCH_DATES: Record<string, { date: Date, price: number }> = {
 };
 
 export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
+    // Clean symbol (remove $ prefix if present)
+    symbol = symbol.replace(/^\$/, '').toUpperCase();
+
     // 0. Check for pre-market dates (before launch)
     if (date) {
-        const launchData = LAUNCH_DATES[symbol.toUpperCase()];
+        const launchData = LAUNCH_DATES[symbol];
         if (launchData && date < launchData.date) {
             console.log(`[MarketData] Date ${date.toISOString()} is before ${symbol} launch (${launchData.date.toISOString()}). Using launch price: $${launchData.price}`);
             return launchData.price;
