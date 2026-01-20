@@ -71,6 +71,14 @@ const COINGECKO_IDS: Record<string, string> = {
     'LIT': 'litentry',
     'ASTER': 'aster-2',
     'JUP': 'jupiter-exchange-solana',
+    // Privacy Coins
+    'BCH': 'bitcoin-cash',
+    'XMR': 'monero',
+    'ZEC': 'zcash',
+    'DASH': 'dash',
+    // Solana Ecosystem
+    'ME': 'magic-eden',
+    'PUMP': 'pump-fun',
 };
 
 interface RefreshResult {
