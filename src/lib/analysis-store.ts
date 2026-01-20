@@ -132,11 +132,32 @@ export const StoredAnalysisSchema = z.object({
 
 export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {
     try {
-        // Add to beginning of list (lpush)
-        await redis.lpush(RECENT_KEY, JSON.stringify(analysis));
+        // Fetch current list to check for duplicates
+        const currentData = await redis.lrange(RECENT_KEY, 0, -1);
+        let items: StoredAnalysis[] = currentData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
 
-        // Trim to max size
-        await redis.ltrim(RECENT_KEY, 0, MAX_STORED - 1);
+        // Remove any existing entry with the same ID
+        items = items.filter(item => item.id !== analysis.id);
+
+        // Add new to top
+        items.unshift(analysis);
+
+        // Limit size
+        if (items.length > MAX_STORED) {
+            items = items.slice(0, MAX_STORED);
+        }
+
+        // Write back
+        await redis.del(RECENT_KEY);
+        // Optimize: Pipeline the pushes
+        const pipeline = redis.pipeline();
+        for (const item of items) {
+            pipeline.rpush(RECENT_KEY, JSON.stringify(item));
+        }
+        await pipeline.exec();
+
     } catch (error) {
         console.error('[AnalysisStore] Failed to add analysis:', error);
     }
