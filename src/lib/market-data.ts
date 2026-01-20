@@ -632,7 +632,57 @@ export function calculatePerformance(callPrice: number, currentPrice: number, se
     return rawChange;
 }
 
+const INDEX_FALLBACKS: Record<string, string> = {
+    // S&P 500
+    'SPX': 'SPY',
+    '^GSPC': 'SPY',
+    '^SPX': 'SPY',
+    'ES': 'SPY',      // Futures
+    'ES=F': 'SPY',
+
+    // Nasdaq
+    'NDX': 'QQQ',
+    '^NDX': 'QQQ',
+    '^IXIC': 'QQQ',
+    'NQ': 'QQQ',      // Futures
+    'NQ=F': 'QQQ',
+
+    // Dow Jones
+    'DJI': 'DIA',
+    '^DJI': 'DIA',
+    'YM': 'DIA',      // Futures
+    'YM=F': 'DIA',
+
+    // Russell 2000
+    'RUT': 'IWM',
+    '^RUT': 'IWM',
+    'RTY': 'IWM',     // Futures
+    'RTY=F': 'IWM',
+
+    // Volatility
+    'VIX': 'VIXY',
+    '^VIX': 'VIXY',
+};
+
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
+    // 1. Try original symbol
+    let price = await getYahooPriceInternal(symbol, date);
+    if (price !== null) return price;
+
+    // 2. Check fallback map
+    const fallback = INDEX_FALLBACKS[symbol.toUpperCase()];
+    if (fallback) {
+        console.log(`[MarketData] Yahoo fetch failed for ${symbol}, trying fallback ETF: ${fallback}`);
+        price = await getYahooPriceInternal(fallback, date);
+        if (price !== null) return price;
+    }
+
+    // 3. Try prepending ^ if it looks like an index (3-4 chars, no numbers?) - Simplistic heuristic
+    // or just rely on the map above.
+    return null;
+}
+
+async function getYahooPriceInternal(symbol: string, date?: Date): Promise<number | null> {
     try {
         let period1 = 0;
         let period2 = 9999999999;
