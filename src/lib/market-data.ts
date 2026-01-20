@@ -647,7 +647,12 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
                 const url = `${YAHOO_BASE}/${symbol}?period1=${p1}&period2=${p2}&interval=${strategy.interval}&events=history`;
 
                 try {
-                    const res = await fetch(url, { cache: 'no-store' });
+                    const res = await fetch(url, {
+                        cache: 'no-store',
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
                     if (res.ok) {
                         const json = await res.json();
                         const result = json?.chart?.result?.[0];
@@ -687,7 +692,12 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
         }
 
         const url = `${YAHOO_BASE}/${symbol}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
-        const res = await fetch(url, { cache: 'no-store' });
+        const res = await fetch(url, {
+            cache: 'no-store',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
 
         if (!res.ok) return null;
 
