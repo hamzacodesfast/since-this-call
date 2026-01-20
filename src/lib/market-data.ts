@@ -204,7 +204,15 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             return getDexPriceWithHistory(result, date); // Use Token Address (via result obj)
         }
     } else {
-        return getYahooPrice(symbol, date);
+        // STOCK - Yahoo Finance only
+        console.log(`[MarketData] Fetching stock price for ${symbol}...`);
+        const stockPrice = await getYahooPrice(symbol, date);
+        if (stockPrice === null) {
+            console.log(`[MarketData] Yahoo Finance returned null for ${symbol}`);
+        } else {
+            console.log(`[MarketData] Yahoo price for ${symbol}: $${stockPrice}`);
+        }
+        return stockPrice;
     }
 
     return null;
@@ -673,7 +681,9 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
                             if (closestPrice !== null) return closestPrice;
                         }
                     }
-                } catch (e) { }
+                } catch (e: any) {
+                    console.error(`[MarketData] Yahoo intraday fetch error for ${symbol}:`, e?.message || e);
+                }
             }
 
             // Fallback to Daily - include previous day for pre-market tweets
