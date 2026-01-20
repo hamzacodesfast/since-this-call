@@ -29,7 +29,7 @@ function getTickerKey(analysis: { symbol: string; type?: string; contractAddress
 /**
  * Add an analysis to the ticker index for efficient lookup during refresh.
  */
-async function trackTicker(analysis: StoredAnalysis): Promise<void> {
+export async function trackTicker(analysis: StoredAnalysis): Promise<void> {
     try {
         const tickerKey = getTickerKey(analysis);
         const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
@@ -48,7 +48,7 @@ async function trackTicker(analysis: StoredAnalysis): Promise<void> {
 /**
  * Remove an analysis from the ticker index.
  */
-async function untrackTicker(analysis: StoredAnalysis): Promise<void> {
+export async function untrackTicker(analysis: StoredAnalysis): Promise<void> {
     try {
         const tickerKey = getTickerKey(analysis);
         const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
@@ -108,6 +108,9 @@ export interface StoredAnalysis {
     currentPrice?: number; // Price at analysis time (or last update)
     type?: 'CRYPTO' | 'STOCK';
     contractAddress?: string; // For pump.fun/DexScreener tokens
+    // Optional metadata
+    tweetUrl?: string;
+    text?: string;
 }
 
 // Zod schema for input validation
