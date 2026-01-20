@@ -137,6 +137,26 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
     // Clean symbol (remove $ prefix if present)
     symbol = symbol.replace(/^\$/, '').toUpperCase();
 
+    // Remove common pair suffixes (USDT, USD, PERP) if it's likely a pair
+    // Prevent stripping if the symbol IS the suffix (e.g. USDT)
+    const suffixes = ['USDT', 'USD', 'PERP'];
+    for (const suffix of suffixes) {
+        if (symbol.endsWith(suffix) && symbol.length > suffix.length) {
+            // Check for separators like BTC/USDT or BTC-USD
+            // If strictly HYPEUSDT, just strip.
+            // If BTC-USD, strip USD -> BTC- -> BTC
+
+            const base = symbol.slice(0, -suffix.length);
+            // Clean trailing separator
+            if (base.endsWith('-') || base.endsWith('/')) {
+                symbol = base.slice(0, -1);
+            } else {
+                symbol = base;
+            }
+            break;
+        }
+    }
+
     // 0. Check for pre-market dates (before launch)
     if (date) {
         const launchData = LAUNCH_DATES[symbol];
