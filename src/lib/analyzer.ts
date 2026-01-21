@@ -3,6 +3,29 @@ import { extractCallFromText } from '@/lib/ai-extractor';
 import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA } from '@/lib/market-data';
 import { getPumpfunPrice, storePumpfunPrice } from '@/lib/analysis-store';
 
+/**
+ * Clean symbol by removing $ prefix and common pair suffixes (USDT, USD, PERP)
+ */
+function cleanSymbol(symbol: string): string {
+    let clean = symbol.replace(/^\$/, '').toUpperCase();
+
+    const suffixes = ['USDT', 'USD', 'PERP'];
+    for (const suffix of suffixes) {
+        if (clean.endsWith(suffix) && clean.length > suffix.length) {
+            const base = clean.slice(0, -suffix.length);
+            // Clean trailing separator like BTC-USD -> BTC
+            if (base.endsWith('-') || base.endsWith('/')) {
+                clean = base.slice(0, -1);
+            } else {
+                clean = base;
+            }
+            break;
+        }
+    }
+
+    return clean;
+}
+
 export interface AnalysisResult {
     analysis: {
         symbol: string;
@@ -48,6 +71,11 @@ export async function analyzeTweet(tweetId: string, contractAddressOverride?: st
 
     if (!callData) {
         throw new Error('Could not identify financial call');
+    }
+
+    // 5. Clean the symbol (strip $ and USDT/USD suffixes)
+    if (callData.symbol) {
+        callData.symbol = cleanSymbol(callData.symbol);
     }
 
     // If CA override provided (e.g., from pump.fun URL), validate and use it
