@@ -9,7 +9,8 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 ## ✨ Features
 
 - **AI-Powered Extraction**: Uses **Google Gemini 2.0 Flash** to intelligently parse tweets, identifying asset symbols, sentiment (Bullish/Bearish), and prediction dates
-- **Live Price Updates**: Automatic 15-minute price refresh via Vercel Cron keeps call receipts accurate
+- **Metrics Dashboard**: Live platform stats showing total calls, active gurus, and community win rate
+- **Live Price Updates**: Automatic price refresh to keep call receipts accurate
 - **Multi-Asset Support**:
   - **Crypto**: Real-time prices via **CoinGecko** & **DexScreener** (Meme coins supported!)
   - **Stocks & ETFs**: Free data via **Yahoo Finance**
@@ -29,13 +30,7 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 | Database | [Upstash Redis](https://upstash.com/) (Serverless) |
 | AI | [Vercel AI SDK](https://sdk.vercel.ai/) + [Google Gemini](https://ai.google.dev/) |
 | Styling | [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
-| Comments | [Disqus](https://disqus.com/) |
-
-### Data Sources
-- **Yahoo Finance** - Stocks, ETFs, Indices
-- **CoinGecko** - Major crypto (50+ tokens mapped)
-- **DexScreener** - Meme coins, Solana/Base tokens
-- **GeckoTerminal** - Historical precision for DEX tokens
+| Monitoring | [Vercel Speed Insights](https://vercel.com/docs/speed-insights) |
 
 ## 🚀 Getting Started
 
@@ -85,10 +80,9 @@ Located in `/scripts`, these help manage and correct data:
 | Script | Usage | Purpose |
 |--------|-------|---------|
 | `reanalyze.ts` | `npx tsx scripts/reanalyze.ts <TWEET_ID>` | Re-analyze a tweet to fix incorrect data |
+| `refresh-metrics.ts` | `npx tsx scripts/refresh-metrics.ts` | Manually refresh homepage metrics |
 | `remove-tweet.ts` | `npx tsx scripts/remove-tweet.ts <TWEET_ID>` | Remove a single analysis |
-| `cleanup-duplicates.ts` | `npx tsx scripts/cleanup-duplicates.ts` | Remove duplicate entries |
 | `sync-profile.ts` | `npx tsx scripts/sync-profile.ts <USERNAME>` | Recalculate user stats |
-| `test-refresh.ts` | `npx tsx scripts/test-refresh.ts` | Test price refresh manually |
 | `backup-data.ts` | `npx tsx scripts/backup-data.ts` | Export all Redis data |
 
 ## 📦 Deployment
@@ -101,36 +95,16 @@ Optimized for [Vercel](https://vercel.com):
 4. Deploy!
 
 ### Cron Setup
-Add to `vercel.json`:
+For Vercel Hobby plan (Daily):
 ```json
 {
   "crons": [{
     "path": "/api/cron/refresh",
-    "schedule": "*/15 * * * *"
+    "schedule": "0 0 * * *"
   }]
 }
 ```
-
-## 🏗️ Architecture
-
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── api/
-│   │   ├── analyze/        # Main analysis endpoint
-│   │   ├── recent/         # Recent analyses CRUD
-│   │   └── cron/refresh/   # Price refresh endpoint
-│   ├── user/[username]/    # Profile pages
-│   └── leaderboard/        # Top/Bottom gurus
-├── lib/
-│   ├── analyzer.ts         # Analysis orchestrator
-│   ├── ai-extractor.ts     # Gemini prompt + extraction
-│   ├── market-data.ts      # Price fetching (Yahoo/CG/DexS)
-│   ├── price-refresher.ts  # Batch price updates
-│   └── analysis-store.ts   # Redis operations
-├── components/             # React components
-└── scripts/                # Admin utilities
-```
+*Note: For 15-minute updates, upgrade to Pro or use an external cron service.*
 
 ## 📄 License
 
