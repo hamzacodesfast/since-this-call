@@ -4,6 +4,7 @@ import "./globals.css";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -43,6 +44,7 @@ export default function RootLayout({
                     gtag('config', 'G-ZZQ656XHDP');
                     `}
                 </Script>
+                <SpeedInsights />
             </body>
         </html>
     );
