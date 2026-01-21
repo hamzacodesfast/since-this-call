@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock, Trophy } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
+import { MetricsBar } from '@/components/metrics-bar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -132,6 +133,9 @@ export default function Home() {
                     The ultimate lie detector for Crypto & Stock gurus. Paste a prediction tweet to see the <span className="text-foreground font-semibold">real receipts</span>.
                 </p>
             </div>
+
+            {/* Platform Metrics */}
+            <MetricsBar />
 
             {/* Input Form */}
             <div className="w-full max-w-xl relative mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
