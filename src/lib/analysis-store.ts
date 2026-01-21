@@ -1,3 +1,22 @@
+/**
+ * @file analysis-store.ts
+ * @description Redis storage layer for Since This Call
+ * 
+ * This module handles all Redis operations including:
+ * - Storing and retrieving analyses (recent, user history)
+ * - User profile management (wins/losses/badges)
+ * - Ticker tracking for efficient price refresh
+ * - Pump.fun price caching
+ * 
+ * Key Data Structures:
+ * - `recent_analyses` (List): Recent 50 analyses for homepage
+ * - `user:history:{username}` (List): Per-user analysis history
+ * - `user:profile:{username}` (Hash): User stats and badges
+ * - `tracked_tickers` (Set): All unique tickers being tracked
+ * - `ticker_index:{TYPE:SYMBOL}` (Set): Maps ticker to analyses
+ * 
+ * @see price-refresher.ts for batch price updates using ticker index
+ */
 import { Redis } from '@upstash/redis';
 import { z } from 'zod';
 

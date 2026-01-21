@@ -1,3 +1,22 @@
+/**
+ * @file price-refresher.ts
+ * @description Batch price refresh engine for live call tracking
+ * 
+ * Ticker-Centric Architecture (optimized Jan 2026):
+ * Instead of iterating all analyses, we:
+ * 1. Query `tracked_tickers` set for unique tickers
+ * 2. Batch fetch prices by data source
+ * 3. Update only analyses that reference each ticker
+ * 
+ * Data Source Batching:
+ * - CoinGecko: Up to 50 symbols per API call
+ * - Yahoo Finance: Parallel fetches for stocks
+ * - DexScreener: Up to 30 contract addresses per call
+ * 
+ * Called by: /api/cron/refresh (Vercel Cron every 15m)
+ * 
+ * @see analysis-store.ts for ticker tracking functions
+ */
 import { Redis } from '@upstash/redis';
 import { StoredAnalysis, recalculateUserProfile } from './analysis-store';
 import { calculatePerformance } from './market-data';

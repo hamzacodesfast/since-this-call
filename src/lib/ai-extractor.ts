@@ -1,3 +1,22 @@
+/**
+ * @file ai-extractor.ts
+ * @description AI-powered tweet analysis using Google Gemini
+ * 
+ * Uses Gemini 2.0 Flash to extract:
+ * - Symbol: The asset ticker (BTC, NVDA, etc.)
+ * - Type: CRYPTO or STOCK
+ * - Sentiment: BULLISH or BEARISH
+ * - Date: When the call was made
+ * - Contract Address: For pump.fun/meme tokens
+ * 
+ * Key features:
+ * - Multimodal: Can analyze chart images for context
+ * - Doomposting detection: "cleanse", "capitulation" = BEARISH
+ * - Position vs description: "chart horrible but holding" = BULLISH
+ * - Regex fallback: Safety net if AI rate limited
+ * 
+ * @see analyzer.ts for orchestration
+ */
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';

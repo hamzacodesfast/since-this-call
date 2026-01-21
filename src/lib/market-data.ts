@@ -1,3 +1,23 @@
+/**
+ * @file market-data.ts
+ * @description Price fetching engine with waterfall fallback strategy
+ * 
+ * The "Waterfalls" Architecture:
+ * 1. Symbol cleanup (strip $, USDT, USD, PERP suffixes)
+ * 2. Known contract addresses (KNOWN_CAS) for imposter protection
+ * 3. Yahoo Finance (stocks, indices, major crypto)
+ *    - INDEX_FALLBACKS: SPX→SPY, NQ→QQQ, DJI→DIA, VIX→VIXY
+ * 4. CoinGecko (crypto with ID mapping)
+ * 5. DexScreener (meme coins, SOL/Base tokens)
+ * 6. GeckoTerminal (precision fallback)
+ * 
+ * Historical prices:
+ * - CoinGecko: Primary, with HOURLY granularity for 2-90 day old data
+ * - Yahoo Finance: Stock history
+ * - Binance: Crypto with minute precision
+ * 
+ * @see price-refresher.ts for batch price updates
+ */
 
 import { unstable_noStore as noStore } from 'next/cache';
 

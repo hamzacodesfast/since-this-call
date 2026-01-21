@@ -1,3 +1,22 @@
+/**
+ * @file analyzer.ts
+ * @description Main analysis orchestrator for Since This Call
+ * 
+ * This module coordinates the full analysis pipeline:
+ * 1. Fetch tweet content via react-tweet API
+ * 2. AI extraction of symbol, sentiment, and type
+ * 3. Symbol cleanup (strip $ prefix and USDT/USD suffixes)
+ * 4. Price lookup via market-data waterfall
+ * 5. Performance calculation
+ * 
+ * Key features:
+ * - Contract address override for pump.fun URLs
+ * - Symbol/CA validation to prevent hijacking
+ * - FORCE_STOCKS list for known stock tickers
+ * 
+ * @see ai-extractor.ts for tweet parsing logic
+ * @see market-data.ts for price fetching
+ */
 import { getTweet } from 'react-tweet/api';
 import { extractCallFromText } from '@/lib/ai-extractor';
 import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA } from '@/lib/market-data';
