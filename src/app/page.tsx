@@ -191,80 +191,6 @@ export default function Home() {
                 )}
             </div>
 
-            {/* Features & Limitations */}
-            <div className="w-full max-w-2xl text-left space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                <div className="grid md:grid-cols-2 gap-6">
-                    {/* Features */}
-                    <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
-                        <div className="flex items-center gap-2 text-primary">
-                            <Sparkles className="w-5 h-5" />
-                            <h3 className="font-semibold text-lg">Supported Assets</h3>
-                        </div>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span>
-                                <div>
-                                    <strong className="text-foreground">Stocks</strong>
-                                    <p className="text-xs opacity-80">All tickers via Yahoo Finance (AAPL, TSLA, etc.)</p>
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span>
-                                <div>
-                                    <strong className="text-foreground">Major Crypto</strong>
-                                    <p className="text-xs opacity-80">BTC, ETH, SOL, DOGE, XRP, BNB + 50 more via CoinGecko</p>
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span>
-                                <div>
-                                    <strong className="text-foreground">Meme Coins & Pump.fun</strong>
-                                    <p className="text-xs opacity-80">Auto-discovery via DexScreener & GeckoTerminal</p>
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-green-500 mt-0.5">✓</span>
-                                <div>
-                                    <strong className="text-foreground">Live Tracking</strong>
-                                    <p className="text-xs opacity-80">Prices update automatically, badges flip in real-time</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Limitations */}
-                    <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
-                        <div className="flex items-center gap-2 text-amber-500">
-                            <TrendingUp className="w-5 h-5" />
-                            <h3 className="font-semibold text-lg">Limitations</h3>
-                        </div>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li className="flex items-start gap-2">
-                                <span className="text-amber-500 mt-0.5">⚠</span>
-                                <div>
-                                    <strong className="text-foreground">Old Tweets (&gt;7 days)</strong>
-                                    <p className="text-xs opacity-80">May lack precise historical prices for obscure tokens</p>
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-amber-500 mt-0.5">⚠</span>
-                                <div>
-                                    <strong className="text-foreground">Brand New Tokens</strong>
-                                    <p className="text-xs opacity-80">Need at least a few minutes of trading history</p>
-                                </div>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="text-amber-500 mt-0.5">⚠</span>
-                                <div>
-                                    <strong className="text-foreground">Ambiguous Calls</strong>
-                                    <p className="text-xs opacity-80">AI may misinterpret vague or sarcastic tweets</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
             {/* Error Message */}
             {error && (
                 <div className="mb-12 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-3 animate-in hover:scale-105 transition-transform">
@@ -275,6 +201,82 @@ export default function Home() {
 
             {/* Results */}
             {data && <AnalysisView data={data} />}
+
+            {/* Features & Limitations - Only show when no results */}
+            {!data && !isLoading && (
+                <div className="w-full max-w-2xl text-left space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {/* Features */}
+                        <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-primary">
+                                <Sparkles className="w-5 h-5" />
+                                <h3 className="font-semibold text-lg">Supported Assets</h3>
+                            </div>
+                            <ul className="space-y-2 text-sm text-muted-foreground">
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-500 mt-0.5">✓</span>
+                                    <div>
+                                        <strong className="text-foreground">Stocks</strong>
+                                        <p className="text-xs opacity-80">All tickers via Yahoo Finance (AAPL, TSLA, etc.)</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-500 mt-0.5">✓</span>
+                                    <div>
+                                        <strong className="text-foreground">Major Crypto</strong>
+                                        <p className="text-xs opacity-80">BTC, ETH, SOL, DOGE, XRP, BNB + 50 more via CoinGecko</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-500 mt-0.5">✓</span>
+                                    <div>
+                                        <strong className="text-foreground">Meme Coins & Pump.fun</strong>
+                                        <p className="text-xs opacity-80">Auto-discovery via DexScreener & GeckoTerminal</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-green-500 mt-0.5">✓</span>
+                                    <div>
+                                        <strong className="text-foreground">Live Tracking</strong>
+                                        <p className="text-xs opacity-80">Prices update automatically, badges flip in real-time</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Limitations */}
+                        <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 text-amber-500">
+                                <TrendingUp className="w-5 h-5" />
+                                <h3 className="font-semibold text-lg">Limitations</h3>
+                            </div>
+                            <ul className="space-y-2 text-sm text-muted-foreground">
+                                <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                                    <div>
+                                        <strong className="text-foreground">Old Tweets (&gt;7 days)</strong>
+                                        <p className="text-xs opacity-80">May lack precise historical prices for obscure tokens</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                                    <div>
+                                        <strong className="text-foreground">Brand New Tokens</strong>
+                                        <p className="text-xs opacity-80">Need at least a few minutes of trading history</p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                                    <div>
+                                        <strong className="text-foreground">Ambiguous Calls</strong>
+                                        <p className="text-xs opacity-80">AI may misinterpret vague or sarcastic tweets</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Footer Branding */}
             <div className="mt-auto py-12 text-center space-y-4">

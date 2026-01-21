@@ -227,10 +227,12 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         - Look for $SYMBOL cashtags first
         - Common mappings: Silver/SLV, Gold/GLD, Bitcoin/BTC, Ethereum/ETH
         - For pump.fun tokens, extract the contract address (32-44 char base58 string)
+        - IMPORTANT: "SPX6900" is a CRYPTO memecoin, NOT the S&P 500 index. Extract as symbol "SPX6900" type "CRYPTO"
+        - Do NOT shorten "SPX6900" to "SPX" - they are different assets
         
         **TYPE**:
-        - CRYPTO: BTC, ETH, SOL, DOGE, XRP, meme coins, tokens
-        - STOCK: AAPL, TSLA, SPY, GLD, SLV, individual stocks, ETFs, commodities
+        - CRYPTO: BTC, ETH, SOL, DOGE, XRP, meme coins, tokens, SPX6900
+        - STOCK: AAPL, TSLA, SPY, GLD, SLV, individual stocks, ETFs, commodities, SPX (S&P 500 index)
 
         Return a valid JSON object matching the schema.
         `;
