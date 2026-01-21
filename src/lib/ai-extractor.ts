@@ -203,14 +203,25 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         - "Chart looks horrible BUT I'm holding/buying/sticking with it" = BULLISH (they are LONG despite bad chart)
         - "DCA", "accumulating", "adding", "staking" = BULLISH (they are buying more)
         - "Sticking with the trade" = BULLISH (maintaining long position)
-        - Someone can describe price negatively while still being BULLISH on the trade
-        - The ACTUAL POSITION matters more than commentary on current price action
+        
+        **PROBABILITY / SKEPTICISM**:
+        - "Low chance", "Unlikely", "Doubt", "10% chance" of a high price = BEARISH (indicates it WON'T happen)
+        - "< 50% chance" of upside = BEARISH
+        - "High chance", "Likely", "Imminent" of a high price = BULLISH
         
         **KEY DISTINCTION**:
         - "Closed my long" = They expect DOWN = BEARISH
         - "Closed my short" = They expect UP = BULLISH
         - "NOT buying" or "staying out" = BEARISH stance
         - "Chart looks bad but holding" = BULLISH (position is LONG)
+        - "Cooked", "Finished", "Over", "Dead" = BEARISH (negative outlook)
+        - "Buying sub $X", "Buying under $X", "Bid at $X" = BEARISH (expects price to drop to $X first)
+        - "Bids set" or "Limits set" = BEARISH (waiting for lower prices)
+        - "Run the stops" or "Sweep the lows" = BEARISH (expects drop before reversal)
+        - "Drop then pump" or "Lower then higher" = BEARISH (immediate direction is down)
+        - "I become a buyer at..." = BEARISH (not a buyer YET)
+        - "Buying the dip" (active action NOW) = BULLISH
+        - "Will buy IF it drops" (passive/conditional) = BEARISH (expects drop)
         
         **SYMBOL EXTRACTION**:
         - Look for $SYMBOL cashtags first

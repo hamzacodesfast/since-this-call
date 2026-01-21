@@ -25,7 +25,11 @@ export function Footer() {
                         For entertainment purposes only. Not financial advice.
                         We track the accuracy of public predictions using mathematical analysis.
                     </p>
+                    <p className="text-xs text-amber-500/80 mt-2 font-medium">
+                        Sponsored by <a href="https://www.asterdex.com/en/referral/48b50b" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-400">AsterDex</a> - Trade crypto with low fees.
+                    </p>
                 </div>
+
 
                 {/* Social Links */}
                 <div className="flex items-center gap-4">
@@ -54,6 +58,7 @@ export function Footer() {
                         About & Legal
                     </Link>
                 </div>
+
             </div>
         </footer>
     );

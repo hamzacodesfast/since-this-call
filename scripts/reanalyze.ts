@@ -75,7 +75,7 @@ async function reanalyze() {
 
             // Metadata
             tweetUrl: oldAnalysis.tweetUrl || `https://x.com/${oldAnalysis.username || targetUser}/status/${oldAnalysis.id}`,
-            text: oldAnalysis.text || newResult.tweet.text,
+            text: newResult.tweet.text, // ALWAYS use fresh text (might fix link-only tweets)
             author: oldAnalysis.author,
             username: oldAnalysis.username || targetUser, // Fallback to targetUser if missing
             avatar: oldAnalysis.avatar,

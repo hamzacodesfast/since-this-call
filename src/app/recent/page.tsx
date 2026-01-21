@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import NextImage from 'next/image';
 import { AnalysisCard } from '@/components/analysis-card';
+import { AsterDexBanner } from '@/components/asterdex-banner';
 
 interface StoredAnalysis {
     id: string;
@@ -87,6 +88,11 @@ export default function RecentPage() {
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
+                </div>
+
+                {/* AsterDex Banner */}
+                <div className="mb-8">
+                    <AsterDexBanner />
                 </div>
 
                 {/* Content */}

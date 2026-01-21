@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Trophy, Skull, TrendingUp, TrendingDown, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AsterDexBanner } from '@/components/asterdex-banner';
 
 interface UserProfile {
     username: string;
@@ -87,6 +88,11 @@ export default function LeaderboardPage() {
                         </Button>
                     </Link>
                     <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
+                </div>
+
+                {/* AsterDex Banner */}
+                <div className="mb-8">
+                    <AsterDexBanner />
                 </div>
 
                 {loading ? (

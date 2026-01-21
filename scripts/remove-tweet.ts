@@ -10,9 +10,6 @@ const redis = new Redis({
     token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
 });
 
-const TWEET_ID = '2012652122349642072';
-const USERNAME = 'NihilusBTC';
-
 async function removeAnalysis(key: string, id: string) {
     const list = await redis.lrange(key, 0, -1);
     const initialLen = list.length;
@@ -44,10 +41,18 @@ async function removeAnalysis(key: string, id: string) {
 }
 
 async function main() {
-    console.log(`🗑️ Removing Tweet ${TWEET_ID}...`);
+    const tweetId = process.argv[2];
+    const username = process.argv[3];
 
-    await removeAnalysis('recent_analyses', TWEET_ID);
-    await removeAnalysis(`user:history:${USERNAME}`, TWEET_ID);
+    if (!tweetId || !username) {
+        console.error('❌ Usage: npx tsx scripts/remove-tweet.ts <TWEET_ID> <USERNAME>');
+        process.exit(1);
+    }
+
+    console.log(`🗑️ Removing Tweet ${tweetId} for user ${username}...`);
+
+    await removeAnalysis('recent_analyses', tweetId);
+    await removeAnalysis(`user:history:${username}`, tweetId);
 
     console.log('Done.');
     process.exit(0);
