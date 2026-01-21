@@ -702,6 +702,24 @@ const INDEX_FALLBACKS: Record<string, string> = {
     // Volatility
     'VIX': 'VIXY',
     '^VIX': 'VIXY',
+
+    // Commodities - Gold
+    'GOLD': 'GC=F',
+    'XAUUSD': 'GC=F',
+    'XAU': 'GC=F',
+    'GLD': 'GC=F',      // ETF fallback to futures
+
+    // Commodities - Silver
+    'SILVER': 'SI=F',
+    'XAGUSD': 'SI=F',
+    'XAG': 'SI=F',
+    'SLV': 'SI=F',      // ETF fallback to futures
+
+    // Commodities - Oil
+    'OIL': 'CL=F',
+    'WTI': 'CL=F',
+    'CRUDE': 'CL=F',
+    'USO': 'CL=F',      // ETF fallback to futures
 };
 
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
