@@ -6,6 +6,7 @@ import { ArrowLeft, BarChart3, TrendingUp, Users, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlatformStats } from '@/components/charts/platform-stats';
+import { AsterDexBanner } from '@/components/asterdex-banner';
 
 interface StatsData {
     totalAnalyses: number;
@@ -75,6 +76,11 @@ export default function StatsPage() {
                         <BarChart3 className="w-8 h-8" />
                         Platform Stats
                     </h1>
+                </div>
+
+                {/* AsterDex Banner */}
+                <div className="mb-8">
+                    <AsterDexBanner />
                 </div>
 
                 {loading ? (
