@@ -21,6 +21,15 @@ const redis = new Redis({
 const METRICS_CACHE_KEY = 'platform_metrics';
 const CACHE_TTL = 15 * 60; // 15 minutes
 
+export interface TickerStats {
+    symbol: string;
+    callCount: number;
+    bullish: number;
+    bearish: number;
+    wins: number;
+    losses: number;
+}
+
 export interface PlatformMetrics {
     totalAnalyses: number;
     uniqueGurus: number;
@@ -32,6 +41,7 @@ export interface PlatformMetrics {
     bearishCalls: number;
     cryptoCalls: number;
     stockCalls: number;
+    topTickers: TickerStats[];
     lastUpdated: number;
 }
 
@@ -46,7 +56,10 @@ async function computeMetrics(): Promise<PlatformMetrics> {
     let totalWins = 0;
     let totalLosses = 0;
 
-    // Aggregate wins/losses from user profiles
+    // Ticker aggregation map (from ALL user histories)
+    const tickerMap = new Map<string, TickerStats>();
+
+    // Aggregate wins/losses from user profiles AND get ticker stats from histories
     for (const username of allUsers) {
         const profile = await redis.hgetall(`user:profile:${username}`) as Record<string, any>;
         if (profile && profile.totalAnalyses) {
@@ -54,9 +67,34 @@ async function computeMetrics(): Promise<PlatformMetrics> {
             totalWins += parseInt(profile.wins) || 0;
             totalLosses += parseInt(profile.losses) || 0;
         }
+
+        // Get all analyses from this user's history for ticker aggregation
+        const history = await redis.lrange(`user:history:${username}`, 0, -1);
+        for (const item of history) {
+            const analysis = typeof item === 'string' ? JSON.parse(item) : item;
+            const symbol = analysis.symbol;
+            if (symbol) {
+                if (!tickerMap.has(symbol)) {
+                    tickerMap.set(symbol, {
+                        symbol,
+                        callCount: 0,
+                        bullish: 0,
+                        bearish: 0,
+                        wins: 0,
+                        losses: 0,
+                    });
+                }
+                const stats = tickerMap.get(symbol)!;
+                stats.callCount++;
+                if (analysis.sentiment === 'BULLISH') stats.bullish++;
+                else if (analysis.sentiment === 'BEARISH') stats.bearish++;
+                if (analysis.isWin) stats.wins++;
+                else stats.losses++;
+            }
+        }
     }
 
-    // Get sentiment/type from most recent 100 analyses
+    // Get sentiment/type from most recent 100 analyses for distribution charts
     let bullishCalls = 0;
     let bearishCalls = 0;
     let cryptoCalls = 0;
@@ -70,6 +108,11 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         if (analysis.type === 'CRYPTO') cryptoCalls++;
         else if (analysis.type === 'STOCK') stockCalls++;
     }
+
+    // Sort tickers by call count and get top 5
+    const topTickers = Array.from(tickerMap.values())
+        .sort((a, b) => b.callCount - a.callCount)
+        .slice(0, 5);
 
     // Get unique tickers
     const trackedTickers = await redis.smembers('tracked_tickers') as string[];
@@ -89,6 +132,7 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         bearishCalls,
         cryptoCalls,
         stockCalls,
+        topTickers,
         lastUpdated: Date.now(),
     };
 }

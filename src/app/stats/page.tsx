@@ -2,11 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BarChart3, TrendingUp, Users, Target } from 'lucide-react';
+import { ArrowLeft, BarChart3, TrendingUp, Users, Target, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlatformStats } from '@/components/charts/platform-stats';
 import { AsterDexBanner } from '@/components/asterdex-banner';
+
+interface TickerStats {
+    symbol: string;
+    callCount: number;
+    bullish: number;
+    bearish: number;
+    wins: number;
+    losses: number;
+}
 
 interface StatsData {
     totalAnalyses: number;
@@ -17,6 +26,7 @@ interface StatsData {
     bearishCalls: number;
     cryptoCalls: number;
     stockCalls: number;
+    topTickers: TickerStats[];
 }
 
 export default function StatsPage() {
@@ -43,6 +53,7 @@ export default function StatsPage() {
                     bearishCalls: metricsData.bearishCalls || 0,
                     cryptoCalls: metricsData.cryptoCalls || 0,
                     stockCalls: metricsData.stockCalls || 0,
+                    topTickers: metricsData.topTickers || [],
                 });
             } catch (e) {
                 console.error('Failed to fetch stats:', e);
@@ -152,6 +163,60 @@ export default function StatsPage() {
                                 <PlatformStats stats={stats} />
                             </CardContent>
                         </Card>
+
+                        {/* Top Tickers Section */}
+                        {stats.topTickers && stats.topTickers.length > 0 && (
+                            <Card className="bg-background/40 mb-8">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Flame className="w-5 h-5 text-orange-500" />
+                                        Most Tracked Tickers
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {stats.topTickers.map((ticker, i) => {
+                                            const totalCalls = ticker.bullish + ticker.bearish;
+                                            const bullishPct = totalCalls > 0 ? Math.round((ticker.bullish / totalCalls) * 100) : 0;
+                                            const winRate = (ticker.wins + ticker.losses) > 0
+                                                ? Math.round((ticker.wins / (ticker.wins + ticker.losses)) * 100)
+                                                : 0;
+                                            return (
+                                                <div key={ticker.symbol} className="flex items-center gap-4 p-4 rounded-lg border bg-background/20">
+                                                    <div className="text-2xl font-bold text-muted-foreground w-8">
+                                                        #{i + 1}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-xl font-bold">${ticker.symbol}</span>
+                                                            <span className="text-sm text-muted-foreground">
+                                                                {ticker.callCount} calls
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex gap-4 text-sm">
+                                                            <span className="text-green-500">
+                                                                📈 {ticker.bullish} bullish ({bullishPct}%)
+                                                            </span>
+                                                            <span className="text-red-500">
+                                                                📉 {ticker.bearish} bearish ({100 - bullishPct}%)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className={`text-lg font-bold ${winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
+                                                            {winRate}% win rate
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {ticker.wins}W / {ticker.losses}L
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Quick Links */}
                         <div className="flex flex-wrap gap-4 justify-center">
