@@ -45,12 +45,8 @@ async function computeMetrics(): Promise<PlatformMetrics> {
     let totalAnalyses = 0;
     let totalWins = 0;
     let totalLosses = 0;
-    let bullishCalls = 0;
-    let bearishCalls = 0;
-    let cryptoCalls = 0;
-    let stockCalls = 0;
 
-    // Aggregate from user histories for detailed breakdown
+    // Aggregate wins/losses from user profiles
     for (const username of allUsers) {
         const profile = await redis.hgetall(`user:profile:${username}`) as Record<string, any>;
         if (profile && profile.totalAnalyses) {
@@ -58,16 +54,21 @@ async function computeMetrics(): Promise<PlatformMetrics> {
             totalWins += parseInt(profile.wins) || 0;
             totalLosses += parseInt(profile.losses) || 0;
         }
+    }
 
-        // Get user history for sentiment/type breakdown
-        const historyData = await redis.lrange(`user:history:${username}`, 0, -1);
-        for (const item of historyData) {
-            const analysis = typeof item === 'string' ? JSON.parse(item) : item;
-            if (analysis.sentiment === 'BULLISH') bullishCalls++;
-            else if (analysis.sentiment === 'BEARISH') bearishCalls++;
-            if (analysis.type === 'CRYPTO') cryptoCalls++;
-            else if (analysis.type === 'STOCK') stockCalls++;
-        }
+    // Get sentiment/type from most recent 100 analyses
+    let bullishCalls = 0;
+    let bearishCalls = 0;
+    let cryptoCalls = 0;
+    let stockCalls = 0;
+
+    const recentAnalyses = await redis.lrange('recent_analyses', 0, 99);
+    for (const item of recentAnalyses) {
+        const analysis = typeof item === 'string' ? JSON.parse(item) : item;
+        if (analysis.sentiment === 'BULLISH') bullishCalls++;
+        else if (analysis.sentiment === 'BEARISH') bearishCalls++;
+        if (analysis.type === 'CRYPTO') cryptoCalls++;
+        else if (analysis.type === 'STOCK') stockCalls++;
     }
 
     // Get unique tickers
