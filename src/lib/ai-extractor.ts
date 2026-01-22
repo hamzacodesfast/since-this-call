@@ -198,6 +198,9 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         - "accumulate", "accumulating"
         - "breakout", "breaking out"
         - "bullish", "higher highs", "new ATH"
+        - "bounce", "expecting bounce", "will bounce" (predicting upward reversal)
+        - "approaching level", "at support", "key support" (expecting bounce from support)
+        - "oversold", "good entry" (expecting price to rise)
         - Predicting price will go UP from current levels
         
         **CRITICAL: ACTION vs DESCRIPTION**:
