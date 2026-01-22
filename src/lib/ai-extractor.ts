@@ -188,6 +188,8 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         - "reject", "rejected", "rejection"
         - "flush", "capitulation", "wipeout"
         - "retest", "fill the gap", "revisit" (when referring to a LOWER price)
+        - "hopium", "cope", "copium" (implies the market is delusional and will drop)
+        - "idiots will lose", "people will lose", "others will lose" (they profit from others' losses = bearish)
         - Any prediction of price going DOWN from current levels
         
         **BULLISH INDICATORS** (mark as BULLISH only if expressing positive outlook):
