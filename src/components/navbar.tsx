@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Clock, Trophy, Users } from 'lucide-react';
+import { Home, Clock, Trophy, Users, BarChart3 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 
 const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/recent', label: 'Recent', icon: Clock },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: '/stats', label: 'Stats', icon: BarChart3 },
     { href: '/profiles', label: 'Profiles', icon: Users },
 ];
 

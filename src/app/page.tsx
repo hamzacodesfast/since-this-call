@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock, Trophy } from 'lucide-react';
+import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock, Trophy, BarChart3 } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
 import { MetricsBar } from '@/components/metrics-bar';
 import { Button } from '@/components/ui/button';
@@ -291,6 +291,12 @@ export default function Home() {
                         <Button variant="ghost" className="text-muted-foreground hover:text-primary">
                             <Trophy className="w-4 h-4 mr-2" />
                             Leaderboard
+                        </Button>
+                    </Link>
+                    <Link href="/stats">
+                        <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            Stats
                         </Button>
                     </Link>
                     <Link href="/profiles">

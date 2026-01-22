@@ -28,6 +28,10 @@ export interface PlatformMetrics {
     totalLosses: number;
     winRate: number;
     uniqueTickers: number;
+    bullishCalls: number;
+    bearishCalls: number;
+    cryptoCalls: number;
+    stockCalls: number;
     lastUpdated: number;
 }
 
@@ -41,14 +45,28 @@ async function computeMetrics(): Promise<PlatformMetrics> {
     let totalAnalyses = 0;
     let totalWins = 0;
     let totalLosses = 0;
+    let bullishCalls = 0;
+    let bearishCalls = 0;
+    let cryptoCalls = 0;
+    let stockCalls = 0;
 
-    // Aggregate from user profiles
+    // Aggregate from user histories for detailed breakdown
     for (const username of allUsers) {
         const profile = await redis.hgetall(`user:profile:${username}`) as Record<string, any>;
         if (profile && profile.totalAnalyses) {
             totalAnalyses += parseInt(profile.totalAnalyses) || 0;
             totalWins += parseInt(profile.wins) || 0;
             totalLosses += parseInt(profile.losses) || 0;
+        }
+
+        // Get user history for sentiment/type breakdown
+        const historyData = await redis.lrange(`user:history:${username}`, 0, -1);
+        for (const item of historyData) {
+            const analysis = typeof item === 'string' ? JSON.parse(item) : item;
+            if (analysis.sentiment === 'BULLISH') bullishCalls++;
+            else if (analysis.sentiment === 'BEARISH') bearishCalls++;
+            if (analysis.type === 'CRYPTO') cryptoCalls++;
+            else if (analysis.type === 'STOCK') stockCalls++;
         }
     }
 
@@ -66,6 +84,10 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         totalLosses,
         winRate,
         uniqueTickers: trackedTickers.length,
+        bullishCalls,
+        bearishCalls,
+        cryptoCalls,
+        stockCalls,
         lastUpdated: Date.now(),
     };
 }

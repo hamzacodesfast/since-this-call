@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trophy, Skull, TrendingUp, TrendingDown, User } from 'lucide-react';
+import { ArrowLeft, Trophy, Skull, TrendingUp, TrendingDown, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AsterDexBanner } from '@/components/asterdex-banner';
+import { LeaderboardBar } from '@/components/charts/leaderboard-bar';
 
 interface UserProfile {
     username: string;
@@ -101,56 +102,99 @@ export default function LeaderboardPage() {
                         <div className="h-[600px] bg-muted/50 rounded-xl" />
                     </div>
                 ) : (
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {/* Top 10 */}
-                        <Card className="border-green-500/20 bg-background/40">
-                            <CardHeader className="pb-4">
-                                <CardTitle className="flex items-center gap-2 text-green-500">
-                                    <Trophy className="w-5 h-5" />
-                                    Top 10 Gurus
-                                    <TrendingUp className="w-4 h-4 ml-auto" />
-                                </CardTitle>
-                                <p className="text-xs text-muted-foreground">Minimum 3 calls required</p>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                {top10.map((p, i) => (
-                                    <ProfileRow key={p.username} p={p} rank={i + 1} isTop={true} />
-                                ))}
-                                {top10.length === 0 && (
-                                    <div className="text-center text-muted-foreground py-8">No qualified profiles yet</div>
-                                )}
-                            </CardContent>
-                        </Card>
+                    <>
+                        {/* Charts Visualization */}
+                        <div className="grid md:grid-cols-2 gap-8 mb-8">
+                            <Card className="border-green-500/20 bg-background/40">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2 text-green-500 text-sm">
+                                        <BarChart3 className="w-4 h-4" />
+                                        Top Performers Win Rate
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <LeaderboardBar
+                                        data={top10.slice(0, 8).map(p => ({
+                                            username: p.username,
+                                            winRate: p.winRate,
+                                            totalCalls: p.totalAnalyses
+                                        }))}
+                                        isTop={true}
+                                    />
+                                </CardContent>
+                            </Card>
 
-                        {/* Worst 10 */}
-                        <Card className="border-red-500/20 bg-background/40">
-                            <CardHeader className="pb-4">
-                                <CardTitle className="flex items-center gap-2 text-red-500">
-                                    <Skull className="w-5 h-5" />
-                                    Bottom 10 Gurus
-                                    <TrendingDown className="w-4 h-4 ml-auto" />
-                                </CardTitle>
-                                <p className="text-xs text-muted-foreground">Fade signal?</p>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                {worst10.map((p, i) => (
-                                    <ProfileRow key={p.username} p={p} rank={i + 1} isTop={false} />
-                                ))}
-                                {worst10.length === 0 && (
-                                    <div className="text-center text-muted-foreground py-8">No qualified profiles yet</div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
+                            <Card className="border-red-500/20 bg-background/40">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2 text-red-500 text-sm">
+                                        <BarChart3 className="w-4 h-4" />
+                                        Worst Performers Win Rate
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <LeaderboardBar
+                                        data={worst10.slice(0, 8).map(p => ({
+                                            username: p.username,
+                                            winRate: p.winRate,
+                                            totalCalls: p.totalAnalyses
+                                        }))}
+                                        isTop={false}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {/* Top 10 */}
+                            <Card className="border-green-500/20 bg-background/40">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="flex items-center gap-2 text-green-500">
+                                        <Trophy className="w-5 h-5" />
+                                        Top 10 Gurus
+                                        <TrendingUp className="w-4 h-4 ml-auto" />
+                                    </CardTitle>
+                                    <p className="text-xs text-muted-foreground">Minimum 3 calls required</p>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {top10.map((p, i) => (
+                                        <ProfileRow key={p.username} p={p} rank={i + 1} isTop={true} />
+                                    ))}
+                                    {top10.length === 0 && (
+                                        <div className="text-center text-muted-foreground py-8">No qualified profiles yet</div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Worst 10 */}
+                            <Card className="border-red-500/20 bg-background/40">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="flex items-center gap-2 text-red-500">
+                                        <Skull className="w-5 h-5" />
+                                        Bottom 10 Gurus
+                                        <TrendingDown className="w-4 h-4 ml-auto" />
+                                    </CardTitle>
+                                    <p className="text-xs text-muted-foreground">Fade signal?</p>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {worst10.map((p, i) => (
+                                        <ProfileRow key={p.username} p={p} rank={i + 1} isTop={false} />
+                                    ))}
+                                    {worst10.length === 0 && (
+                                        <div className="text-center text-muted-foreground py-8">No qualified profiles yet</div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="mt-8 text-center">
+                            <Link href="/profiles">
+                                <Button variant="outline">
+                                    View All Profiles
+                                </Button>
+                            </Link>
+                        </div>
+                    </>
                 )}
-
-                <div className="mt-8 text-center">
-                    <Link href="/profiles">
-                        <Button variant="outline">
-                            View All Profiles
-                        </Button>
-                    </Link>
-                </div>
             </div>
         </main>
     );
