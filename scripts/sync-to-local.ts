@@ -2,25 +2,19 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { Redis } from '@upstash/redis';
-import { UnifiedRedis } from '../src/lib/redis-wrapper';
+import { LocalRedisWrapper } from '../src/lib/redis-wrapper';
 
-/**
- * scripts/sync-to-local.ts
- * Clones data from Production Upstash to Local Redis Proxy.
- */
+// 1. Load Production Env
+const prodEnv = dotenv.config({ path: path.resolve(process.cwd(), '.env.production') }).parsed;
+
+// 2. Load Local Env (or default)
+const localEnv = dotenv.config({ path: path.resolve(process.cwd(), '.env.local') }).parsed;
 
 async function sync() {
-    // 1. Load Production Env
-    const prodEnv = dotenv.config({ path: path.resolve(process.cwd(), '.env.production') }).parsed;
     if (!prodEnv) {
         console.error('❌ .env.production not found');
         return;
     }
-
-    // 2. Load Local Env (or default)
-    const localEnv = dotenv.config({ path: path.resolve(process.cwd(), '.env.local') }).parsed;
-
-
 
     console.log('🔗 Connecting to Source (Production)...');
     const source = new Redis({
@@ -28,11 +22,9 @@ async function sync() {
         token: prodEnv.UPSTASH_REDIS_REST_KV_REST_API_TOKEN,
     });
 
+
     console.log('🔗 Connecting to Destination (Local)...');
-    const dest = new UnifiedRedis({
-        url: localEnv?.UPSTASH_REDIS_REST_KV_REST_API_URL || 'redis://localhost:6379',
-        token: localEnv?.UPSTASH_REDIS_REST_KV_REST_API_TOKEN || 'example_token',
-    });
+    const dest = new LocalRedisWrapper(localEnv?.UPSTASH_REDIS_REST_KV_REST_API_URL || 'redis://localhost:6379');
 
     try {
         console.log('🧹 Clearing local database...');
