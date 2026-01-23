@@ -40,6 +40,7 @@ export interface PlatformMetrics {
     stockCalls: number;
     topTickers: TickerStats[];
     lastUpdated: number;
+    _debug?: any;
 }
 
 /**
@@ -162,6 +163,11 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         stockCalls,
         topTickers,
         lastUpdated: Date.now(),
+        _debug: {
+            urlSet: !!(process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.KV_REST_API_URL),
+            client: redis.constructor.name,
+            env: process.env.NODE_ENV,
+        }
     };
 }
 
