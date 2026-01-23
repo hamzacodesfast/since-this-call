@@ -34,17 +34,13 @@ export type CallData = z.infer<typeof CallSchema>;
 // Solana base58 address regex (32-44 characters, base58 alphabet)
 const SOLANA_CA_REGEX = /\b([1-9A-HJ-NP-Za-km-z]{32,44})\b/g;
 
-// Known pump.fun indicators
-const PUMP_FUN_INDICATORS = ['pump.fun', 'pumpfun', 'bonding curve', 'launched on pump', 'CA:'];
-
-
 // Basic Regex Extraction Fallback if AI fails (Rate Limited)
 // This serves as a critical safety net to keep the app functional during AI outages.
 function extractWithRegex(text: string, dateStr: string): CallData | null {
 
     // 1. Find Ticker/Symbol
     // Look for $BTC, $ETH, $AAPL or common names like "Bitcoin", "Apple"
-    const cashtagRegex = /\$([A-Za-z]{2,6})/g;
+    const cashtagRegex = /\$([A-Za-z][A-Za-z0-9]{1,19})/g;
     const matches = [...text.matchAll(cashtagRegex)];
 
     let symbol = '';
@@ -69,12 +65,15 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
     }
 
     // 2. Determine Type
-    // Naive classification based on known crypto tickers. Default is STOCK.
-    let type: 'CRYPTO' | 'STOCK' = 'STOCK';
+    // Default to CRYPTO if it was a cashtag $SYMBOL, as that's 99% of our usage
+    let type: 'CRYPTO' | 'STOCK' = matches.length > 0 ? 'CRYPTO' : 'STOCK';
+
     const cryptoList = [
         'BTC', 'ETH', 'SOL', 'DOGE', 'DOT', 'ADA', 'XRP', 'LINK', 'AVAX', 'MATIC',
         'PEPE', 'WOJAK', 'SHIB', 'BONK', 'WIF', 'FLOKI', 'BRETT', 'MOG', 'TURBO',
-        'SPX', 'SPX6900', 'PENGU', 'MOODENG', 'POPCAT', 'GPY', 'HYPE', 'VIRTUAL', 'AI16Z'
+        'SPX', 'SPX6900', 'PENGU', 'MOODENG', 'POPCAT', 'GPY', 'HYPE', 'VIRTUAL', 'AI16Z',
+        'BULLISH', 'TRUMP', 'SCRT', 'ROSE', 'PYTH', 'JUP', 'RAY', 'ONDO', 'TIA', 'SEI',
+        'SUI', 'APT', 'OP', 'ARB', 'STRK', 'LDO', 'PENDLE', 'ENA', 'W', 'TNSR'
     ];
 
     if (!symbol) {
@@ -85,16 +84,13 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
             const clean = word.replace(/[^a-zA-Z0-9]/g, '');
             if (cryptoList.includes(clean.toUpperCase())) {
                 symbol = clean.toUpperCase();
+                type = 'CRYPTO';
                 break;
             }
         }
     }
 
-    if (!symbol) {
-        // console.warn('[AI-Extractor] Regex failed to find symbol');
-        // Don't fail silently, return null so caller knows.
-        return null;
-    }
+    if (!symbol) return null;
 
     if (cryptoList.includes(symbol)) {
         type = 'CRYPTO';
@@ -256,7 +252,7 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
         ];
 
         const { object } = await generateObject({
-            model: google('models/gemini-2.0-flash-exp'), // Revert to working model
+            model: google('models/gemini-2.0-flash-exp'), // Revert to known working model
             schema: CallSchema,
             messages: messages,
         });
@@ -273,6 +269,10 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
                 // If AI got generic symbol like "SOL", try to refine it later (handled in analyzer)
             }
         }
+
+
+
+
 
         return object;
 

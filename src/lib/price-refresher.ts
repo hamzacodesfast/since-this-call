@@ -98,6 +98,9 @@ const COINGECKO_IDS: Record<string, string> = {
     // Solana Ecosystem
     'ME': 'magic-eden',
     'PUMP': 'pump-fun',
+    'ASTER': 'aster-2',
+    'LIT': 'lighter',
+    'BULLISH': 'bullish',
 };
 
 interface RefreshResult {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshAllAnalyses } from '@/lib/price-refresher';
 
-export const runtime = 'edge';
+
 
 // Vercel Cron sends a specific header to verify authenticity
 // Or use a secret for manual triggers

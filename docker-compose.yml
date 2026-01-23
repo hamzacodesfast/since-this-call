@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  redis-local:
+    image: hirokidaichi/upstash-redis-local
+    ports:
+      - "8080:8080"
+      - "6379:6379"
+    environment:
+      - UPSTASH_REDIS_REST_URL=http://localhost:8080
+      - UPSTASH_REDIS_REST_TOKEN=example_token
+    restart: always

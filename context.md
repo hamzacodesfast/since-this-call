@@ -2,7 +2,20 @@
 
 **Project:** SinceThisCall (STC) - "Call Receipts for Crypto/Meme Twitter"  
 **Current Status:** Production (Main Branch)  
-**Last Updated:** January 21, 2026  
+**Last Updated:** January 23, 2026  
+
+---
+
+## 📊 Current Metrics (Jan 23, 2026)
+
+| Metric | Value |
+|--------|-------|
+| Tracked Calls | 530 |
+| Unique Gurus | 291 |
+| Unique Tickers | 131 |
+| Platform Win Rate | 38% |
+| Twitter Followers | ~146 |
+| Website MAU | 71 |
 
 ---
 
@@ -10,64 +23,72 @@
 
 - **Framework:** Next.js 14 (App Router) + TypeScript + TailwindCSS
 - **Database:** Upstash Redis (REST API), handled in `src/lib/analysis-store.ts`
+  - **Schema Enforced:** `user:profile:*` (Hash), `user:history:*` (List), `all_users` (Set).
+  - **Critical Rule:** Never overwrite a Hash with a String. use `hset`, not `set`.
 - **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash Exp
 - **Pricing Engine:** `src/lib/market-data.ts` (Waterfall: Yahoo → CoinGecko → DexScreener)
-- **Monitoring:** Vercel Speed Insights (added Jan 21)
+- **Charts:** `recharts` library in `src/components/charts/`
+- **Monitoring:** Vercel Speed Insights
 
-## 📊 Metrics System (New)
+## 🆕 Recent Features (Jan 2026)
 
-A platform-wide dashboard on the homepage showing live stats:
-- **Endpoint:** `/api/metrics` (Aggregates stats from all user profiles)
-- **Caching:** 15-minute Redis cache (`platform_metrics`)
-- **UI:** `src/components/metrics-bar.tsx` (Animated counters)
-- **Refresh:** Manual via `scripts/refresh-metrics.ts` or Cron
+1. **Charts Section** (`/stats` page)
+   - Platform stats dashboard with pie/bar charts
+   - Win rate trends, sentiment distribution
+   - Top 5 tracked tickers with win rates
 
-## 🔄 Live Price Refresh Architecture
+2. **AsterDex Monetization**
+   - Referral banners on `/recent`, `/leaderboard`, `/stats`
+   - Footer sponsorship link
+   - Affiliate URL: `asterdex.com/en/referral/48b50b`
 
-**Ticker-Centric Refresh System**:
-1. **Refresher:** `src/lib/price-refresher.ts` called by `/api/cron/refresh`
-2. **Trigger:** Vercel Cron (Daily `0 0 * * *`)
-   - **Note:** Vercel Hobby plan limits cron to 1/day. For 15m refresh, use external service targeting `/api/cron/refresh`.
+3. **Most Tracked Tickers** (`/api/metrics`)
+   - BTC (137 calls), ETH (53), SOL (27), ASTER (21), HYPE (17)
+   - Includes sentiment split and win rate per ticker
 
-## 🛠️ Admin Tools
-
-### Scripts (`/scripts`)
-| Script | Purpose |
-|--------|---------|
-| `reanalyze.ts` | Fix incorrect analysis (updates history + profile + tickers) |
-| `refresh-metrics.ts` | Manually refresh homepage stats cache |
-| `remove-tweet.ts` | Delete single analysis |
-| `sync-profile.ts` | Recalculate user stats from history |
-| `backup-data.ts` | Export all Redis data |
-
-## 🔧 Recent Critical Fixes
-
-1. **Symbol Cleanup:** `cleanSymbol()` strips `$` and `USDT` suffixes (e.g. `HYPEUSDT` -> `HYPE`).
-2. **Metrics Dashboard:** Added visual stats bar to homepage.
-3. **Speed Insights:** Integrated `@vercel/speed-insights`.
-4. **Vercel Deployment:** Fixed cron schedule to daily (`0 0 * * *`) to pass Hobby plan validation.
+4. **Leaderboard Updates**
+   - Minimum 5 calls required (was 3)
+   - Bar chart visualization
 
 ## 📂 Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/lib/analysis-store.ts` | Redis layer (Profiles, History, Tickers) |
-| `src/app/api/metrics/route.ts` | Metrics aggregation endpoint |
-| `src/components/metrics-bar.tsx` | Client component for stats |
-| `src/app/layout.tsx` | Global layout + Speed Insights |
-| `vercel.json` | Cron configuration |
+| `src/app/api/metrics/route.ts` | Platform metrics + topTickers |
+| `src/app/stats/page.tsx` | Stats dashboard page |
+| `src/components/charts/` | Chart components (recharts) |
+| `src/components/asterdex-banner.tsx` | Affiliate banner |
+| `src/lib/price-refresher.ts` | Ticker price update logic |
+| `videos/` | Remotion video project (not in git) |
 
-## 🚨 Known Issues / TODOs
+## 🛠️ Admin Scripts
 
-1. **Cron Frequency:** Currently daily due to Vercel Hobby limits. Upgrade to Pro for 15m.
-2. **Vercel Deployments:** If auto-deploy fails, use `npx vercel --prod`.
+| Script | Purpose |
+|--------|---------|
+| `reanalyze.ts` | Fix incorrect analysis |
+| `refresh-metrics.ts` | Manually refresh stats cache |
+| `remove-tweet.ts` | Delete single analysis |
+| `sync-profile.ts` | Recalculate user stats |
+| `backup-data.ts` | Export all Redis data |
+
+## 🎯 Immediate Priorities
+
+1. **Content Marketing** - Post prepared tweets in `/brain/.../marketing_content.md`
+2. **Video Narration** - Add audio to Remotion videos in `videos/`
+3. **Pro Tier** - Implement subscription features
+4. **1K Follower Target** - Estimated mid-March
 
 ## 📜 Standard Procedures
 
 ### Wrong Analysis Fix
 `npx tsx scripts/reanalyze.ts <TWEET_ID>`
 
-### Deployment
-`npx vercel --prod` (if git push doesn't trigger)
+### Force Metrics Refresh
+`curl -X POST http://localhost:3000/api/metrics`
+
+### Price Refresh (All Tickers)
+`curl http://localhost:3000/api/cron/refresh`
+
+---
 
 **Good Luck, Agent! 🫡**

@@ -3,7 +3,7 @@ import { addAnalysis, getRecentAnalyses, StoredAnalysisSchema, updateUserProfile
 import { rateLimit } from '@/lib/rate-limit';
 
 // Edge runtime works with Upstash Redis REST API
-export const runtime = 'edge';
+
 
 const limiter = rateLimit({
     interval: 60 * 1000, // 60 seconds

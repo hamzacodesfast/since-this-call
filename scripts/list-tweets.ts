@@ -1,26 +1,23 @@
-// Script to list all tweet IDs in Redis
-// Run with: npx -y tsx scripts/list-tweets.ts
+
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 import { Redis } from '@upstash/redis';
-import * as dotenv from 'dotenv';
-
-dotenv.config({ path: '.env.local' });
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
     token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
 });
 
-const RECENT_KEY = 'recent_analyses';
-
-async function listTweets() {
-    const allItems = await redis.lrange(RECENT_KEY, 0, -1);
-    console.log(`Found ${allItems.length} items:\n`);
-
-    allItems.forEach((item: any, index: number) => {
-        const parsed = typeof item === 'string' ? JSON.parse(item) : item;
-        console.log(`${index + 1}. ID: ${parsed.id} | Symbol: ${parsed.symbol} | User: @${parsed.username}`);
-    });
+async function main() {
+    const list = await redis.lrange('recent_analyses', 0, 10);
+    console.log('Recent Tweets:');
+    for (const item of list) {
+        const p = typeof item === 'string' ? JSON.parse(item) : item;
+        console.log(`${p.id} | ${p.symbol} | ${p.type} | ${p.username}`);
+    }
 }
 
-listTweets().catch(console.error);
+main().catch(console.error);

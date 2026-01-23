@@ -143,6 +143,8 @@ const COINGECKO_IDS: Record<string, string> = {
     'SWARMS': 'swarms',
     'PUMP': 'pump-fun',
     'ASTER': 'aster-2',
+    'LIT': 'lighter',
+    'BULLISH': 'bullish',
 };
 
 // Launch dates and initial prices for major assets

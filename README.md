@@ -9,17 +9,27 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 ## ✨ Features
 
 - **AI-Powered Extraction**: Uses **Google Gemini 2.0 Flash** to intelligently parse tweets, identifying asset symbols, sentiment (Bullish/Bearish), and prediction dates
-- **Metrics Dashboard**: Live platform stats showing total calls, active gurus, and community win rate
+- **📊 Stats Dashboard**: Charts and analytics at `/stats` showing platform-wide performance
+- **📈 Most Tracked Tickers**: See which assets gurus are calling most (BTC, ETH, SOL, etc.)
 - **Live Price Updates**: Automatic price refresh to keep call receipts accurate
 - **Multi-Asset Support**:
   - **Crypto**: Real-time prices via **CoinGecko** & **DexScreener** (Meme coins supported!)
   - **Stocks & ETFs**: Free data via **Yahoo Finance**
   - **Index Fallbacks**: Automatically resolves SPX→SPY, NQ→QQQ, DJI→DIA
 - **Leaderboard**: Track the top (and worst) financial gurus with win/loss records
-- **Profile Pages**: Individual pages for each guru with full prediction history
+- **Profile Pages**: Individual pages for each guru with full prediction history and charts
 - **Community Comments**: Disqus integration for discussion on each profile
 - **Social Sharing**: One-click visual sharing generates a screenshot of the analysis
 - **Premium UI**: Sleek dark-mode design with Tailwind CSS and shadcn/ui
+
+## 📊 Current Stats (Jan 2026)
+
+| Metric | Value |
+|--------|-------|
+| Tracked Calls | 530+ |
+| Unique Gurus | 291 |
+| Platform Win Rate | 38% |
+| Top Ticker | BTC (137 calls) |
 
 ## 🛠️ Tech Stack
 
@@ -30,6 +40,7 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 | Database | [Upstash Redis](https://upstash.com/) (Serverless) |
 | AI | [Vercel AI SDK](https://sdk.vercel.ai/) + [Google Gemini](https://ai.google.dev/) |
 | Styling | [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
+| Charts | [Recharts](https://recharts.org/) |
 | Monitoring | [Vercel Speed Insights](https://vercel.com/docs/speed-insights) |
 
 ## 🚀 Getting Started
@@ -105,6 +116,16 @@ For Vercel Hobby plan (Daily):
 }
 ```
 *Note: For 15-minute updates, upgrade to Pro or use an external cron service.*
+
+## 🛡️ Data Integrity
+    
+This project uses Upstash Redis and relies on strict data types.
+    
+- **Profiles (`user:profile:*`)** are **Hashes**. Never use `set` or `setnx` on them.
+- **Histories (`user:history:*`)** are **Lists**.
+- **Sets (`all_users`)** track membership.
+    
+**Always use the `src/lib/analysis-store.ts` abstractions.** Do not write raw Redis commands in new features unless strictly necessary and type-verified.
 
 ## 📄 License
 

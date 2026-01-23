@@ -17,14 +17,33 @@
  * 
  * @see price-refresher.ts for batch price updates using ticker index
  */
-import { Redis } from '@upstash/redis';
+import { getRedisClient } from './redis-client';
 import { z } from 'zod';
+import { Redis } from '@upstash/redis';
 
-// Initialize Upstash Redis client
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
-    token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
-});
+// Primary Redis client
+const redis = getRedisClient();
+
+// Secondary Redis client (Production) - Only used for Dual-Write
+// We instantiate this directly as Upstash client since it's strictly for cloud URL
+const redisProd = process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL
+    ? new Redis({
+        url: process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL,
+        token: process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
+    })
+    : null;
+
+/**
+ * Executes a function on both primary and secondary (if available) Redis clients.
+ */
+async function dualWrite<T>(fn: (r: Redis) => Promise<T>): Promise<T> {
+    const primaryResult = await fn(redis as Redis);
+    if (redisProd) {
+        // Fire and forget secondary write
+        fn(redisProd).catch(e => console.error('[AnalysisStore] Secondary Dual-Write Failed:', e));
+    }
+    return primaryResult;
+}
 
 const RECENT_KEY = 'recent_analyses';
 const MAX_STORED = 50;
@@ -54,11 +73,12 @@ export async function trackTicker(analysis: StoredAnalysis): Promise<void> {
         const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
         const analysisRef = `${analysis.username.toLowerCase()}:${analysis.id}`;
 
-        // Add to global ticker set
-        await redis.sadd(TRACKED_TICKERS_KEY, tickerKey);
-
-        // Add to ticker's analysis index
-        await redis.sadd(indexKey, analysisRef);
+        await dualWrite(async (r) => {
+            const pipe = r.pipeline();
+            pipe.sadd(TRACKED_TICKERS_KEY, tickerKey);
+            pipe.sadd(indexKey, analysisRef);
+            await pipe.exec();
+        });
     } catch (error) {
         console.error('[AnalysisStore] Failed to track ticker:', error);
     }
@@ -73,15 +93,14 @@ export async function untrackTicker(analysis: StoredAnalysis): Promise<void> {
         const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
         const analysisRef = `${analysis.username.toLowerCase()}:${analysis.id}`;
 
-        // Remove from ticker's analysis index
-        await redis.srem(indexKey, analysisRef);
-
-        // Check if ticker has any more analyses, if not remove from global set
-        const remaining = await redis.scard(indexKey);
-        if (remaining === 0) {
-            await redis.srem(TRACKED_TICKERS_KEY, tickerKey);
-            await redis.del(indexKey);
-        }
+        await dualWrite(async (r) => {
+            await r.srem(indexKey, analysisRef);
+            const remaining = await r.scard(indexKey);
+            if (remaining === 0) {
+                await r.srem(TRACKED_TICKERS_KEY, tickerKey);
+                await r.del(indexKey);
+            }
+        });
     } catch (error) {
         console.error('[AnalysisStore] Failed to untrack ticker:', error);
     }
@@ -151,31 +170,30 @@ export const StoredAnalysisSchema = z.object({
 
 export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {
     try {
-        // Fetch current list to check for duplicates
+        // We must fetch from primary to perform consistency logic
         const currentData = await redis.lrange(RECENT_KEY, 0, -1);
         let items: StoredAnalysis[] = currentData.map((item: any) =>
             typeof item === 'string' ? JSON.parse(item) : item
         );
 
-        // Remove any existing entry with the same ID
         items = items.filter(item => item.id !== analysis.id);
-
-        // Add new to top
         items.unshift(analysis);
 
-        // Limit size
         if (items.length > MAX_STORED) {
             items = items.slice(0, MAX_STORED);
         }
 
-        // Write back
-        await redis.del(RECENT_KEY);
-        // Optimize: Pipeline the pushes
-        const pipeline = redis.pipeline();
-        for (const item of items) {
-            pipeline.rpush(RECENT_KEY, JSON.stringify(item));
-        }
-        await pipeline.exec();
+        const serializedItems = items.map(item => JSON.stringify(item));
+
+        // Use dualWrite for persistence
+        await dualWrite(async (r) => {
+            await r.del(RECENT_KEY);
+            const pipeline = r.pipeline();
+            for (const s of serializedItems) {
+                pipeline.rpush(RECENT_KEY, s);
+            }
+            await pipeline.exec();
+        });
 
     } catch (error) {
         console.error('[AnalysisStore] Failed to add analysis:', error);
@@ -299,25 +317,31 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
 
         const winRate = total > 0 ? (wins / total) * 100 : 0;
 
-        // Update Hash
-        await redis.hset(profileKey, {
-            username: analysis.username,
-            avatar: analysis.avatar || '',
-            totalAnalyses: total,
-            wins,
-            losses,
-            neutral,
-            winRate,
-            lastAnalyzed: Date.now(),
-        });
+        // Persist via Dual-Write
+        await dualWrite(async (r) => {
+            // Update Hash
+            await r.hset(profileKey, {
+                username: analysis.username,
+                avatar: analysis.avatar || '',
+                totalAnalyses: total,
+                wins,
+                losses,
+                neutral,
+                winRate,
+                lastAnalyzed: Date.now(),
+            });
 
-        // Replace History List
-        await redis.del(historyKey);
-        if (history.length > 0) {
-            for (let i = history.length - 1; i >= 0; i--) {
-                await redis.lpush(historyKey, JSON.stringify(history[i]));
+            // Replace History List
+            await r.del(historyKey);
+            if (history.length > 0) {
+                // Pipeline the history pushes
+                const p = r.pipeline();
+                for (let i = history.length - 1; i >= 0; i--) {
+                    p.lpush(historyKey, JSON.stringify(history[i]));
+                }
+                await p.exec();
             }
-        }
+        });
 
     } catch (error) {
         console.error('[AnalysisStore] Failed to update user profile:', error);
@@ -365,16 +389,18 @@ export async function recalculateUserProfile(username: string): Promise<void> {
             displayUsername = history[0].username;
         }
 
-        // Update Hash
-        await redis.hset(profileKey, {
-            username: displayUsername,
-            avatar: avatar,
-            totalAnalyses: total,
-            wins,
-            losses,
-            neutral,
-            winRate,
-            lastAnalyzed: Date.now(),
+        // Persist via Dual-Write
+        await dualWrite(async (r) => {
+            await r.hset(profileKey, {
+                username: displayUsername,
+                avatar: avatar,
+                totalAnalyses: total,
+                wins,
+                losses,
+                neutral,
+                winRate,
+                lastAnalyzed: Date.now(),
+            });
         });
 
         console.log(`[AnalysisStore] Synced profile for ${username}: ${total} calls (${wins}W/${losses}L)`);
@@ -434,11 +460,20 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
         const results = await pipeline.exec();
 
         const profiles: UserProfile[] = [];
-        results.forEach((result) => {
-            if (result && Object.keys(result as object).length > 0) {
-                const safeProfile = result as Record<string, string>;
+        results.forEach((res) => {
+            // Pipeline results are now normalized by LocalRedisWrapper proxy locally,
+            // and native Upstash client works purely. No manual unwrapping needed.
+            const data = res;
+
+            if (data && Object.keys(data as object).length > 0) {
+                const safeProfile = data as Record<string, string>;
+
+                // Ensure username exists (fallback to generic if missing in hash)
+                if (!safeProfile.username) return;
+
                 profiles.push({
-                    ...safeProfile,
+                    username: safeProfile.username,
+                    avatar: safeProfile.avatar || '',
                     totalAnalyses: parseInt(safeProfile.totalAnalyses || '0'),
                     wins: parseInt(safeProfile.wins || '0'),
                     losses: parseInt(safeProfile.losses || '0'),
@@ -518,14 +553,17 @@ export async function storePumpfunPrice(
     try {
         const key = `${PUMPFUN_PRICE_PREFIX}${contractAddress}`;
 
-        // Only set if key doesn't exist (NX = Not eXists)
-        const result = await redis.setnx(key, JSON.stringify({
+        const payload = JSON.stringify({
             price,
             symbol,
             timestamp: Date.now(),
-        } as StoredPumpfunPrice));
+        } as StoredPumpfunPrice);
 
-        return result === 1; // Returns 1 if set, 0 if already exists
+        const results = await dualWrite(async (r) => {
+            return await r.setnx(key, payload);
+        });
+
+        return results === 1;
     } catch (error) {
         console.error('[AnalysisStore] Failed to store pumpfun price:', error);
         return false;

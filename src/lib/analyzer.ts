@@ -5,7 +5,7 @@
  * This module coordinates the full analysis pipeline:
  * 1. Fetch tweet content via react-tweet API
  * 2. AI extraction of symbol, sentiment, and type
- * 3. Symbol cleanup (strip $ prefix and USDT/USD suffixes)
+ * 3. Symbol cleanup (strip $ prefix and common pair suffixes)
  * 4. Price lookup via market-data waterfall
  * 5. Performance calculation
  * 
@@ -13,6 +13,7 @@
  * - Contract address override for pump.fun URLs
  * - Symbol/CA validation to prevent hijacking
  * - FORCE_STOCKS list for known stock tickers
+ * - Refactored to support Bulk Analysis (analyzing raw tweet objects without fetching)
  * 
  * @see ai-extractor.ts for tweet parsing logic
  * @see market-data.ts for price fetching
@@ -70,19 +71,17 @@ export interface AnalysisResult {
     };
 }
 
-export async function analyzeTweet(tweetId: string, contractAddressOverride?: string): Promise<AnalysisResult> {
-    // 1. Fetch Tweet Content
-    const tweet = await getTweet(tweetId);
-    if (!tweet) {
-        throw new Error('Tweet not found');
-    }
-
+/**
+ * Core analysis logic, decoupled from fetching.
+ * Use this when you already have the tweet object (e.g. bulk import).
+ */
+export async function analyzeTweetContent(tweet: any, contractAddressOverride?: string): Promise<AnalysisResult> {
     // 2. Anti-Cheating / Time Travel Check
     // We detect if it was edited but now we allow it with a flag.
-    const isEdited = (tweet as any).edit_info?.initial?.edit_tweet_ids?.length > 1 || (tweet as any).isEdited || false;
+    const isEdited = tweet.edit_info?.initial?.edit_tweet_ids?.length > 1 || tweet.isEdited || false;
 
     // 3. Extract first image URL if available (for multimodal analysis)
-    const mediaDetails = (tweet as any).mediaDetails || [];
+    const mediaDetails = tweet.mediaDetails || [];
     const firstImageUrl = mediaDetails.find((m: any) => m.type === 'photo')?.media_url_https;
 
     // 4. AI Extraction (with optional image for chart analysis)
@@ -118,8 +117,6 @@ export async function analyzeTweet(tweetId: string, contractAddressOverride?: st
             // 2. CA Name contains Tweet Symbol (e.g. "Brett The Dog" contains "BRETT")
             // 3. Tweet Symbol contains CA Symbol (e.g. "$BRETT" contains "BRETT")
             // 4. Special Case: Tweet detected "SOL" (chain) often happens when people say "Buy on SOL". 
-            //    We strictly shouldn't allow "SOL" if the token is "APE", but "SOL" is often a false positive for the asset.
-            //    However, user wants strictness. Let's start strict.
 
             const isMatch =
                 tweetSymbol === caSymbol ||
@@ -279,4 +276,14 @@ export async function analyzeTweet(tweetId: string, contractAddressOverride?: st
             isEdited
         }
     };
+}
+
+export async function analyzeTweet(tweetId: string, contractAddressOverride?: string): Promise<AnalysisResult> {
+    // 1. Fetch Tweet Content
+    const tweet = await getTweet(tweetId);
+    if (!tweet) {
+        throw new Error('Tweet not found');
+    }
+
+    return analyzeTweetContent(tweet, contractAddressOverride);
 }

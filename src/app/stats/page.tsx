@@ -226,6 +226,9 @@ export default function StatsPage() {
                             <Link href="/recent">
                                 <Button variant="outline">Recent Analyses</Button>
                             </Link>
+                            <Link href="/flat">
+                                <Button variant="outline">Flat Calls</Button>
+                            </Link>
                             <Link href="/profiles">
                                 <Button variant="outline">All Profiles</Button>
                             </Link>

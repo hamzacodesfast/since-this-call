@@ -3,7 +3,7 @@ import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { analyzeTweet } from '@/lib/analyzer';
 
-export const runtime = 'edge';
+
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);

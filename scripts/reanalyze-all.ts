@@ -79,21 +79,21 @@ async function main() {
 
             const { analysis, market, tweet } = result;
 
-            if (!tweet.user) {
+            if (!tweet.username) {
                 console.error(`❌ Tweet user data missing for ${oldItem.id}`);
                 continue;
             }
 
             const storedAnalysis = {
-                id: tweet.id_str,
-                username: tweet.user.screen_name,
-                author: tweet.user.name,
-                avatar: tweet.user.profile_image_url_https,
+                id: tweet.id,
+                username: tweet.username,
+                author: tweet.author,
+                avatar: tweet.avatar,
                 symbol: analysis.symbol,
                 sentiment: analysis.sentiment,
                 performance: market.performance,
                 isWin: market.performance > 0,
-                timestamp: new Date(tweet.created_at).getTime(),
+                timestamp: new Date(tweet.date).getTime(),
                 entryPrice: market.callPrice,
                 currentPrice: market.currentPrice,
                 type: analysis.type,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeTweet } from '@/lib/analyzer';
 
-export const runtime = 'edge';
+
 
 import { rateLimit } from '@/lib/rate-limit';
 

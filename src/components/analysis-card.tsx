@@ -33,8 +33,8 @@ const formatTimeAgo = (timestamp: number) => {
 };
 
 export function AnalysisCard({ analysis }: AnalysisCardProps) {
-    const isNeutral = Math.abs(analysis.performance) < 0.01;
-    const isWin = analysis.performance > 0;
+    const isNeutral = analysis.performance === null || Math.abs(analysis.performance) < 0.01;
+    const isWin = analysis.performance !== null && analysis.performance > 0;
 
     return (
         <Card className={`h-full hover:scale-[1.02] transition-transform border-2 relative group overflow-hidden ${isNeutral ? 'border-yellow-500/30 bg-yellow-500/5' : (isWin ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5')}`}>
@@ -92,11 +92,11 @@ export function AnalysisCard({ analysis }: AnalysisCardProps) {
                         <div className="grid grid-cols-2 gap-2 text-[10px] uppercase font-bold tracking-wider opacity-80 border-t border-white/5 pt-3">
                             <div className="text-left">
                                 <div className="text-muted-foreground/80">ENTRY</div>
-                                <div className="font-mono text-sm font-bold text-foreground">${analysis.entryPrice < 1 ? analysis.entryPrice.toFixed(6) : analysis.entryPrice.toFixed(2)}</div>
+                                <div className="font-mono text-sm font-bold text-foreground">${analysis.entryPrice ? (analysis.entryPrice < 1 ? analysis.entryPrice.toFixed(6) : analysis.entryPrice.toFixed(2)) : '0.00'}</div>
                             </div>
                             <div className="text-right">
                                 <div className="text-muted-foreground/80">CURRENT</div>
-                                <div className="font-mono text-sm font-bold text-foreground">${analysis.currentPrice < 1 ? analysis.currentPrice.toFixed(6) : analysis.currentPrice.toFixed(2)}</div>
+                                <div className="font-mono text-sm font-bold text-foreground">${analysis.currentPrice ? (analysis.currentPrice < 1 ? analysis.currentPrice.toFixed(6) : analysis.currentPrice.toFixed(2)) : '0.00'}</div>
                             </div>
                         </div>
                     )}
@@ -107,7 +107,8 @@ export function AnalysisCard({ analysis }: AnalysisCardProps) {
                             {isNeutral ? 'NEUTRAL' : (isWin ? 'WIN' : 'REKT')}
                         </div>
                         <div className={`font-mono font-bold ${isNeutral ? 'text-yellow-500' : (isWin ? 'text-green-500' : 'text-red-500')}`}>
-                            {analysis.performance > 0 ? '+' : ''}{analysis.performance.toFixed(2)}%
+                            {analysis.performance !== null && analysis.performance > 0 ? '+' : ''}
+                            {analysis.performance !== null ? analysis.performance.toFixed(2) : '0.00'}%
                         </div>
                     </div>
                 </div>
