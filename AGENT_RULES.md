@@ -12,19 +12,17 @@ This application relies on a delicate sync between Upstash Redis keys.
 
 ### 🚫 STRICT PROHIBITIONS:
 1.  **NEVER run `FLUSHDB` or `FLUSHALL`.**
-2.  **NEVER overwrite `all_users` set** unless you have verified you are rebuilding it from a *complete* source (scanning ALL `user:history:*` keys).
-3.  **NEVER trust local backup files (e.g., `latest.json`) to be complete.** They are often partial snapshots. Reverting strict state from a partial backup WILL CAUSE DATA LOSS.
-4.  **NEVER delete `scripts/` that are critical utils.** (e.g. `sync-profile.ts`).
+2.  **NEVER switch between Local and Production keys mid-task.** Use `.env.local` for Localhouse and `.env.production` for scripts targeting Prod.
+3.  **NEVER trust local backup files (e.g., `latest.json`) to be complete.** Always sync from Production.
+4.  **NEVER modify `ioredis` behavior** directly. If there is a compatibility issue with Upstash, update the `LocalRedisWrapper` Proxy in `src/lib/redis-wrapper.ts`.
 5.  **Strict Data Types:** Redis keys MUST respect their intended type.
-    - `user:profile:{username}` is ALWAYS a **Hash**. NEVER use `set()` or `setnx()` on it. Use `hset()` only.
+    - `user:profile:{username}` is ALWAYS a **Hash**. NEVER use `set()` on it. The site WILL CRASH if you do this.
     - `user:history:{username}` is ALWAYS a **List**.
-    - If you see a `WRONGTYPE` error, STOP. You are likely trying to overwrite a complex key with a string.
 
-### ✅ RECOVERY PROCEDURES:
-If data appears missing:
-1.  **Scan `user:history:*`** to find the source of truth.
-2.  **Rebuild indexes** (`all_users`, `tracked_tickers`) from that history.
-3.  **Do not wipe** existing data before confirming the backup size matches strict expectations (>100 users).
+### ✅ REPOSITORY PROTOCOLS:
+1.  **Sync-to-Local:** Every time you modify the Production database (e.g. via direct script or repair), you MUST run `npx tsx scripts/sync-to-local.ts` immediately after.
+2.  **Local Dev:** Always ensure `npx tsx scripts/local-redis-proxy.ts` is running in a terminal if you are using the local environment.
+3.  **AI Fallback:** If the Gemini API hits 429, the Regex fallback in `ai-extractor.ts` is the safety net. Keep it updated for common tickers.
 
 ---
 **Signed:** *The Previous Agent who learned this the hard way.*

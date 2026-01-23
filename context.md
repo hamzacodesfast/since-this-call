@@ -10,25 +10,27 @@
 
 | Metric | Value |
 |--------|-------|
-| Tracked Calls | 530 |
-| Unique Gurus | 291 |
-| Unique Tickers | 131 |
-| Platform Win Rate | 38% |
-| Twitter Followers | ~146 |
-| Website MAU | 71 |
+| Tracked Calls | 536 |
+| Unique Gurus | 236 |
+| Unique Tickers | 134 |
+| Platform Win Rate | 39% |
+| Twitter Followers | ~150 |
+| Website MAU | 85 |
 
 ---
 
 ## 🏗️ Core Architecture
 
 - **Framework:** Next.js 14 (App Router) + TypeScript + TailwindCSS
-- **Database:** Upstash Redis (REST API), handled in `src/lib/analysis-store.ts`
+- **Database:** Upstash Redis (REST API)
+  - **Local Dev:** Uses `ioredis` wrapped in `LocalRedisWrapper` (Proxy) to simulate Upstash API.
+  - **Production:** Uses `@upstash/redis` (Direct REST) for Edge compatibility.
   - **Schema Enforced:** `user:profile:*` (Hash), `user:history:*` (List), `all_users` (Set).
-  - **Critical Rule:** Never overwrite a Hash with a String. use `hset`, not `set`.
-- **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash Exp
-- **Pricing Engine:** `src/lib/market-data.ts` (Waterfall: Yahoo → CoinGecko → DexScreener)
+  - **Critical Rule:** Never overwrite a Hash with a String. Every refresh of Prod MUST be followed by a `sync-to-local`.
+- **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash Exp.
+  - **Improved Fallback:** Highly robust Regex system for hashtags (#BTC) and plain-text tickers (Palantir -> PLTR) when AI is rate-limited.
+- **Pricing Engine:** `src/lib/market-data.ts` (Waterfall: DexScreener -> CoinGecko -> Yahoo Finance)
 - **Charts:** `recharts` library in `src/components/charts/`
-- **Monitoring:** Vercel Speed Insights
 
 ## 🆕 Recent Features (Jan 2026)
 
@@ -64,12 +66,14 @@
 ## 🛠️ Admin Scripts
 
 | Script | Purpose |
-|--------|---------|
-| `reanalyze.ts` | Fix incorrect analysis |
-| `refresh-metrics.ts` | Manually refresh stats cache |
-| `remove-tweet.ts` | Delete single analysis |
-| `sync-profile.ts` | Recalculate user stats |
-| `backup-data.ts` | Export all Redis data |
+|--------|-------|
+| `sync-to-local.ts` | **MOST IMPORTANT:** Clones Prod to Local. Run after ANY prod change. |
+| `local-redis-proxy.ts` | Runs the local Redis server with the Upstash-compatible proxy. |
+| `reanalyze.ts` | Fix incorrect analysis for a tweet ID. |
+| `remove-tweet.ts` | Delete a single analysis from history and recent. |
+| `bulk-analyze.ts` | Process a JSON list of tweet URLs into the DB. |
+| `backup-data.ts` | Export all Redis data to JSON. |
+| `restore-users.ts` | Restore users from a backup file. |
 
 ## 🎯 Immediate Priorities
 

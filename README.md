@@ -76,12 +76,24 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
    UPSTASH_REDIS_REST_KV_REST_API_TOKEN=your_upstash_token
    ```
 
-4. **Run the Development Server:**
+4. **Run the Local Redis Proxy:**
+   In a separate terminal, run:
+   ```bash
+   npx tsx scripts/local-redis-proxy.ts
+   ```
+   *Note: This starts a local Redis server and a proxy that makes it compatible with the Upstash API used in the app.*
+
+5. **Sync Data from Production (Recommended):**
+   ```bash
+   npx tsx scripts/sync-to-local.ts
+   ```
+
+6. **Run the Development Server:**
    ```bash
    npm run dev
    ```
 
-5. **Open the App:**
+7. **Open the App:**
    Visit `http://localhost:3000`
 
 ## 🧰 Admin Scripts
