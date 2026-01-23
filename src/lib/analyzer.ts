@@ -53,6 +53,14 @@ export interface AnalysisResult {
         sentiment: 'BULLISH' | 'BEARISH';
         date: string;
         contractAddress?: string;
+        // Context Engine Fields
+        ticker: string;
+        action: 'BUY' | 'SELL';
+        confidence_score: number;
+        timeframe: 'SHORT_TERM' | 'LONG_TERM' | 'UNKNOWN';
+        is_sarcasm: boolean;
+        reasoning: string;
+        warning_flags: string[];
     };
     market: {
         callPrice: number;
@@ -75,7 +83,11 @@ export interface AnalysisResult {
  * Core analysis logic, decoupled from fetching.
  * Use this when you already have the tweet object (e.g. bulk import).
  */
-export async function analyzeTweetContent(tweet: any, contractAddressOverride?: string): Promise<AnalysisResult> {
+export async function analyzeTweetContent(
+    tweet: any,
+    contractAddressOverride?: string,
+    typeOverride?: 'CRYPTO' | 'STOCK'
+): Promise<AnalysisResult> {
     // 2. Anti-Cheating / Time Travel Check
     // We detect if it was edited but now we allow it with a flag.
     const isEdited = tweet.edit_info?.initial?.edit_tweet_ids?.length > 1 || tweet.isEdited || false;
@@ -85,16 +97,17 @@ export async function analyzeTweetContent(tweet: any, contractAddressOverride?: 
     const firstImageUrl = mediaDetails.find((m: any) => m.type === 'photo')?.media_url_https;
 
     // 4. AI Extraction (with optional image for chart analysis)
-    const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl);
+    const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl, typeOverride);
 
     if (!callData) {
         throw new Error('Could not identify financial call');
     }
 
     // 5. Clean the symbol (strip $ and USDT/USD suffixes)
-    if (callData.symbol) {
-        callData.symbol = cleanSymbol(callData.symbol);
-    }
+    const symbol = cleanSymbol(callData.ticker);
+
+    // Map Context Engine fields
+    const sentiment = callData.action === 'BUY' ? 'BULLISH' : 'BEARISH';
 
     // If CA override provided (e.g., from pump.fun URL), validate and use it
     if (contractAddressOverride) {
@@ -107,8 +120,8 @@ export async function analyzeTweetContent(tweet: any, contractAddressOverride?: 
         // Validation 2: Symbol/Ticker Mismatch
         // Fetch CA details to get the REAL symbol for this address
         const overrideData = await getPriceByContractAddress(contractAddressOverride);
-        if (overrideData && callData.symbol) {
-            const tweetSymbol = callData.symbol.toUpperCase();
+        if (overrideData && symbol) {
+            const tweetSymbol = symbol.toUpperCase();
             const caSymbol = overrideData.symbol.toUpperCase();
             const caName = overrideData.name.toUpperCase();
 
@@ -136,15 +149,21 @@ export async function analyzeTweetContent(tweet: any, contractAddressOverride?: 
 
         // Update the symbol to the real one from the CA (fix "SOL" -> "MYTOKEN")
         if (overrideData) {
-            callData.symbol = overrideData.symbol;
+            // We'll update symbol later
         }
     }
 
     // Force known stocks that might be misclassified as crypto (e.g. BMNR which has a garbage token on Base)
+    // ONLY if no explicit override is provided
     const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC'];
-    if (callData.symbol && FORCE_STOCKS.includes(callData.symbol.toUpperCase()) && !contractAddressOverride) {
-        console.log(`[Analyzer] Forcing ${callData.symbol} to STOCK type`);
+    if (!typeOverride && symbol && FORCE_STOCKS.includes(symbol.toUpperCase()) && !contractAddressOverride) {
+        console.log(`[Analyzer] Forcing ${symbol} to STOCK type`);
         callData.type = 'STOCK';
+    }
+
+    // Apply explicit override if provided
+    if (typeOverride) {
+        callData.type = typeOverride;
     }
 
     // 4. Market Data Fetch
@@ -165,7 +184,15 @@ export async function analyzeTweetContent(tweet: any, contractAddressOverride?: 
 
     let callPrice: number | null = null;
     let currentPrice: number | null = null;
-    let finalSymbol = callData.symbol;
+    let finalSymbol = symbol;
+
+    // If we have override data, use its symbol
+    if (contractAddressOverride) {
+        const overrideData = await getPriceByContractAddress(contractAddressOverride);
+        if (overrideData) {
+            finalSymbol = overrideData.symbol;
+        }
+    }
 
     // Known tokens with CoinGecko listings - skip CA lookup to avoid fake tokens
     const COINGECKO_SYMBOLS = ['PUMP', 'ME', 'PEPE', 'WIF', 'BONK', 'PENGU', 'JUP', 'PYTH', 'JTO', 'RENDER', 'HYPE'];
@@ -250,15 +277,23 @@ export async function analyzeTweetContent(tweet: any, contractAddressOverride?: 
     }
 
     // 5. Calculate Performance
-    const performance = calculatePerformance(callPrice, currentPrice, callData.sentiment);
+    const performance = calculatePerformance(callPrice, currentPrice, sentiment);
 
     return {
         analysis: {
             symbol: finalSymbol,
             type: callData.type,
-            sentiment: callData.sentiment,
+            sentiment,
             date: callData.date,
             contractAddress: callData.contractAddress,
+            // Context Engine fields
+            ticker: callData.ticker,
+            action: callData.action as 'BUY' | 'SELL',
+            confidence_score: callData.confidence_score,
+            timeframe: callData.timeframe,
+            is_sarcasm: callData.is_sarcasm,
+            reasoning: callData.reasoning,
+            warning_flags: callData.warning_flags,
         },
         market: {
             callPrice,
@@ -278,12 +313,16 @@ export async function analyzeTweetContent(tweet: any, contractAddressOverride?: 
     };
 }
 
-export async function analyzeTweet(tweetId: string, contractAddressOverride?: string): Promise<AnalysisResult> {
+export async function analyzeTweet(
+    tweetId: string,
+    contractAddressOverride?: string,
+    typeOverride?: 'CRYPTO' | 'STOCK'
+): Promise<AnalysisResult> {
     // 1. Fetch Tweet Content
     const tweet = await getTweet(tweetId);
     if (!tweet) {
         throw new Error('Tweet not found');
     }
 
-    return analyzeTweetContent(tweet, contractAddressOverride);
+    return analyzeTweetContent(tweet, contractAddressOverride, typeOverride);
 }

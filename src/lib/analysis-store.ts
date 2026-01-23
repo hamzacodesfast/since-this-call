@@ -146,6 +146,14 @@ export interface StoredAnalysis {
     currentPrice?: number; // Price at analysis time (or last update)
     type?: 'CRYPTO' | 'STOCK';
     contractAddress?: string; // For pump.fun/DexScreener tokens
+    // Context Engine fields
+    ticker?: string;
+    action?: 'BUY' | 'SELL';
+    confidence_score?: number;
+    timeframe?: 'SHORT_TERM' | 'LONG_TERM' | 'UNKNOWN';
+    is_sarcasm?: boolean;
+    reasoning?: string;
+    warning_flags?: string[];
     // Optional metadata
     tweetUrl?: string;
     text?: string;
@@ -166,6 +174,13 @@ export const StoredAnalysisSchema = z.object({
     currentPrice: z.number().optional(),
     type: z.enum(['CRYPTO', 'STOCK']).optional(),
     contractAddress: z.string().optional(),
+    ticker: z.string().optional(),
+    action: z.enum(['BUY', 'SELL']).optional(),
+    confidence_score: z.number().optional(),
+    timeframe: z.enum(['SHORT_TERM', 'LONG_TERM', 'UNKNOWN']).optional(),
+    is_sarcasm: z.boolean().optional(),
+    reasoning: z.string().optional(),
+    warning_flags: z.array(z.string()).optional(),
 });
 
 export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {

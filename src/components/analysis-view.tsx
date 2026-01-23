@@ -13,6 +13,14 @@ interface AnalysisViewProps {
             type: 'CRYPTO' | 'STOCK';
             sentiment: 'BULLISH' | 'BEARISH';
             date: string;
+            // Context Engine fields
+            ticker: string;
+            action: 'BUY' | 'SELL';
+            confidence_score: number;
+            timeframe: 'SHORT_TERM' | 'LONG_TERM' | 'UNKNOWN';
+            is_sarcasm: boolean;
+            reasoning: string;
+            warning_flags: string[];
         };
         market: {
             callPrice: number;
@@ -246,6 +254,48 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                                 <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">Current</div>
                                 <div className="text-sm font-mono font-bold tracking-tight whitespace-nowrap">{formatPrice(data.market.currentPrice)}</div>
                             </div>
+                        </div>
+
+                        {/* Signal Intelligence (Context Engine) */}
+                        <div className="pt-4 border-t border-white/5 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">Signal Intelligence</div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-500"
+                                            style={{ width: `${data.analysis.confidence_score * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-blue-400">{(data.analysis.confidence_score * 100).toFixed(0)}%</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-white/5 rounded-lg p-3 text-left">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-bold py-0.5 px-1.5 rounded bg-blue-500/20 text-blue-400 uppercase tracking-tighter">
+                                        Verdict
+                                    </span>
+                                    {data.analysis.is_sarcasm && (
+                                        <span className="text-[10px] font-bold py-0.5 px-1.5 rounded bg-purple-500/20 text-purple-400 uppercase tracking-tighter">
+                                            Sarcasm Detected
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-xs text-foreground/80 leading-relaxed italic">
+                                    "{data.analysis.reasoning}"
+                                </p>
+                            </div>
+
+                            {data.analysis.warning_flags.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {data.analysis.warning_flags.map(flag => (
+                                        <span key={flag} className="text-[9px] font-bold text-yellow-500/60 uppercase">
+                                            ⚠️ {flag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                     </CardContent>

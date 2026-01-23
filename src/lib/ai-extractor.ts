@@ -22,9 +22,14 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const CallSchema = z.object({
-    symbol: z.string().describe('The stock ticker or crypto symbol (e.g. BTC, NVDA, ETH). For pump.fun tokens, use the token name/symbol if known.'),
+    ticker: z.string().describe('The stock ticker or crypto symbol (e.g. BTC, NVDA, ETH). For pump.fun tokens, use the token name/symbol if known.'),
+    action: z.enum(['BUY', 'SELL', 'NULL']).describe('The action/sentiment of the call. Use NULL if it is a conditional hypothesis or not an active call.'),
+    confidence_score: z.number().min(0).max(1).describe('Confidence score from 0 to 1.'),
+    timeframe: z.enum(['SHORT_TERM', 'LONG_TERM', 'UNKNOWN']).describe('The predicted timeframe.'),
+    is_sarcasm: z.boolean().describe('Whether the tweet uses sarcasm or memes to convey intent.'),
+    reasoning: z.string().describe('Brief explanation of the verdict.'),
+    warning_flags: z.array(z.string()).describe('Any warning flags for the analysis (e.g., "HIGH_VOLATILITY", "AMBIGUOUS_TICKER").'),
     type: z.enum(['CRYPTO', 'STOCK']).describe('The type of asset.'),
-    sentiment: z.enum(['BULLISH', 'BEARISH']).describe('The sentiment of the call.'),
     date: z.string().describe('The date of the tweet/call in ISO format (YYYY-MM-DD).'),
     contractAddress: z.string().optional().describe('Optional: Solana contract address for pump.fun or meme tokens (32-44 char base58 string).'),
 });
@@ -36,7 +41,7 @@ const SOLANA_CA_REGEX = /\b([1-9A-HJ-NP-Za-km-z]{32,44})\b/g;
 
 // Basic Regex Extraction Fallback if AI fails (Rate Limited)
 // This serves as a critical safety net to keep the app functional during AI outages.
-function extractWithRegex(text: string, dateStr: string): CallData | null {
+function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO' | 'STOCK'): CallData | null {
 
     // 1. Find Ticker/Symbol
     // Look for $BTC, $ETH, $AAPL or common names like "Bitcoin", "Apple"
@@ -84,7 +89,7 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
 
     // 2. Determine Type
     // Default to CRYPTO if it was a cashtag $SYMBOL, as that's 99% of our usage
-    let type: 'CRYPTO' | 'STOCK' = matches.length > 0 ? 'CRYPTO' : 'STOCK';
+    let type: 'CRYPTO' | 'STOCK' = typeOverride || (matches.length > 0 ? 'CRYPTO' : 'STOCK');
 
     const cryptoList = [
         'BTC', 'ETH', 'SOL', 'DOGE', 'DOT', 'ADA', 'XRP', 'LINK', 'AVAX', 'MATIC',
@@ -93,22 +98,6 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
         'BULLISH', 'TRUMP', 'SCRT', 'ROSE', 'PYTH', 'JUP', 'RAY', 'ONDO', 'TIA', 'SEI',
         'SUI', 'APT', 'OP', 'ARB', 'STRK', 'LDO', 'PENDLE', 'ENA', 'W', 'TNSR'
     ];
-
-    if (!symbol) {
-        // Fallback: Check for uppercase words matching known crypto tickers
-        const words = text.split(/\s+/);
-        for (const word of words) {
-            // Remove punctuation
-            const clean = word.replace(/[^a-zA-Z0-9]/g, '');
-            if (cryptoList.includes(clean.toUpperCase())) {
-                symbol = clean.toUpperCase();
-                type = 'CRYPTO';
-                break;
-            }
-        }
-    }
-
-    if (!symbol) return null;
 
     if (cryptoList.includes(symbol)) {
         type = 'CRYPTO';
@@ -159,9 +148,14 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
     }
 
     return {
-        symbol,
+        ticker: symbol,
+        action: sentiment === 'BULLISH' ? 'BUY' : 'SELL',
+        confidence_score: 0.5,
+        timeframe: 'SHORT_TERM',
+        is_sarcasm: false,
+        reasoning: 'Extracted via fallback regex.',
+        warning_flags: ['AI_FALLBACK'],
         type,
-        sentiment,
         date: dateStr,
         contractAddress,
     };
@@ -172,86 +166,55 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
  * Tries Google Gemini Flash 2.0 first (with optional image analysis).
  * If Rate Limited (429) or fails, falls back to Regex extraction.
  */
-export async function extractCallFromText(tweetText: string, tweetDate: string, imageUrl?: string): Promise<CallData | null> {
+export async function extractCallFromText(
+    tweetText: string,
+    tweetDate: string,
+    imageUrl?: string,
+    typeOverride?: 'CRYPTO' | 'STOCK'
+): Promise<CallData | null> {
     try {
         // Build the prompt content - text + optional image
         const promptText = `
-        Analyze this tweet and extract the financial "Call" (Prediction).
+        Analyze this tweet and extract the financial "Call" (Prediction) as the Chief Linguistic Officer for "SinceThisCall."
+        Your sole purpose is to disambiguate intent. Translate "FinTwit Slang," sarcasm, and memes into rigid, executable trading signals.
+
         Tweet Content: "${tweetText}"
         Tweet Date: "${tweetDate}"
         ${imageUrl ? '\nAn image/chart is attached. Use it to identify the asset if the text is ambiguous.' : ''}
+        ${typeOverride ? `\nUSER INTENT HINT: The user has explicitly selected the asset type as ${typeOverride}. Prioritize this type and look for relevant tickers of this type.` : ''}
 
-        CRITICAL SENTIMENT RULES (READ CAREFULLY):
-        
-        **PRICE TARGET RULES** (MOST IMPORTANT):
-        - If tweet mentions a PRICE TARGET, determine if it's ABOVE or BELOW the TYPICAL current price
-        - BTC is currently around $90k-100k. A target of "65k", "60k", "50k" = BEARISH. A target of "150k", "200k" = BULLISH
-        - ETH is currently around $3000-4000. A target of "2k", "1500", "1000" = BEARISH. A target of "5k", "10k" = BULLISH
-        - If predicting a LOWER price target = BEARISH
-        - If predicting a HIGHER price target = BULLISH
-        - "Going to 65k", "target 65k", "expecting 65k", "retest 60k" on BTC = BEARISH (price going DOWN)
-        
-        **BEARISH INDICATORS** (mark as BEARISH if ANY of these are present):
-        - "short", "shorting", "shorted"
-        - "sell", "selling", "sold"
-        - "dump", "dumping", "crash", "crashing"
-        - "down", "going down", "lower", "drop"
-        - "top is in", "the top", "topped"
-        - "exit", "exiting", "closed my long"
-        - "taking profits", "time to leave"
-        - "reject", "rejected", "rejection"
-        - "flush", "capitulation", "wipeout"
-        - "retest", "fill the gap", "revisit" (when referring to a LOWER price)
-        - "hopium", "cope", "copium" (implies the market is delusional and will drop)
-        - "idiots will lose", "people will lose", "others will lose" (they profit from others' losses = bearish)
-        - Any prediction of price going DOWN from current levels
-        
-        **BULLISH INDICATORS** (mark as BULLISH only if expressing positive outlook):
-        - "long", "longing", "buy", "buying", "bought"
-        - "moon", "pump", "send it", "going up"
-        - "accumulate", "accumulating"
-        - "breakout", "breaking out"
-        - "bullish", "higher highs", "new ATH"
-        - "bounce", "expecting bounce", "will bounce" (predicting upward reversal)
-        - "approaching level", "at support", "key support" (expecting bounce from support)
-        - "oversold", "good entry" (expecting price to rise)
-        - Predicting price will go UP from current levels
-        
-        **CRITICAL: ACTION vs DESCRIPTION**:
-        - FOCUS ON THE TRADER'S POSITION/ACTION, NOT THEIR DESCRIPTION OF PRICE
-        - "Chart looks horrible BUT I'm holding/buying/sticking with it" = BULLISH (they are LONG despite bad chart)
-        - "DCA", "accumulating", "adding", "staking" = BULLISH (they are buying more)
-        - "Sticking with the trade" = BULLISH (maintaining long position)
-        
-        **PROBABILITY / SKEPTICISM**:
-        - "Low chance", "Unlikely", "Doubt", "10% chance" of a high price = BEARISH (indicates it WON'T happen)
-        - "< 50% chance" of upside = BEARISH
-        - "High chance", "Likely", "Imminent" of a high price = BULLISH
-        
-        **KEY DISTINCTION**:
-        - "Closed my long" = They expect DOWN = BEARISH
-        - "Closed my short" = They expect UP = BULLISH
-        - "NOT buying" or "staying out" = BEARISH stance
-        - "Chart looks bad but holding" = BULLISH (position is LONG)
-        - "Cooked", "Finished", "Over", "Dead" = BEARISH (negative outlook)
-        - "Buying sub $X", "Buying under $X", "Bid at $X" = BEARISH (expects price to drop to $X first)
-        - "Bids set" or "Limits set" = BEARISH (waiting for lower prices)
-        - "Run the stops" or "Sweep the lows" = BEARISH (expects drop before reversal)
-        - "Drop then pump" or "Lower then higher" = BEARISH (immediate direction is down)
-        - "I become a buyer at..." = BEARISH (not a buyer YET)
-        - "Buying the dip" (active action NOW) = BULLISH
-        - "Will buy IF it drops" (passive/conditional) = BEARISH (expects drop)
-        
-        **SYMBOL EXTRACTION**:
-        - Look for $SYMBOL cashtags first
-        - Common mappings: Silver/SLV, Gold/GLD, Bitcoin/BTC, Ethereum/ETH
-        - For pump.fun tokens, extract the contract address (32-44 char base58 string)
-        - IMPORTANT: "SPX6900" is a CRYPTO memecoin, NOT the S&P 500 index. Extract as symbol "SPX6900" type "CRYPTO"
-        - Do NOT shorten "SPX6900" to "SPX" - they are different assets
-        
-        **TYPE**:
-        - CRYPTO: BTC, ETH, SOL, DOGE, XRP, meme coins, tokens, SPX6900
-        - STOCK: AAPL, TSLA, SPY, GLD, SLV, individual stocks, ETFs, commodities, SPX (S&P 500 index)
+        YOUR CORE DIRECTIVES:
+
+        1. Sarcasm & "Engagement Bait" Detection (The "Clown" Rule)
+        - If a tweet contains 🤡, 💀, or "Imagine...", analyze if the user is mocking sellers (Bullish/BUY) or mocking buyers (Bearish/SELL).
+        - "Imagine not owning BTC at this price 🤡" -> action: "BUY" (Bullish), is_sarcasm: true.
+
+        2. Inverse Logic
+        - If a user says "I am ruined," they are likely Long and the price went Down (Sentiment: BULLISH but trade went bad, look for intent).
+        - If they say "Printer go brrr," they are Long and price is Up.
+
+        3. Entity Resolution (The "Nicknames" Database)
+        - Map slang terms to Ticker Symbols:
+          * "HL" or "Hyperliquid" -> $HYPE
+          * "Saylor's bags" -> $MSTR
+          * "Vitalik's coin" -> $ETH
+          * "Golden Arches" -> $MCD
+          * "The dog" -> $DOGE (or $SHIB if context implies)
+          * "Corn" -> $BTC (Bitcoin)
+
+        4. Conditional Logic (The "If/Then" Trap)
+        - Distinguish between an Active Call and a Conditional Hypothesis.
+        - "Buying if we reclaim 40k" -> action: "NULL" (Do not generate a receipt).
+        - "Aping here. Stop loss at 39k" -> action: "BUY" (Active call).
+
+        5. Price Target Rules:
+        - BTC is currently around $90k-100k. A target of "65k" = BEARISH (SELL). A target of "150k" = BULLISH (BUY).
+        - If predicting a LOWER price target = SELL.
+        - If predicting a HIGHER price target = BUY.
+
+        6. Symbol Extraction:
+        - Look for $SYMBOL cashtags first.
+        - "SPX6900" is a CRYPTO memecoin, NOT the S&P 500 index.
 
         Return a valid JSON object matching the schema.
         `;
@@ -275,6 +238,12 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
             messages: messages,
         });
 
+        // Handle NULL action (conditional hypothesis)
+        if (object.action === 'NULL') {
+            console.log('[AI-Extractor] Detected conditional hypothesis (NULL action). Skipping receipt generation.');
+            return null;
+        }
+
         // DEBUG: Log what AI returned
         console.log('[AI-Extractor] AI returned:', JSON.stringify(object));
 
@@ -297,7 +266,7 @@ export async function extractCallFromText(tweetText: string, tweetDate: string, 
     } catch (error) {
         console.error('[AI-Extractor] AI failed (Rate Limit or Error), falling back to Regex:', error);
         // Fallback to Regex extraction
-        return extractWithRegex(tweetText, tweetDate);
+        return extractWithRegex(tweetText, tweetDate, typeOverride);
     }
 }
 

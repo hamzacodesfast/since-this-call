@@ -45,6 +45,7 @@ function setCachedData(url: string, data: any) {
 export default function Home() {
     const [url, setUrl] = useState('');
     const [pumpfunUrl, setPumpfunUrl] = useState('');
+    const [assetType, setAssetType] = useState<'CRYPTO' | 'STOCK' | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<any | null>(null);
@@ -66,8 +67,8 @@ export default function Home() {
         }
 
         try {
-            let apiUrl = `/api/analyze?url=${encodeURIComponent(url)}`;
-            if (pumpfunUrl) {
+            let apiUrl = `/api/analyze?url=${encodeURIComponent(url)}&type=${assetType}`;
+            if (pumpfunUrl && assetType === 'CRYPTO') {
                 apiUrl += `&pumpfun=${encodeURIComponent(pumpfunUrl)}`;
             }
             const res = await fetch(apiUrl);
@@ -130,63 +131,104 @@ export default function Home() {
                 </h1>
 
                 <p className="text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                    The ultimate lie detector for Crypto & Stock gurus. Paste a prediction tweet to see the <span className="text-foreground font-semibold">real receipts</span>.
+                    The ultimate lie detector for Crypto & Stock gurus. Choose your asset to see the <span className="text-foreground font-semibold">real receipts</span>.
                 </p>
             </div>
 
             {/* Platform Metrics */}
             <MetricsBar />
 
-            {/* Input Form */}
+            {/* Input Form / Type Selection */}
             <div className="w-full max-w-xl relative mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-
-                <form onSubmit={handleAnalyze} className="relative flex flex-col gap-2 p-2 bg-card/80 backdrop-blur-md border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                <Search className="w-5 h-5" />
-                            </div>
-                            <Input
-                                type="url"
-                                placeholder="Paste Tweet URL (e.g. https://x.com/...)"
-                                className="w-full h-12 pl-10 bg-transparent border-none focus-visible:ring-0 text-base"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                            />
-                        </div>
+                {!assetType ? (
+                    /* Initial Selection View */
+                    <div className="grid grid-cols-2 gap-4 animate-in zoom-in-95 duration-300">
                         <Button
-                            type="submit"
-                            size="lg"
-                            disabled={isLoading || !url}
-                            className="h-12 px-8 rounded-xl font-bold text-md shadow-lg"
+                            onClick={() => setAssetType('CRYPTO')}
+                            className="h-32 flex flex-col gap-3 rounded-2xl bg-card/80 backdrop-blur-md border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all group"
                         >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check Receipt'}
+                            <Sparkles className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-transform" />
+                            <div className="text-xl font-bold text-foreground">Analyze Crypto</div>
+                        </Button>
+                        <Button
+                            onClick={() => setAssetType('STOCK')}
+                            className="h-32 flex flex-col gap-3 rounded-2xl bg-card/80 backdrop-blur-md border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                        >
+                            <TrendingUp className="w-8 h-8 text-purple-500 group-hover:scale-110 transition-transform" />
+                            <div className="text-xl font-bold text-foreground">Analyze Stock</div>
                         </Button>
                     </div>
+                ) : (
+                    /* Search Mode View */
+                    <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
 
-                    {/* Optional Pump.fun URL for meme coins */}
-                    <div className="relative">
-                        <Input
-                            type="url"
-                            placeholder="Optional: pump.fun or dexscreener.com URL"
-                            className="w-full h-10 pl-4 bg-secondary/30 border-none focus-visible:ring-0 text-sm rounded-lg placeholder:text-muted-foreground/50"
-                            value={pumpfunUrl}
-                            onChange={(e) => setPumpfunUrl(e.target.value)}
-                        />
-                    </div>
-                </form>
+                        <form onSubmit={handleAnalyze} className="relative flex flex-col gap-2 p-2 bg-card/80 backdrop-blur-md border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                        <Search className="w-5 h-5" />
+                                    </div>
+                                    <Input
+                                        type="url"
+                                        placeholder={`Paste Tweet URL for ${assetType === 'CRYPTO' ? 'Crypto' : 'Stock'} Call`}
+                                        className="w-full h-12 pl-10 bg-transparent border-none focus-visible:ring-0 text-base"
+                                        value={url}
+                                        onChange={(e) => setUrl(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    disabled={isLoading || !url}
+                                    className="h-12 px-8 rounded-xl font-bold text-md shadow-lg"
+                                >
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check Receipt'}
+                                </Button>
+                            </div>
 
-                {/* Quick Prompts / Examples */}
-                {!data && !isLoading && (
-                    <div className="mt-6 flex flex-wrap justify-center gap-2 opacity-60">
-                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider mr-2 pt-1">Try:</span>
-                        <Button variant="outline" size="sm" className="h-7 text-xs rounded-full bg-background/50 hover:bg-background" onClick={() => setUrl('https://x.com/nntaleb/status/1408395330471829504')}>
-                            $BTC Prediction
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-7 text-xs rounded-full bg-background/50 hover:bg-background" onClick={() => setUrl('https://x.com/jimcramer/status/2002112942054215875')}>
-                            Jim Cramer
-                        </Button>
+                            {/* Optional Pump.fun URL - ONLY for Crypto */}
+                            {assetType === 'CRYPTO' && (
+                                <div className="relative">
+                                    <Input
+                                        type="url"
+                                        placeholder="Optional: pump.fun or dexscreener.com URL"
+                                        className="w-full h-10 pl-4 bg-secondary/30 border-none focus-visible:ring-0 text-sm rounded-lg placeholder:text-muted-foreground/50"
+                                        value={pumpfunUrl}
+                                        onChange={(e) => setPumpfunUrl(e.target.value)}
+                                    />
+                                </div>
+                            )}
+                        </form>
+
+                        {/* Quick Mode Toggle */}
+                        <div className="flex justify-between items-center px-2">
+                            <button
+                                onClick={() => {
+                                    setAssetType(assetType === 'CRYPTO' ? 'STOCK' : 'CRYPTO');
+                                    setData(null);
+                                    setError(null);
+                                }}
+                                className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+                            >
+                                <ArrowRight className="w-3 h-3 rotate-180" />
+                                Switch to {assetType === 'CRYPTO' ? 'Stocks' : 'Crypto'}
+                            </button>
+
+                            {/* Quick Prompts / Examples */}
+                            {!data && !isLoading && (
+                                <div className="flex gap-2 opacity-60">
+                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pt-1">Try:</span>
+                                    <button
+                                        className="text-[10px] hover:text-foreground transition-colors"
+                                        onClick={() => setUrl(assetType === 'CRYPTO' ? 'https://x.com/nntaleb/status/1408395330471829504' : 'https://x.com/jimcramer/status/2002112942054215875')}
+                                    >
+                                        {assetType === 'CRYPTO' ? '$BTC Example' : 'Jim Cramer Example'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

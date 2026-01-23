@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const tweetUrl = searchParams.get('url');
+    const typeOverride = searchParams.get('type') as 'CRYPTO' | 'STOCK' | null;
     const pumpfunUrl = searchParams.get('pumpfun'); // Optional: pump.fun/coin/<CA> URL
     const caParam = searchParams.get('ca'); // Optional: Direct CA override
 
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const result = await analyzeTweet(tweetId, contractAddress);
+        const result = await analyzeTweet(tweetId, contractAddress, typeOverride || undefined);
 
         return NextResponse.json(result);
 
