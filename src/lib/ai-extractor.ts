@@ -40,14 +40,16 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
 
     // 1. Find Ticker/Symbol
     // Look for $BTC, $ETH, $AAPL or common names like "Bitcoin", "Apple"
-    const cashtagRegex = /\$([A-Za-z][A-Za-z0-9]{1,19})/g;
+    // 1. Find Ticker/Symbol
+    // Look for $BTC, #BTC, or just capitalized words common in finance
+    const cashtagRegex = /[\$#]([A-Za-z][A-Za-z0-9]{1,19})/g;
     const matches = [...text.matchAll(cashtagRegex)];
 
     let symbol = '';
     if (matches.length > 0) {
         symbol = matches[0][1].toUpperCase();
     } else {
-        // Simple keyword matching for major assets
+        // Keyword matching for major assets and common names
         const lower = text.toLowerCase();
         if (lower.includes('bitcoin') || lower.includes('btc')) symbol = 'BTC';
         else if (lower.includes('ethereum') || lower.includes('eth')) symbol = 'ETH';
@@ -57,6 +59,22 @@ function extractWithRegex(text: string, dateStr: string): CallData | null {
         else if (lower.includes('nvidia') || lower.includes('nvda')) symbol = 'NVDA';
         else if (lower.includes('silver') || lower.includes('slv')) symbol = 'SLV';
         else if (lower.includes('gold') || lower.includes('gld')) symbol = 'GLD';
+        else if (lower.includes('microsoft') || lower.includes('msft')) symbol = 'MSFT';
+        else if (lower.includes('amazon') || lower.includes('amzn')) symbol = 'AMZN';
+        else if (lower.includes('palantir') || lower.includes('pltr')) symbol = 'PLTR';
+
+        // Try strict uppercase word matching for 3-5 letter tickers
+        if (!symbol) {
+            const words = text.split(/\s+/);
+            for (const word of words) {
+                const clean = word.replace(/[^a-zA-Z0-9]/g, '');
+                if (clean === clean.toUpperCase() && clean.length >= 3 && clean.length <= 5 && !['THE', 'AND', 'FOR'].includes(clean)) {
+                    // Assume it's a ticker if it's ALL CAPS 3-5 Chars
+                    symbol = clean;
+                    break;
+                }
+            }
+        }
     }
 
     if (!symbol) {
