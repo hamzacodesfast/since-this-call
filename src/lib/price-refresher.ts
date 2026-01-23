@@ -99,7 +99,6 @@ const COINGECKO_IDS: Record<string, string> = {
     'ME': 'magic-eden',
     'PUMP': 'pump-fun',
 
-    'LIT': 'lighter',
     'BULLISH': 'bullish',
 };
 
