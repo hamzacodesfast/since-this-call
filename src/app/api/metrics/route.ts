@@ -187,10 +187,18 @@ export async function GET() {
         await redis.set(METRICS_CACHE_KEY, JSON.stringify(metrics), { ex: CACHE_TTL });
 
         return NextResponse.json(metrics);
-    } catch (error) {
+    } catch (error: any) {
         console.error('[Metrics API] Error:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch metrics' },
+            {
+                error: 'Failed to fetch metrics',
+                details: error.message,
+                stack: error.stack,
+                _debug: {
+                    urlSet: !!(process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.KV_REST_API_URL),
+                    env: process.env.NODE_ENV
+                }
+            },
             { status: 500 }
         );
     }
