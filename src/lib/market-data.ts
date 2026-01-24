@@ -159,6 +159,22 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
     // Clean symbol (remove $ prefix if present)
     symbol = symbol.replace(/^\$/, '').toUpperCase();
 
+    // Futures / Commodities Normalization
+    const STOCK_OVERRIDES: Record<string, string> = {
+        'GC_F': 'GC=F', // Gold Futures
+        'CL_F': 'CL=F', // Crude Oil
+        'SI_F': 'SI=F', // Silver
+        'NQ_F': 'NQ=F', // Nasdaq Futures
+        'ES_F': 'ES=F', // S&P 500 Futures
+        'GOLD': 'GC=F', // Common alias
+    };
+    if (STOCK_OVERRIDES[symbol]) {
+        symbol = STOCK_OVERRIDES[symbol];
+    } else if (symbol.endsWith('_F')) {
+        // Generic catch-all: XX_F -> XX=F
+        symbol = symbol.replace('_F', '=F');
+    }
+
     // Remove common pair suffixes (USDT, USD, PERP) if it's likely a pair
     // Prevent stripping if the symbol IS the suffix (e.g. USDT)
     const suffixes = ['USDT', 'USD', 'PERP'];
@@ -201,7 +217,14 @@ export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: 
             'ZEC': 'ZEC-USD',
             'XMR': 'XMR-USD',
             'HYPE': 'HYPE32196-USD', // Hyperliquid
+            'USDT.D': 'USDT-USD',    // Dominance Fallback
+            'USDT.P': 'USDT-USD',    // Dominance Fallback
+            'BTC.D': 'BTC-USD',     // Dominance Fallback
+            'ETHBTC': 'ETH-BTC',    // ETH/BTC Pair
         };
+
+
+
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
         const yahooPrice = await getYahooPrice(yahooSymbol, date);
 
@@ -723,6 +746,8 @@ const INDEX_FALLBACKS: Record<string, string> = {
     'CRUDE': 'CL=F',
     'USO': 'CL=F',      // ETF fallback to futures
 };
+
+
 
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     // 1. Try original symbol

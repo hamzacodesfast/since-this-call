@@ -18,11 +18,9 @@ async function reanalyze() {
     // Dynamic imports to ensure env vars are loaded first
     const { analyzeTweet } = await import('../src/lib/analyzer');
     const { recalculateUserProfile, trackTicker, untrackTicker } = await import('../src/lib/analysis-store');
+    const { getRedisClient } = await import('../src/lib/redis-client');
 
-    const redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
-        token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
-    });
+    const redis = getRedisClient();
 
     const tweetId = process.argv[2];
     const caOverride = process.argv[3];
