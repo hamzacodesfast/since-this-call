@@ -318,10 +318,13 @@ export async function extractCallFromText(
         - Map slang terms to PURE Ticker Symbols (No $):
           * "Corn" -> BTC
           * "Vitalik's coin" or "Vitalik's token" -> ETH
-          * "Saylor's bags" -> MSTR
+          * "Saylor's bags" or "Saylor's buys" -> BTC
           * "Golden Arches" -> MCD
           * "The dog" -> DOGE (or SHIB if context implies)
           * "HL" or "Hyperliquid" -> HYPE
+          
+        6. MSTR/Saylor/Strategy Accumulation:
+        - If the account is @Strategy, @saylor, or the text mentions "MicroStrategy has acquired/bought BTC", the ticker MUST be BTC. Use "BTC" as the primary asset. Only use "MSTR" if the tweet is specifically about the company's fiscal earnings or stock-specific news.
 
         6. Conditional Logic vs Active Stance:
         - Distinguish between an Active Call and a Conditional Hypothesis.
