@@ -22,13 +22,18 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 - **Social Sharing**: One-click visual sharing generates a screenshot of the analysis
 - **Premium UI**: Sleek dark-mode design with Tailwind CSS and shadcn/ui
 
-## 📊 Current Stats (Jan 2026)
+## 🛑 Hard Rules for Contributors/Agents
+1. **Push to `main` first**: Commit and push code changes before database actions.
+2. **Sync Data**: Always run `npx tsx scripts/sync-to-local.ts` after a push or pull to keep local data in sync with production.
+3. **Type Safety**: Never overwrite Redis Hashes (`user:profile`) with Strings. Use `AnalysisStore`.
+
+## 📊 Current Stats (Jan 24, 2026)
 
 | Metric | Value |
 |--------|-------|
-| Tracked Calls | 530+ |
-| Unique Gurus | 291 |
-| Platform Win Rate | 38% |
+| Tracked Calls | 570+ |
+| Verified Edge Cases | 101 |
+| Platform Win Rate | 39% |
 | Top Ticker | BTC (137 calls) |
 
 ## 🛠️ Tech Stack
