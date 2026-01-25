@@ -33,7 +33,7 @@
   - **Local Dev:** Uses standard `redis:alpine` Docker container.
   - **Redis Wrapper:** `src/lib/redis-wrapper.ts` (IORedis proxy) handles protocol translation.
   - **Unified Client:** `src/lib/redis-client.ts` automatically switches between Local Proxy and Production Upstash based on env.
-- **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash Exp (Tier 1 / Paid).
+- **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash (Tier 1 / Paid).
   - **Asset Type Selection:** Now supports explicit "Crypto" vs "Stock" selection for higher accuracy.
 - **Pricing Engine:** `src/lib/market-data.ts` (CA-Aware Waterfall: GeckoTerminal -> DexScreener -> CoinGecko -> Yahoo Finance).
 

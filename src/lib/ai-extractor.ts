@@ -259,7 +259,7 @@ export async function extractCallFromText(
         ];
 
         const { object } = await generateObject({
-            model: google('gemini-2.0-flash-exp'), // Restore to recommended model
+            model: google('gemini-2.0-flash'), // Use stable 2.0 Flash for Tier 1 performance
             schema: CallSchema,
             messages: messages,
         });
