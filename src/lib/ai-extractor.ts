@@ -142,6 +142,21 @@ function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO'
     // Explicitly check for "sleeping giant" -> Big Bullish Signal
     if (cleanText.includes('sleeping giant')) bullScore += 3;
 
+    // PRICE TARGET LOGIC (REGEX):
+    // If targeting a price that looks like a "crash" or "bottom" compared to crypto norms
+    // e.g. "Targeting $3" for something like HYPE/BTC/SOL is BEARISH.
+    if (cleanText.includes('targeting')) {
+        const priceMatch = cleanText.match(/targeting\s+(?:tge\s+)?(?:price\s+)?\$(\d+(?:\.\d+)?)/i);
+        if (priceMatch) {
+            const targetPrice = parseFloat(priceMatch[1]);
+            // Low absolute numbers for major assets or "TGE" usually implies a low valuation/bearish target
+            if (targetPrice < 5 && !cleanText.includes('pennies')) {
+                bearScore += 2;
+                console.log(`[AI-Extractor] Regex: Target price $${targetPrice} detected as bearish context.`);
+            }
+        }
+    }
+
     const countOccurrences = (target: string, term: string) => {
         // Use word boundaries for most terms to avoid partial matches like "along" matching "long"
         // or "mindset" matching "in"
