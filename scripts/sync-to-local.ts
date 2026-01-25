@@ -107,9 +107,11 @@ async function sync() {
 
         console.log('\n✨ Sync Complete!');
         console.log(`Synced ${allUsers.length} user profiles and ${tickers.length} tickers.`);
+        process.exit(0);
 
     } catch (e: any) {
         console.error('\n❌ Sync Failed:', e.message);
+        process.exit(1);
     }
 }
 
