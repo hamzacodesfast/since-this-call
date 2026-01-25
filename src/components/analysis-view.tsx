@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ScreenshotButton } from './screenshot-button';
 
 
 interface AnalysisViewProps {
@@ -77,48 +78,6 @@ export function AnalysisView({ data }: AnalysisViewProps) {
         }).format(price);
     };
 
-    const handleShare = async () => {
-        const container = document.getElementById('share-card');
-        if (!container) return;
-
-
-        try {
-            // Use html-to-image instead of html2canvas for better SVG/CSS support
-            const { toPng } = await import('html-to-image');
-
-            const dataUrl = await toPng(container, {
-                backgroundColor: '#030712',
-                pixelRatio: 2,
-                style: {
-                    // Force any backdrop-blur to be ignored for capture
-                    backdropFilter: 'none',
-                }
-            });
-
-            // Convert data URL to blob
-            const response = await fetch(dataUrl);
-            const blob = await response.blob();
-
-            try {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                ]);
-                alert("📸 Receipt Copied! Paste it on X.");
-
-                const verdictText = isNeutral ? '➖ FLAT' : (isWin ? '✅ AGED WELL' : '❌ AGED POORLY');
-                const text = `Verified by @sincethiscall 🧾\n\n${data.analysis.symbol} Call:\n${verdictText} (${Math.abs(data.market.performance).toFixed(2)}% move)\n\nCheck your own prediction 👇 ${window.location.href}`;
-                const url = `https://twitter.com/intent/tweet?in_reply_to=${data.tweet.id}&text=${encodeURIComponent(text)}`;
-                window.open(url, '_blank');
-
-            } catch (e) {
-                console.error('Clipboard failed', e);
-                alert("Please allow clipboard access to copy the image.");
-            }
-
-        } catch (e) {
-            console.error('Screenshot failed', e);
-        }
-    };
 
     return (
         <div className="flex flex-col xl:flex-row gap-8 w-full max-w-6xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -265,13 +224,13 @@ export function AnalysisView({ data }: AnalysisViewProps) {
                     </CardFooter>
                 </Card>
 
-                <Button
-                    onClick={handleShare}
-                    size="lg"
-                    className="mt-8 w-full max-w-[500px] font-bold gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
-                >
-                    <Share className="w-4 h-4" /> Share Receipt
-                </Button>
+                <ScreenshotButton
+                    targetId="share-card"
+                    buttonText="Share Receipt"
+                    shareText={`Verified by @sincethiscall 🧾\n\n${data.analysis.symbol} Call:\n${isNeutral ? '➖ FLAT' : (isWin ? '✅ AGED WELL' : '❌ AGED POORLY')} (${Math.abs(data.market.performance).toFixed(2)}% move)`}
+                    replyToId={data.tweet.id}
+                    className="mt-8 w-full max-w-[500px] shadow-primary/20 hover:shadow-primary/40"
+                />
             </div>
         </div>
     );

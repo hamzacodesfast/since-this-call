@@ -276,6 +276,7 @@ export interface UserProfile {
     neutral: number;
     winRate: number;
     lastAnalyzed: number;
+    isVerified: boolean;
 }
 
 const ALL_USERS_KEY = 'all_users';
@@ -332,6 +333,9 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
 
         const winRate = total > 0 ? (wins / total) * 100 : 0;
 
+        // Get existing profile to preserve verification
+        const existingProfile = await redis.hgetall(profileKey);
+
         // Persist via Dual-Write
         await dualWrite(async (r) => {
             // Update Hash
@@ -344,6 +348,7 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
                 neutral,
                 winRate,
                 lastAnalyzed: Date.now(),
+                isVerified: (existingProfile as any)?.isVerified === 'true' || (existingProfile as any)?.isVerified === true,
             });
 
             // Replace History List
@@ -415,6 +420,7 @@ export async function recalculateUserProfile(username: string): Promise<void> {
                 neutral,
                 winRate,
                 lastAnalyzed: Date.now(),
+                isVerified: (existingProfile as any)?.isVerified === 'true' || (existingProfile as any)?.isVerified === true,
             });
         });
 
@@ -455,6 +461,7 @@ export async function getUserProfile(username: string): Promise<{ profile: UserP
                 neutral: parseInt(safeProfile.neutral || '0'),
                 winRate: parseFloat(safeProfile.winRate || '0'),
                 lastAnalyzed: parseInt(safeProfile.lastAnalyzed || '0'),
+                isVerified: safeProfile.isVerified === 'true' || safeProfile.isVerified === (true as any),
             } as UserProfile,
             history
         };
@@ -495,6 +502,7 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
                     neutral: parseInt(safeProfile.neutral || '0'),
                     winRate: parseFloat(safeProfile.winRate || '0'),
                     lastAnalyzed: parseInt(safeProfile.lastAnalyzed || '0'),
+                    isVerified: safeProfile.isVerified === 'true' || safeProfile.isVerified === (true as any),
                 } as UserProfile);
             }
         });

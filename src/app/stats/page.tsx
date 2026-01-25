@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlatformStats } from '@/components/charts/platform-stats';
 import { AsterDexBanner } from '@/components/asterdex-banner';
+import { ScreenshotButton } from '@/components/screenshot-button';
+import { Share } from 'lucide-react';
 
 interface TickerStats {
     symbol: string;
@@ -87,6 +89,15 @@ export default function StatsPage() {
                         <BarChart3 className="w-8 h-8" />
                         Platform Stats
                     </h1>
+                    <div className="ml-auto">
+                        <ScreenshotButton
+                            targetId="platform-stats-container"
+                            buttonText="Share Platform Alpha"
+                            shareText={`Verified by @sincethiscall 🧾\n\nPlatform Performance:\n${winRate}% Win Rate across ${stats?.totalAnalyses} calls! 🚀`}
+                            className="bg-blue-600 hover:bg-blue-700"
+                            size="sm"
+                        />
+                    </div>
                 </div>
 
                 {/* AsterDex Banner */}
@@ -104,7 +115,7 @@ export default function StatsPage() {
                         <div className="h-[200px] bg-muted/50 rounded-xl" />
                     </div>
                 ) : stats && (
-                    <>
+                    <div id="platform-stats-container" className="space-y-8 p-4 rounded-3xl border border-white/5 bg-black/20">
                         {/* Key Metrics */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                             <Card className="bg-background/40">
@@ -233,7 +244,7 @@ export default function StatsPage() {
                                 <Button variant="outline">All Profiles</Button>
                             </Link>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </main>

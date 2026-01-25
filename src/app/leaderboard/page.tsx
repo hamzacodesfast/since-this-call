@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AsterDexBanner } from '@/components/asterdex-banner';
 import { LeaderboardBar } from '@/components/charts/leaderboard-bar';
+import { ScreenshotButton } from '@/components/screenshot-button';
+import { CheckCircle2 } from 'lucide-react';
 
 interface UserProfile {
     username: string;
@@ -16,6 +18,7 @@ interface UserProfile {
     losses: number;
     neutral: number;
     winRate: number;
+    isVerified: boolean;
 }
 
 export default function LeaderboardPage() {
@@ -58,7 +61,10 @@ export default function LeaderboardPage() {
                     )}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">@{p.username}</div>
+                    <div className="font-semibold truncate flex items-center gap-1">
+                        @{p.username}
+                        {p.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-blue-400/10" />}
+                    </div>
                     <div className="text-xs text-muted-foreground">{p.totalAnalyses} calls</div>
                 </div>
                 <div className="text-right">
@@ -155,7 +161,7 @@ export default function LeaderboardPage() {
                                     </CardTitle>
                                     <p className="text-xs text-muted-foreground">Minimum 5 calls required</p>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
+                                <CardContent className="space-y-3" id="top-gurus-card">
                                     {top10.map((p, i) => (
                                         <ProfileRow key={p.username} p={p} rank={i + 1} isTop={true} />
                                     ))}
@@ -163,6 +169,15 @@ export default function LeaderboardPage() {
                                         <div className="text-center text-muted-foreground py-8">No qualified profiles yet</div>
                                     )}
                                 </CardContent>
+                                <div className="p-4 pt-0">
+                                    <ScreenshotButton
+                                        targetId="top-gurus-card"
+                                        buttonText="Share Alpha"
+                                        shareText="🔥 The Top 10 Financial Gurus on @sincethiscall. These legends are printing! 🧾"
+                                        className="w-full bg-green-600 hover:bg-green-700"
+                                        size="sm"
+                                    />
+                                </div>
                             </Card>
 
                             {/* Worst 10 */}
@@ -175,7 +190,7 @@ export default function LeaderboardPage() {
                                     </CardTitle>
                                     <p className="text-xs text-muted-foreground">Fade signal?</p>
                                 </CardHeader>
-                                <CardContent className="space-y-3">
+                                <CardContent className="space-y-3" id="worst-gurus-card">
                                     {worst10.map((p, i) => (
                                         <ProfileRow key={p.username} p={p} rank={i + 1} isTop={false} />
                                     ))}
@@ -183,6 +198,15 @@ export default function LeaderboardPage() {
                                         <div className="text-center text-muted-foreground py-8">No qualified profiles yet</div>
                                     )}
                                 </CardContent>
+                                <div className="p-4 pt-0">
+                                    <ScreenshotButton
+                                        targetId="worst-gurus-card"
+                                        buttonText="Share Wall of Shame"
+                                        shareText="💀 The Bottom 10 Financial Gurus. Fade these calls for maximum profit! 🧾 Verified by @sincethiscall"
+                                        className="w-full bg-red-600 hover:bg-red-700"
+                                        size="sm"
+                                    />
+                                </div>
                             </Card>
                         </div>
 
@@ -194,8 +218,9 @@ export default function LeaderboardPage() {
                             </Link>
                         </div>
                     </>
-                )}
-            </div>
-        </main>
+                )
+                }
+            </div >
+        </main >
     );
 }

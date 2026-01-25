@@ -33,6 +33,10 @@ export class LocalRedisWrapper {
         return this.client.del(key);
     }
 
+    async exists(key: string): Promise<number> {
+        return this.client.exists(key);
+    }
+
     async hgetall(key: string): Promise<Record<string, any> | null> {
         return this.client.hgetall(key);
     }
