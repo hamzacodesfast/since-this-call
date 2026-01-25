@@ -33,9 +33,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const rawParams = {
         url: searchParams.get('url'),
-        type: searchParams.get('type'),
-        pumpfun: searchParams.get('pumpfun'),
-        ca: searchParams.get('ca'),
+        type: searchParams.get('type') || undefined,
+        pumpfun: searchParams.get('pumpfun') || undefined,
+        ca: searchParams.get('ca') || undefined,
     };
 
     const validation = analyzeSchema.safeParse(rawParams);
