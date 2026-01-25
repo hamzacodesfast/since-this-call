@@ -5,14 +5,21 @@
  * 
  * Usage: npx tsx scripts/refresh-metrics.ts
  */
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load production env if available
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config();
 
 async function refreshMetrics() {
-    console.log('🔄 Refreshing platform metrics...\n');
+    const isLocal = process.argv.includes('--local');
+    const baseUrl = process.env.PRODUCTION_URL ||
+        (isLocal ? 'http://localhost:3000' : 'https://www.sincethiscall.com');
 
-    const baseUrl = process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000';
+    console.log(`🔄 Refreshing platform metrics...`);
+    console.log(`🔗 Target: ${baseUrl}\n`);
 
     try {
         const res = await fetch(`${baseUrl}/api/metrics`, {

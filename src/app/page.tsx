@@ -101,6 +101,8 @@ export default function Home() {
                     currentPrice: json.market.currentPrice,
                     type: json.analysis.type,
                     contractAddress: json.analysis.contractAddress,
+                    // Ensure timestamp is valid, otherwise undefined (which triggers fallback, but better than NaN)
+                    timestamp: !isNaN(new Date(json.tweet.date).getTime()) ? new Date(json.tweet.date).getTime() : undefined,
                 }),
             }).catch(() => { }); // Ignore errors
         } catch (err: any) {

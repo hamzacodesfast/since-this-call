@@ -10,18 +10,19 @@
 1. **PUSH TO MAIN FIRST**: All logic/code changes MUST be committed and pushed to `main` before any other actions.
 2. **SYNC-TO-LOCAL**: Run `npx tsx scripts/sync-to-local.ts` after any push to ensure your local environment reflects the live production data.
 3. **NO REDIS TYPE OVERWRITES**: Never overwrite a Hash (`user:profile`) with a String. Use `AnalysisStore` abstractions.
+4. **MARKETING ON MAIN**: Always prepare tweets and marketing content using **Production** stats (Main database). Never use local data for public performance reports.
 
 ---
 
-## 📊 Current Metrics (Jan 24, 2026)
+## 📊 Current Metrics (Jan 24, 2026 - Post-Sync)
 
 | Metric | Value |
 |--------|-------|
-| Tracked Calls | 570+ |
-| Unique Gurus | 310+ |
-| Verified Edge Cases | 101 |
-| Platform Win Rate | 39% |
-| Website MAU | 120 |
+| Total Analyses | 552 |
+| Unique Gurus | 244 |
+| Tracked Tickers | 194 |
+| Platform Win Rate| 40% |
+| Verified Edge Cases| 101 |
 
 ---
 
@@ -29,32 +30,23 @@
 
 - **Framework:** Next.js 14 (App Router) + TypeScript + TailwindCSS
 - **Database:** Upstash Redis (REST API)
-  - **Local Dev:** Uses `ioredis` wrapped in `LocalRedisWrapper` (Proxy) to simulate Upstash API.
-  - **Production:** Uses `@upstash/redis` (Direct REST) for Edge compatibility.
-  - **Schema Enforced:** `user:profile:*` (Hash), `user:history:*` (List), `all_users` (Set).
-  - **Critical Rule:** Never overwrite a Hash with a String. Every refresh of Prod MUST be followed by a `sync-to-local`.
+  - **Local Dev:** Uses standard `redis:alpine` Docker container.
+  - **Redis Wrapper:** `src/lib/redis-wrapper.ts` (IORedis proxy) handles protocol translation.
+  - **Unified Client:** `src/lib/redis-client.ts` automatically switches between Local Proxy and Production Upstash based on env.
 - **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash Exp.
-  - **Context Engine (Hardened):** Now highly resilient with 100+ verified edge cases.
-    - **Slang Overrides:** "Cooked", "Survive", "Avoiding", "Pain" = SELL.
-    - **Math Logic:** Performs accurate numerical comparison (Target < Current = SELL).
-    - **Proxy Logic:** Prioritizes underlying assets (e.g., @Strategy outputting BTC instead of MSTR).
-    - **Market Psych:** Correctly identifies "Where are we?" (Cycle Top) and "Goldilocks" (Complacency) as SELL signals.
-  - **Improved Fallback:** Highly robust Regex system for hashtags (#BTC) and plain-text tickers (Palantir -> PLTR).
+  - **Asset Type Selection:** Now supports explicit "Crypto" vs "Stock" selection for higher accuracy.
 - **Pricing Engine:** `src/lib/market-data.ts` (Waterfall: DexScreener -> CoinGecko -> Yahoo Finance)
-- **Charts:** `recharts` library in `src/components/charts/`
 
-## 🆕 Recent Features (Jan 2026)
+## 🆕 Recent Features (Jan 24-25, 2026)
 
-1. **Charts Section** (`/stats` page)
-   - Platform stats dashboard with pie/bar charts.
-2. **AsterDex Monetization**
-   - Referral banners on `/recent`, `/leaderboard`, `/stats`.
-3. **Most Tracked Tickers** (`/api/metrics`)
-   - Includes sentiment split and win rate per ticker.
-4. **Context Engine Hardening (Jan 24)**
-   - 101/101 Verified edge cases (Linguistics, Slang, Math, Psych).
-   - "MSTR/Saylor Proxy" rule: Prioritize BTC for @Strategy/@saylor.
-   - "USDT.D" Directive: Bearish USDT.D = Bullish Crypto signal.
+1. **Asset Type Selection (Search)**
+   - Two-step flow on homepage: Choose "Analyze Crypto" or "Analyze Stock" first.
+   - Dynamic forms: Crypto mode shows Pump.fun/DexScreener URLs; Stock mode is simplified.
+   - "Switch to..." toggle for quick mode changes.
+2. **Simplified Share Receipts**
+   - Removed "Signal Intelligence" (confidence score, reasoning) from receipts for cleaner visuals.
+3. **Main-First Maintenance Scripts**
+   - `refresh-metrics.ts` and `refresh-stats.ts` now prioritize `.env.production` and target `sincethiscall.com` by default.
 
 ## 📂 Key Files
 

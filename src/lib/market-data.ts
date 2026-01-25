@@ -30,6 +30,24 @@ const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
     'PUMP': { ca: 'pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn', chainId: 'solana' }, // Pump.fun
 };
 
+// Known Stock Tickers to enforce Type: STOCK
+const KNOWN_STOCKS: Set<string> = new Set([
+    'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT'
+]);
+
+/**
+ * Infers the asset type based on the symbol.
+ * - Checks known stock list first.
+ * - Defaults to CRYPTO if not found (majority use case).
+ */
+export function inferAssetType(symbol: string): 'CRYPTO' | 'STOCK' {
+    const clean = symbol.replace(/^\$/, '').toUpperCase();
+    if (KNOWN_STOCKS.has(clean)) {
+        return 'STOCK';
+    }
+    return 'CRYPTO';
+}
+
 // CoinGecko ID mapping for common tokens
 const COINGECKO_IDS: Record<string, string> = {
     'BTC': 'bitcoin',
@@ -155,9 +173,37 @@ const LAUNCH_DATES: Record<string, { date: Date, price: number }> = {
     'DOGE': { date: new Date('2013-12-15'), price: 0.0002 },
 };
 
-export async function getPrice(symbol: string, type: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
+/**
+ * Get current prices for major indices/cryptos to provide context to the AI.
+ * Returns a map of Symbol -> Price.
+ */
+export async function getMajorIndicesPrices(): Promise<Record<string, number>> {
+    try {
+        const [btc, eth, sol] = await Promise.all([
+            getPrice('BTC', 'CRYPTO'),
+            getPrice('ETH', 'CRYPTO'),
+            getPrice('SOL', 'CRYPTO'),
+        ]);
+
+        return {
+            'BTC': btc || 0,
+            'ETH': eth || 0,
+            'SOL': sol || 0,
+        };
+    } catch (e) {
+        console.error('[MarketData] Failed to fetch major indices:', e);
+        return {};
+    }
+}
+
+export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
     // Clean symbol (remove $ prefix if present)
     symbol = symbol.replace(/^\$/, '').toUpperCase();
+
+    // Infer type if not provided
+    if (!type) {
+        type = inferAssetType(symbol);
+    }
 
     // Futures / Commodities Normalization
     const STOCK_OVERRIDES: Record<string, string> = {

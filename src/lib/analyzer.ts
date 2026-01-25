@@ -20,7 +20,7 @@
  */
 import { getTweet } from 'react-tweet/api';
 import { extractCallFromText } from '@/lib/ai-extractor';
-import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA } from '@/lib/market-data';
+import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA, getMajorIndicesPrices } from '@/lib/market-data';
 import { getPumpfunPrice, storePumpfunPrice } from '@/lib/analysis-store';
 
 /**
@@ -96,8 +96,11 @@ export async function analyzeTweetContent(
     const mediaDetails = tweet.mediaDetails || [];
     const firstImageUrl = mediaDetails.find((m: any) => m.type === 'photo')?.media_url_https;
 
-    // 4. AI Extraction (with optional image for chart analysis)
-    const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl, typeOverride);
+    // 4. Fetch Market Context (Major Indices)
+    const marketContext = await getMajorIndicesPrices();
+
+    // 5. AI Extraction (with optional image for chart analysis)
+    const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl, typeOverride, marketContext);
 
     if (!callData) {
         throw new Error('Could not identify financial call');

@@ -31,10 +31,18 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
+        if (!body.timestamp) {
+            return NextResponse.json(
+                { error: 'Missing timestamp. Analysis rejected to prevent data corruption.' },
+                { status: 400 }
+            );
+        }
+
         // Zod validation - sanitize all inputs
         const parse = StoredAnalysisSchema.safeParse({
             ...body,
-            timestamp: Date.now(), // Server-side timestamp, not client
+            /// STRICT VALIDATION: Timestamp must be provided by client (which gets it from analyzeTweet)
+            timestamp: body.timestamp,
         });
 
         if (!parse.success) {

@@ -1,15 +1,8 @@
-
-import { Redis } from '@upstash/redis';
-import { getPrice } from './market-data';
-import { calculatePerformance } from './market-data';
+import { getRedisClient } from './redis-client';
+import { getPrice, calculatePerformance, inferAssetType } from './market-data';
 import { updateUserProfile, StoredAnalysis } from './analysis-store';
 
-// Lazy initialization or ensure env is loaded? 
-// Ideally we rely on process.env being set.
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
-    token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
-});
+const redis = getRedisClient();
 
 const ALL_USERS_KEY = 'all_users';
 const USER_HISTORY_PREFIX = 'user:history:';
@@ -52,7 +45,8 @@ export async function refreshUser(username: string, force: boolean = false) {
         let hasItemChanges = false;
 
         // Determine type (Default to CRYPTO if missing - most are crypto)
-        const type = item.type || 'CRYPTO';
+        // Use updated inference logic to catch things like MSTR
+        const type = item.type || inferAssetType(item.symbol);
 
         // 1. Backfill Entry Price if missing OR Forced
         if (!item.entryPrice || force) {

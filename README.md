@@ -8,6 +8,7 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 
 ## ✨ Features
 
+- **Asset Type Selection**: Explicit "Crypto" vs "Stock" search modes for maximum accuracy
 - **AI-Powered Extraction**: Uses **Google Gemini 2.0 Flash** to intelligently parse tweets, identifying asset symbols, sentiment (Bullish/Bearish), and prediction dates
 - **📊 Stats Dashboard**: Charts and analytics at `/stats` showing platform-wide performance
 - **📈 Most Tracked Tickers**: See which assets gurus are calling most (BTC, ETH, SOL, etc.)
@@ -27,14 +28,14 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 2. **Sync Data**: Always run `npx tsx scripts/sync-to-local.ts` after a push or pull to keep local data in sync with production.
 3. **Type Safety**: Never overwrite Redis Hashes (`user:profile`) with Strings. Use `AnalysisStore`.
 
-## 📊 Current Stats (Jan 24, 2026)
+## 📊 Current Stats (Jan 24, 2026 - Post-Sync)
 
 | Metric | Value |
 |--------|-------|
-| Tracked Calls | 570+ |
-| Verified Edge Cases | 101 |
-| Platform Win Rate | 39% |
-| Top Ticker | BTC (137 calls) |
+| Total Analyses | 552 |
+| Unique Gurus | 244 |
+| Platform Win Rate | 40% |
+| Tracked Tickers | 194 |
 
 ## 🛠️ Tech Stack
 

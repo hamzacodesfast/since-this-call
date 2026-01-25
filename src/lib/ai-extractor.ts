@@ -199,7 +199,8 @@ export async function extractCallFromText(
     tweetText: string,
     tweetDate: string,
     imageUrl?: string,
-    typeOverride?: 'CRYPTO' | 'STOCK'
+    typeOverride?: 'CRYPTO' | 'STOCK',
+    marketContext?: Record<string, number>
 ): Promise<CallData | null> {
 
     // 0. Pre-filter Noise
@@ -212,16 +213,20 @@ export async function extractCallFromText(
 
     try {
         // Build the prompt content - text + optional image
+        const btcPrice = marketContext?.['BTC'] || 90000;
+        const ethPrice = marketContext?.['ETH'] || 3000;
+        const solPrice = marketContext?.['SOL'] || 200;
+
         const promptText = `
         ROLE:
         You are the Chief Linguistic Officer for "SinceThisCall." Your sole purpose is to disambiguate intent. 
         You translate "FinTwit Slang," sarcasm, and memes into rigid, executable trading signals.
 
-        MARKET_CONTEXT (Current Era 2026):
-        - BTC: ~$90,000 - $100,000 range. (Targets < $85k are BEARISH/CRASH).
-        - ETH: ~$3,000 - $4,000 range.
-        - SOL: ~$200 - $300 range.
-        * Use these reference prices to determine direction if the tweet target is ambiguous. E.g. "Target 60k" for BTC is a CRASH prediction (SELL).
+        MARKET_CONTEXT (Current Era 2026 - REAL TIME):
+        - BTC: ~$${btcPrice.toLocaleString()} (Targets < $${(btcPrice * 0.9).toLocaleString()} are BEARISH).
+        - ETH: ~$${ethPrice.toLocaleString()} 
+        - SOL: ~$${solPrice.toLocaleString()} 
+        * Use these reference prices to determine direction if the tweet target is ambiguous. E.g. "Target 60k" for BTC is a CRASH prediction (SELL) if current is ${btcPrice.toLocaleString()}.
 
         THE PROBLEM:
         A regex can find "$BTC". It cannot understand "Imagine not owning BTC at this price 🤡." (Which is a BULLISH call, despite the clown emoji).
@@ -323,8 +328,14 @@ export async function extractCallFromText(
           * "The dog" -> DOGE (or SHIB if context implies)
           * "HL" or "Hyperliquid" -> HYPE
           
-        6. MSTR/Saylor/Strategy Accumulation:
-        - If the account is @Strategy, @saylor, or the text mentions "MicroStrategy has acquired/bought BTC", the ticker MUST be BTC. Use "BTC" as the primary asset. Only use "MSTR" if the tweet is specifically about the company's fiscal earnings or stock-specific news.
+          * "HL" or "Hyperliquid" -> HYPE
+          
+        6. MSTR/Saylor/Strategy Accumulation (PROXY RULE):
+        - MSTR is a PROXY for BTC. 
+        - If the account is @Strategy, @saylor, or the text mentions "MicroStrategy has acquired/bought BTC", the ticker MUST be BTC.
+        - UNLESS the text explicitly discusses "MSTR stock price", "premium", or "NAV". In that case, ticker is MSTR.
+        - If the user says "Buy MSTR", ticker is MSTR.
+        - If the user says "Saylor is buying", ticker is BTC.
 
         6. Conditional Logic vs Active Stance:
         - Distinguish between an Active Call and a Conditional Hypothesis.
