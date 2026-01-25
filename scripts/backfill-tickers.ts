@@ -7,7 +7,10 @@ import { Redis } from '@upstash/redis';
 import * as dotenv from 'dotenv';
 import path from 'path';
 
+// Load Env (Priority: Production -> Local)
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config();
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,

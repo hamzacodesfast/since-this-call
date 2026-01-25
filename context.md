@@ -14,14 +14,14 @@
 
 ---
 
-## 📊 Current Metrics (Jan 24, 2026 - Post-Sync)
+## 📊 Current Metrics (Jan 24, 2026 - Post-Repair)
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 552 |
-| Unique Gurus | 244 |
-| Tracked Tickers | 194 |
-| Platform Win Rate| 40% |
+| Total Analyses | 564 |
+| Unique Gurus | 245 |
+| Tracked Tickers | 211 |
+| Platform Win Rate| 39% |
 | Verified Edge Cases| 101 |
 
 ---
@@ -35,18 +35,21 @@
   - **Unified Client:** `src/lib/redis-client.ts` automatically switches between Local Proxy and Production Upstash based on env.
 - **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash Exp.
   - **Asset Type Selection:** Now supports explicit "Crypto" vs "Stock" selection for higher accuracy.
-- **Pricing Engine:** `src/lib/market-data.ts` (Waterfall: DexScreener -> CoinGecko -> Yahoo Finance)
+- **Pricing Engine:** `src/lib/market-data.ts` (CA-Aware Waterfall: GeckoTerminal -> DexScreener -> CoinGecko -> Yahoo Finance).
 
 ## 🆕 Recent Features (Jan 24-25, 2026)
 
-1. **Asset Type Selection (Search)**
-   - Two-step flow on homepage: Choose "Analyze Crypto" or "Analyze Stock" first.
-   - Dynamic forms: Crypto mode shows Pump.fun/DexScreener URLs; Stock mode is simplified.
-   - "Switch to..." toggle for quick mode changes.
-2. **Simplified Share Receipts**
-   - Removed "Signal Intelligence" (confidence score, reasoning) from receipts for cleaner visuals.
-3. **Main-First Maintenance Scripts**
-   - `refresh-metrics.ts` and `refresh-stats.ts` now prioritize `.env.production` and target `sincethiscall.com` by default.
+1.  **Historical Pricing Integrity**
+    - **Fix:** System now uses **Tweet Creation Date** (not analysis time) for all entry prices.
+    - **Repair:** Full database repair run on all 245 gurus.
+2.  **Contract Address (CA) Awareness**
+    - **Analyzer:** Automatically extracts CAs for meme coins (Solana/Base).
+    - **Price Refresher:** Now supports CA-based historical lookups via GeckoTerminal.
+    - **Impact:** Accurate "Win/Loss" tracking for low-cap tokens.
+3.  **Asset Type Selection (Search)**
+    - Two-step flow on homepage: Choose "Analyze Crypto" or "Analyze Stock" first.
+4.  **Main-First Maintenance Scripts**
+    - `refresh-metrics.ts` and `refresh-stats.ts` now prioritize `.env.production`.
 
 ## 📂 Key Files
 

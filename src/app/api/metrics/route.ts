@@ -120,8 +120,42 @@ async function computeMetrics(): Promise<PlatformMetrics> {
             }
         });
 
+        // Aggregate stats
+        refs.forEach((ref, i) => {
+            // ... existing finding logic ...
+        });
+
+        // Find the first valid analysis to get the Display Symbol
+        // (The key might be CA:0x... or CRYPTO:BTC, but analysis.symbol is "BTC" or "APE")
+        let displaySymbol = symbol;
+        const firstValid = userHistories.find(h => {
+            if (!Array.isArray(h)) return false;
+            return h.some(item => {
+                const p = typeof item === 'string' ? JSON.parse(item) : item;
+                return refs.some(ref => ref.includes(p.id));
+            });
+        });
+
+        // Actually, simpler: iterate refs until we find one that resolves
+        for (let i = 0; i < refs.length; i++) {
+            const [user, id] = refs[i].split(':');
+            const history = userHistories[i] as any[];
+            if (!history) continue;
+            const item = history.find(h => {
+                const p = typeof h === 'string' ? JSON.parse(h) : h;
+                return p.id === id;
+            });
+            if (item) {
+                const p = typeof item === 'string' ? JSON.parse(item) : item;
+                if (p.symbol) {
+                    displaySymbol = p.symbol;
+                    break;
+                }
+            }
+        }
+
         topTickers.push({
-            symbol,
+            symbol: displaySymbol,
             callCount: count,
             bullish,
             bearish,

@@ -20,6 +20,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### 3. Entity Proxy Resolution (The "Symbol" Layer)
 *   **Nicknames**: Mapping "Corn" (BTC), "Vitalik" (ETH), and "The Dog" (DOGE).
+*   **Contract Addresses (CA)**: Automatically detecting Solana/Base addresses (e.g. `85V...`) and treating them as the primary ticker for meme coins.
 *   **Proxy Overrides**: Identifying when a stock (MSTR) is used as a proxy for the underlying (BTC). For official Strategy/Saylor accounts, the data subject is **BTC**.
 *   **Dominance Parsing**: Understanding that a "Bearish" view on `USDT.D` (USDT Dominance) is a **BULLISH** signal for the crypto market.
 
@@ -44,14 +45,17 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### IV. Fix Protocols
 *   **Main First**: Data repairs (scripts) must target **Production** first. Local environment is downstream from Main.
-*   **Scripted Repairs**: Never manually edit database entries. Create reusable scripts (`scripts/fix-*.ts`) committed to `main` for auditability.
+*   **Scripted Repairs**: Never manually edit database entries. Create reusable scripts committed to `main`:
+    *   `scripts/repair-all-users.ts`: For historical timestamp/price corrections.
+    *   `scripts/backfill-tickers.ts`: For rebuilding the ticker index.
+    *   `scripts/reanalyze.ts`: For individual fix-ups.
 
 ---
 
 ## 🧪 Tech Stack Proficiency
 *   **AI**: Gemini 2.0 Flash (Multimodal) for text + chart analysis.
 *   **Data**: Redis (Upstash/LocalProxy) with a focus on Hash/List parity.
-*   **Pricing**: Waterfall logic (DexScreener -> CoinGecko -> Yahoo Finance).
+*   **Pricing**: CA-Aware Waterfall (GeckoTerminal Historical -> DexScreener -> CoinGecko -> Yahoo Finance).
 
 ---
 *Blueprint Version: 2.1 (Jan 24, 2026)*

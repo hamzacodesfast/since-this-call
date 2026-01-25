@@ -9,7 +9,7 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 - **Framework**: Next.js 14 (App Router) / TypeScript / Tailwind CSS / shadcn/ui.
 - **AI Engine**: Gemini 2.0 Flash (via Vercel AI SDK).
 - **Database**: Upstash Redis (Production) / Docker Redis:Alpine (Local).
-- **Market Data**: Waterfall logic (DexScreener → CoinGecko → Yahoo Finance).
+- **Market Data**: Waterfall (GeckoTerminal Historical → DexScreener → CoinGecko → Yahoo Finance).
 - **Visuals**: Recharts (Stats) / Remotion (Video) / html-to-image (Receipts).
 
 ---
@@ -54,6 +54,7 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 - **Manual Overrides**: 
     - Full Metric Refresh: `npx tsx scripts/refresh-metrics.ts`
     - Full Stats/Win-Rate Refresh: `npx tsx scripts/refresh-stats.ts`
+    - Rebuild Ticker Index: `npx tsx scripts/backfill-tickers.ts`
 
 ### Emergency Fixes
 - **Individual Analysis Fix**: `npx tsx scripts/reanalyze.ts <TWEET_ID>`

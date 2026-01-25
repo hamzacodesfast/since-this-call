@@ -126,13 +126,21 @@ function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO'
     // Also remove "short squeeze" (bullish) from triggering "short" (bearish) logic if handled separately
     let cleanText = lowerText.replace(/short term/g, '').replace(/short squeeze/g, '');
 
+    // NEGATION LOGIC:
+    // Remove "was never dead", "not dead", "never broken" to avoid triggering bearish keywords
+    cleanText = cleanText.replace(/never dead/g, 'alive').replace(/not dead/g, 'alive');
+    cleanText = cleanText.replace(/never broken/g, 'intact').replace(/not broken/g, 'intact');
+
     // Expanded list of bearish terms to catch nuances like "short", "crash", "puts"
     const bearishTerms = ['sell', 'dump', 'crash', 'short', 'bear', 'down', 'worth 0', 'zero', 'dead', 'falling', 'underperforming', 'puts', 'overvalued', 'late', 'top', 'exit', '💩', 'shit', 'scam', 'rug', 'bagholder', 'cleanse', 'flush', 'wipeout', '3 fig', 'purification', 'profit taking', 'closing', 'closed', 'distributed', 'close', 'exit', 'horrible', 'ugly', 'weak', 'rejected', 'nothing to offer', 'vaporware', 'useless', 'deviation', 'fakeout', 'bull trap', 'lower lows', 'lower highs', 'grinds lower', 'not interested', 'retarded', 'taking money', 'rekt', 'cooked'];
 
-    const bullishTerms = ['buy', 'long', 'bull', 'moon', 'pump', 'high', 'rocket', 'parabolic', 'gem', 'next 100x', 'bottom is in', 'reclaim', 'a+', 'a quarter', 'killer', 'accumulating', 'adding', 'hold', 'holding', 'hhodl', 'alt run', 'alt season', 'inflows', 'make a run', 'ath', 'all time high', 'risk/reward', 'best time'];
+    const bullishTerms = ['buy', 'long', 'bull', 'moon', 'pump', 'high', 'rocket', 'parabolic', 'gem', 'next 100x', 'bottom is in', 'reclaim', 'a+', 'a quarter', 'killer', 'accumulating', 'adding', 'hold', 'holding', 'hhodl', 'alt run', 'alt season', 'inflows', 'make a run', 'ath', 'all time high', 'risk/reward', 'best time', 'success', 'sleeping giant', 'opportunities', 'opportunity', 'early'];
 
     let bullScore = 0;
     let bearScore = 0;
+
+    // Explicitly check for "sleeping giant" -> Big Bullish Signal
+    if (cleanText.includes('sleeping giant')) bullScore += 3;
 
     const countOccurrences = (target: string, term: string) => {
         // Use word boundaries for most terms to avoid partial matches like "along" matching "long"
