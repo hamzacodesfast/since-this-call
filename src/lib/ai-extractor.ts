@@ -9,11 +9,10 @@
  * - Date: When the call was made
  * - Contract Address: For pump.fun/meme tokens
  * 
- * Key features:
  * - Multimodal: Can analyze chart images for context
  * - Doomposting detection: "cleanse", "capitulation" = BEARISH
  * - Position vs description: "chart horrible but holding" = BULLISH
- * - Regex fallback: Safety net if AI rate limited
+ * - AI-Only: No heuristics or regex fallbacks
  * 
  * @see analyzer.ts for orchestration
  */
@@ -36,229 +35,9 @@ export const CallSchema = z.object({
 
 export type CallData = z.infer<typeof CallSchema>;
 
-// Solana base58 address regex (32-44 characters, base58 alphabet)
-const SOLANA_CA_REGEX = /\b([1-9A-HJ-NP-Za-km-z]{32,44})\b/g;
-
-// Patterns for tweets that are just noise/facts/trivia and should be ignored
-const NOISE_PATTERNS = [
-    /^fun fact/i,
-    /launched .* ago/i,
-    /happy birthday/i,
-    /year ago today/i,
-    /years ago today/i,
-    /^did you know/i,
-    /history .* today/i
-];
-
-// Basic Regex Extraction Fallback if AI fails (Rate Limited)
-// This serves as a critical safety net to keep the app functional during AI outages.
-function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO' | 'STOCK'): CallData | null {
-
-    // 1. Find Ticker/Symbol
-    // Look for $BTC, $ETH, $AAPL or common names like "Bitcoin", "Apple"
-    // 1. Find Ticker/Symbol
-    // Look for $BTC, #BTC, or just capitalized words common in finance
-    const cashtagRegex = /[\$#]([A-Za-z][A-Za-z0-9]{1,19})/g;
-    const matches = [...text.matchAll(cashtagRegex)];
-
-    let symbol = '';
-    if (matches.length > 0) {
-        symbol = matches[0][1].toUpperCase();
-    } else {
-        // Keyword matching for major assets and common names
-        // Strip usernames to avoid false positives (e.g. @MoEthWhale matching "eth")
-        const cleanForKeywords = text.replace(/@[A-Za-z0-9_]+/g, '').toLowerCase();
-
-        if (cleanForKeywords.includes('bitcoin') || cleanForKeywords.includes('btc') || cleanForKeywords.includes('corn')) symbol = 'BTC';
-        else if (cleanForKeywords.includes('ethereum') || cleanForKeywords.includes('eth') || cleanForKeywords.includes('vitalik')) symbol = 'ETH';
-        else if (cleanForKeywords.includes('solana') || cleanForKeywords.includes('sol')) symbol = 'SOL';
-        else if (cleanForKeywords.includes('tesla') || cleanForKeywords.includes('tsla')) symbol = 'TSLA';
-        else if (cleanForKeywords.includes('apple') || cleanForKeywords.includes('aapl')) symbol = 'AAPL';
-        else if (cleanForKeywords.includes('nvidia') || cleanForKeywords.includes('nvda')) symbol = 'NVDA';
-        else if (cleanForKeywords.includes('silver') || cleanForKeywords.includes('slv')) symbol = 'SLV';
-        else if (cleanForKeywords.includes('gold') || cleanForKeywords.includes('gld')) symbol = 'GLD';
-        else if (cleanForKeywords.includes('microsoft') || cleanForKeywords.includes('msft')) symbol = 'MSFT';
-        else if (cleanForKeywords.includes('amazon') || cleanForKeywords.includes('amzn')) symbol = 'AMZN';
-        else if (cleanForKeywords.includes('palantir') || cleanForKeywords.includes('pltr')) symbol = 'PLTR';
-        else if (cleanForKeywords.includes('mcdonald') || cleanForKeywords.includes('golden arches')) symbol = 'MCD';
-        else if (cleanForKeywords.includes('microstrategy') || cleanForKeywords.includes('saylor')) symbol = 'MSTR';
-        else if (cleanForKeywords.includes('aster')) symbol = 'ASTER';
+// Basic Regex Extraction Fallback removed. System now relies entirely on AI.
 
 
-
-
-        // Try strict uppercase word matching for 3-5 letter tickers
-        if (!symbol) {
-            const words = text.split(/\s+/);
-            for (const word of words) {
-                const clean = word.replace(/[^a-zA-Z0-9]/g, '');
-                if (clean === clean.toUpperCase() && clean.length >= 3 && clean.length <= 5 && !['THE', 'AND', 'FOR'].includes(clean)) {
-                    // Assume it's a ticker if it's ALL CAPS 3-5 Chars
-                    symbol = clean;
-                    break;
-                }
-            }
-        }
-    }
-
-    if (!symbol) {
-        console.warn('[AI-Extractor] Regex failed to find symbol');
-        return null;
-    }
-
-    // 2. Determine Type
-    // Default to CRYPTO if it was a cashtag $SYMBOL, as that's 99% of our usage
-    let type: 'CRYPTO' | 'STOCK' = typeOverride || (matches.length > 0 || text.toLowerCase().includes('aster') ? 'CRYPTO' : 'STOCK');
-
-
-    const cryptoList = [
-        'BTC', 'ETH', 'SOL', 'DOGE', 'DOT', 'ADA', 'XRP', 'LINK', 'AVAX', 'MATIC',
-        'PEPE', 'WOJAK', 'SHIB', 'BONK', 'WIF', 'FLOKI', 'BRETT', 'MOG', 'TURBO',
-        'SPX', 'SPX6900', 'PENGU', 'MOODENG', 'POPCAT', 'GPY', 'HYPE', 'VIRTUAL', 'AI16Z',
-        'BULLISH', 'TRUMP', 'SCRT', 'ROSE', 'PYTH', 'JUP', 'RAY', 'ONDO', 'TIA', 'SEI',
-        'SUI', 'APT', 'OP', 'ARB', 'STRK', 'LDO', 'PENDLE', 'ENA', 'W', 'TNSR', 'ASTER'
-
-    ];
-
-    if (cryptoList.includes(symbol)) {
-        type = 'CRYPTO';
-    }
-
-    // 3. Determine Sentiment
-    // Simple score-based keyword matching.
-    let sentiment: 'BULLISH' | 'BEARISH' = 'BULLISH'; // Default assumption
-    const lowerText = text.toLowerCase();
-
-    // Pre-processing: Remove "short term" to avoid triggering "short" (bearish)
-    // Also remove "short squeeze" (bullish) from triggering "short" (bearish) logic if handled separately
-    let cleanText = lowerText.replace(/short term/g, '').replace(/short squeeze/g, '');
-
-    // NEGATION LOGIC:
-    // Remove "was never dead", "not dead", "never broken" to avoid triggering bearish keywords
-    cleanText = cleanText.replace(/never dead/g, 'alive').replace(/not dead/g, 'alive');
-    cleanText = cleanText.replace(/never broken/g, 'intact').replace(/not broken/g, 'intact');
-
-    // Expanded list of bearish terms to catch nuances like "short", "crash", "puts"
-    const bearishTerms = ['sell', 'dump', 'crash', 'short', 'bear', 'down', 'worth 0', 'zero', 'dead', 'falling', 'underperforming', 'puts', 'overvalued', 'late', 'top', 'exit', '💩', 'shit', 'scam', 'rug', 'bagholder', 'cleanse', 'flush', 'wipeout', '3 fig', 'purification', 'profit taking', 'closing', 'closed', 'distributed', 'close', 'exit', 'horrible', 'ugly', 'weak', 'rejected', 'nothing to offer', 'vaporware', 'useless', 'deviation', 'fakeout', 'bull trap', 'lower lows', 'lower highs', 'grinds lower', 'not interested', 'retarded', 'taking money', 'rekt', 'cooked'];
-
-    const bullishTerms = ['buy', 'long', 'bull', 'moon', 'pump', 'high', 'rocket', 'parabolic', 'gem', 'next 100x', 'bottom is in', 'reclaim', 'a+', 'a quarter', 'killer', 'accumulating', 'adding', 'hold', 'holding', 'hhodl', 'alt run', 'alt season', 'inflows', 'make a run', 'ath', 'all time high', 'risk/reward', 'best time', 'success', 'sleeping giant', 'opportunities', 'opportunity', 'early'];
-
-    let bullScore = 0;
-    let bearScore = 0;
-
-    // Explicitly check for "sleeping giant" -> Big Bullish Signal
-    if (cleanText.includes('sleeping giant')) bullScore += 3;
-
-    // PRICE TARGET LOGIC (REGEX):
-    // If targeting a price that looks like a "crash" or "bottom" compared to crypto norms
-    // e.g. "Targeting $3" for something like HYPE/BTC/SOL is BEARISH.
-    if (cleanText.includes('targeting')) {
-        const priceMatch = cleanText.match(/targeting\s+(?:tge\s+)?(?:price\s+)?\$(\d+(?:\.\d+)?)/i);
-        if (priceMatch) {
-            const targetPrice = parseFloat(priceMatch[1]);
-            // Low absolute numbers for major assets or "TGE" usually implies a low valuation/bearish target
-            if (targetPrice < 5 && !cleanText.includes('pennies')) {
-                bearScore += 2;
-                console.log(`[AI-Extractor] Regex: Target price $${targetPrice} detected as bearish context.`);
-            }
-        }
-    }
-
-    const countOccurrences = (target: string, term: string) => {
-        // Use word boundaries for most terms to avoid partial matches like "along" matching "long"
-        // or "mindset" matching "in"
-        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`\\b${escapedTerm}\\b`, 'gi');
-        return (target.match(regex) || []).length;
-    };
-
-    bullishTerms.forEach(t => { bullScore += countOccurrences(cleanText, t); });
-    bearishTerms.forEach(t => { bearScore += countOccurrences(cleanText, t); });
-
-    if (bearScore > bullScore) sentiment = 'BEARISH';
-
-    // Special case for Taleb's famous "worth 0" tweet or similar definitive statements
-    if (text.includes('worth 0')) sentiment = 'BEARISH';
-
-    // Check for Solana contract address (pump.fun tokens)
-    let contractAddress: string | undefined;
-    const caMatches = [...text.matchAll(SOLANA_CA_REGEX)];
-    if (caMatches.length > 0) {
-        // Filter out common false positives (short strings that aren't CAs)
-        const validCAs = caMatches.map(m => m[1]).filter(ca =>
-            ca.length >= 32 &&
-            ca.length <= 44 &&
-            !/^[0-9]+$/.test(ca) // Not all numbers
-        );
-        if (validCAs.length > 0) {
-            contractAddress = validCAs[0];
-            // If we found a CA but no symbol, use a placeholder
-            if (!symbol) {
-                symbol = 'PUMPFUN';
-                type = 'CRYPTO';
-            }
-        }
-    }
-
-    // Improve type detection for common stocks/ETFs
-    const stockTickers = ['spy', 'qqq', 'dia', 'iwm', 'vti', 'gld', 'slv', 'aapl', 'tsla', 'msft', 'goog', 'amzn', 'meta', 'nflx', 'nvda', 'oklo', 'smr'];
-    if (symbol && stockTickers.includes(symbol.toLowerCase())) {
-        type = 'STOCK';
-    }
-
-    // REGEX LOGIC PATCH for Insider Buying vs Selling
-    // If text mentions "insider buying", try to find the symbol closest to that phrase or explicitly linked.
-    // Example: "$OKLO insider selling versus $SMR insider buying"
-    if (text.toLowerCase().includes('insider buying')) {
-        const buyingMatch = text.match(/(\$[A-Za-z]+)\s+insider\s+buying/i);
-        if (buyingMatch) {
-            symbol = buyingMatch[1].replace('$', '').toUpperCase();
-            sentiment = 'BULLISH';
-            console.log(`[AI-Extractor] Regex override: Found insider buying for ${symbol}`);
-            if (stockTickers.includes(symbol.toLowerCase())) {
-                type = 'STOCK';
-            }
-        }
-    }
-
-    // REGEX LOGIC PATCH for "Eyes on" Preference
-    // Example: "A lot have eyes on $OKLO but I've got eyes on $SMR"
-    // We want the one the author has eyes on.
-    if (text.toLowerCase().includes('eyes on')) {
-        // Look for "my eyes on", "got eyes on", "have eyes on" followed by a symbol
-        // But specifically if there is a contrast "but ... eyes on $X", that is the winner.
-        // Or just the last mention of "eyes on $X" if multiple?
-        // Let's try to match "I've got eyes on $SYMBOL" specifically.
-        const eyesMatch = text.match(/(?:i've|i|we)\s+(?:got|have)\s+eyes\s+on\s+(\$[A-Za-z]+)/i);
-        if (eyesMatch) {
-            symbol = eyesMatch[1].replace('$', '').toUpperCase();
-            sentiment = 'BULLISH';
-            console.log(`[AI-Extractor] Regex override: Found 'eyes on' preference for ${symbol}`);
-            if (stockTickers.includes(symbol.toLowerCase())) {
-                type = 'STOCK';
-            }
-        }
-    }
-
-    return {
-        ticker: symbol,
-        action: sentiment === 'BULLISH' ? 'BUY' : 'SELL',
-        confidence_score: 0.5,
-        timeframe: 'SHORT_TERM',
-        is_sarcasm: false,
-        reasoning: 'Extracted via fallback regex.',
-        warning_flags: ['AI_FALLBACK'],
-        type,
-        date: dateStr,
-        contractAddress,
-    };
-}
-
-/**
- * Main Extraction Function.
- * Tries Google Gemini Flash 2.0 first (with optional image analysis).
- * If Rate Limited (429) or fails, falls back to Regex extraction.
- */
 export async function extractCallFromText(
     tweetText: string,
     tweetDate: string,
@@ -266,14 +45,6 @@ export async function extractCallFromText(
     typeOverride?: 'CRYPTO' | 'STOCK',
     marketContext?: Record<string, number>
 ): Promise<CallData | null> {
-
-    // 0. Pre-filter Noise
-    for (const pattern of NOISE_PATTERNS) {
-        if (pattern.test(tweetText.trim())) {
-            console.log(`[AI-Extractor] Ignored noise tweet: "${tweetText.substring(0, 50)}..." (Matched: ${pattern})`);
-            return null;
-        }
-    }
 
     try {
         // Build the prompt content - text + optional image
@@ -488,7 +259,7 @@ export async function extractCallFromText(
         ];
 
         const { object } = await generateObject({
-            model: google('models/gemini-1.5-flash'), // Switch to 1.5-flash for reliability/quota
+            model: google('gemini-2.0-flash-exp'), // Restore to recommended model
             schema: CallSchema,
             messages: messages,
         });
@@ -502,15 +273,7 @@ export async function extractCallFromText(
         // DEBUG: Log what AI returned
         console.log('[AI-Extractor] AI returned:', JSON.stringify(object));
 
-        // Post-processing for Solana CA to ensure it's captured
-        if (object && !object.contractAddress) {
-            const extractedCA = extractSolanaCA(tweetText);
-            if (extractedCA) {
-                console.log(`[AI-Extractor] AI missed CA, regex found it: ${extractedCA}`);
-                object.contractAddress = extractedCA;
-                // If AI got generic symbol like "SOL", try to refine it later (handled in analyzer)
-            }
-        }
+        // Post-processing for Solana CA removed. Relying on AI.
 
 
 
@@ -518,27 +281,21 @@ export async function extractCallFromText(
 
         return object;
 
-    } catch (error) {
-        console.error('[AI-Extractor] AI failed (Rate Limit or Error), falling back to Regex:', error);
-        // Fallback to Regex extraction
-        return extractWithRegex(tweetText, tweetDate, typeOverride);
-    }
-}
+    } catch (error: any) {
+        // Detect 429 (Rate Limit) or Quota errors from the Google AI SDK.
+        const errorJson = JSON.stringify(error);
+        const isRateLimit =
+            error.status === 429 ||
+            error.statusCode === 429 ||
+            errorJson.includes('429') ||
+            errorJson.toLowerCase().includes('quota') ||
+            (error.message && (error.message.includes('429') || error.message.toLowerCase().includes('quota')));
 
-/**
- * Helper function to extract Solana Contract Address using regex.
- */
-function extractSolanaCA(text: string): string | null {
-    const caMatches = [...text.matchAll(SOLANA_CA_REGEX)];
-    if (caMatches.length > 0) {
-        const validCAs = caMatches.map(m => m[1]).filter(ca =>
-            ca.length >= 32 &&
-            ca.length <= 44 &&
-            !/^[0-9]+$/.test(ca) // Not all numbers
-        );
-        if (validCAs.length > 0) {
-            return validCAs[0];
+        if (isRateLimit) {
+            throw new Error('SinceThisCall is at capacity right now.');
         }
+
+        console.error('[AI-Extractor] AI failed with non-quota error:', error);
+        throw error;
     }
-    return null;
 }
