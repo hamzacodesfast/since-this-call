@@ -202,7 +202,8 @@ export async function analyzeTweetContent(
     const usesCoinGecko = COINGECKO_SYMBOLS.includes(finalSymbol.toUpperCase());
 
     // If we have a contract address (pump.fun token) AND it's not a known CoinGecko token, use CA-based lookup
-    if (callData.contractAddress && !usesCoinGecko) {
+    // STOCKS should never use CA lookup
+    if (callData.contractAddress && !usesCoinGecko && callData.type !== 'STOCK') {
         const caData = await getPriceByContractAddress(callData.contractAddress);
         if (caData) {
             currentPrice = caData.price;
