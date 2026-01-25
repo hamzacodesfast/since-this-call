@@ -32,7 +32,8 @@ const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
 
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
-    'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT'
+    'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
+    'OKLO', 'SMR'
 ]);
 
 /**

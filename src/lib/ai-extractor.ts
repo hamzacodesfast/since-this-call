@@ -171,9 +171,43 @@ function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO'
     }
 
     // Improve type detection for common stocks/ETFs
-    const stockTickers = ['spy', 'qqq', 'dia', 'iwm', 'vti', 'gld', 'slv', 'aapl', 'tsla', 'msft', 'goog', 'amzn', 'meta', 'nflx', 'nvda'];
+    const stockTickers = ['spy', 'qqq', 'dia', 'iwm', 'vti', 'gld', 'slv', 'aapl', 'tsla', 'msft', 'goog', 'amzn', 'meta', 'nflx', 'nvda', 'oklo', 'smr'];
     if (symbol && stockTickers.includes(symbol.toLowerCase())) {
         type = 'STOCK';
+    }
+
+    // REGEX LOGIC PATCH for Insider Buying vs Selling
+    // If text mentions "insider buying", try to find the symbol closest to that phrase or explicitly linked.
+    // Example: "$OKLO insider selling versus $SMR insider buying"
+    if (text.toLowerCase().includes('insider buying')) {
+        const buyingMatch = text.match(/(\$[A-Za-z]+)\s+insider\s+buying/i);
+        if (buyingMatch) {
+            symbol = buyingMatch[1].replace('$', '').toUpperCase();
+            sentiment = 'BULLISH';
+            console.log(`[AI-Extractor] Regex override: Found insider buying for ${symbol}`);
+            if (stockTickers.includes(symbol.toLowerCase())) {
+                type = 'STOCK';
+            }
+        }
+    }
+
+    // REGEX LOGIC PATCH for "Eyes on" Preference
+    // Example: "A lot have eyes on $OKLO but I've got eyes on $SMR"
+    // We want the one the author has eyes on.
+    if (text.toLowerCase().includes('eyes on')) {
+        // Look for "my eyes on", "got eyes on", "have eyes on" followed by a symbol
+        // But specifically if there is a contrast "but ... eyes on $X", that is the winner.
+        // Or just the last mention of "eyes on $X" if multiple?
+        // Let's try to match "I've got eyes on $SYMBOL" specifically.
+        const eyesMatch = text.match(/(?:i've|i|we)\s+(?:got|have)\s+eyes\s+on\s+(\$[A-Za-z]+)/i);
+        if (eyesMatch) {
+            symbol = eyesMatch[1].replace('$', '').toUpperCase();
+            sentiment = 'BULLISH';
+            console.log(`[AI-Extractor] Regex override: Found 'eyes on' preference for ${symbol}`);
+            if (stockTickers.includes(symbol.toLowerCase())) {
+                type = 'STOCK';
+            }
+        }
     }
 
     return {
@@ -372,6 +406,9 @@ export async function extractCallFromText(
         - If ambiguous, default to the first mentioned asset.
         - If the user says the asset is "cooked", "dead", or "bearish", BUT says they will buy lower -> The Call is SELL (Bearish) because the immediate move is down.
 
+        - COMPARISON PRIORITY (INSIDER): If comparing "Insider Selling" vs "Insider Buying" (e.g. "$A selling vs $B buying"), the ticker MUST be the one with "Insider Buying". (Action: BUY).
+        - COMPARISON PRIORITY (FLOWS): "Outflows from X, Inflows to Y" -> Ticker: Y (BUY).
+
         11. CONFLICT RESOLUTION (TEXT vs IMAGE):
         - If the Text and Image contradict significantly (e.g. Text says "Short limit" but Chart shows a massive Green Arrow/Long setup), TRUST THE TEXT action.
         - THE SKEPTICAL EYE: If the text is just a symbol ($BTC) and the image shows a "historically bullish" pattern (green circles, bouncing off a line) but the CURRENT price is at a major high/sideways for weeks, it is often a BEARISH signal implying that the trend is exhausted. 
@@ -421,7 +458,7 @@ export async function extractCallFromText(
         ];
 
         const { object } = await generateObject({
-            model: google('models/gemini-2.0-flash-exp'), // Revert to known working model
+            model: google('models/gemini-1.5-flash'), // Switch to 1.5-flash for reliability/quota
             schema: CallSchema,
             messages: messages,
         });

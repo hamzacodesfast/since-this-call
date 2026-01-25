@@ -36,9 +36,15 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 *   **Sync Parity**: Always run `npx tsx scripts/sync-to-local.ts` after any push or pull. Never verify logic against stale local data.
 *   **Schema Safety**: Never use raw `SET` commands on Redis Hashes. Use the `AnalysisStore` wrapper to prevent production-breaking data-type collisions.
 
-### II. The Verification Loop
-*   **Zero-Hallucination Target**: 100% Extractable Accuracy. 
-*   **Edge Case Documentation**: Every newly identified linguistic pattern (e.g., "Goldilocks Pullback") must be documented in the logic and added to the `walkthrough.md` Case Studies.
+
+### III. Validation & Logic Enforcement
+*   **Strict Timestamp Integrity**: The API (`/api/recent`) must **REJECT** any request without a valid timestamp. There is no fallback to `Date.now()` (Search Time). Timeline integrity is paramount.
+*   **Asset Type Segregation**: Stock searches initiated by the user must **strictly** bypass DexScreener/Crypto APIs to prevent meme-coin contamination of ticker symbols (e.g. $MSTR, $AAPL).
+*   **Dynamic Market Context**: The AI must be fed real-time prices (BTC/ETH/SOL) via `MARKET_CONTEXT` injection to correctly validate "Numerical Directionality" (e.g. Buying BTC at $90k when market is $100k = Bearish/Short).
+
+### IV. Fix Protocols
+*   **Main First**: Data repairs (scripts) must target **Production** first. Local environment is downstream from Main.
+*   **Scripted Repairs**: Never manually edit database entries. Create reusable scripts (`scripts/fix-*.ts`) committed to `main` for auditability.
 
 ---
 
@@ -48,4 +54,4 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 *   **Pricing**: Waterfall logic (DexScreener -> CoinGecko -> Yahoo Finance).
 
 ---
-*Blueprint Version: 2.0 (Jan 24, 2026)*
+*Blueprint Version: 2.1 (Jan 24, 2026)*
