@@ -57,8 +57,14 @@ async function fixBased16z() {
             reasoning: result.analysis.reasoning
         };
 
+        const { updateUserProfile, addAnalysis } = await import('../src/lib/analysis-store');
+
+        // 1. Update Global Recent Feed
+        await addAnalysis(analysis as any);
+
+        // 2. Update User Profile and History
         await updateUserProfile(analysis as any);
-        console.log(`✅ Fixed entry and synced profile for @${username}.`);
+        console.log(`✅ Fixed entry and synced profile for @${username} (Everywhere).`);
 
     } catch (e) {
         console.error('❌ Repair failed:', e);
