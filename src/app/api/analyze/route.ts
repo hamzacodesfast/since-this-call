@@ -11,6 +11,15 @@ const limiter = rateLimit({
 });
 
 
+import { z } from 'zod';
+
+const analyzeSchema = z.object({
+    url: z.string().url(),
+    type: z.enum(['CRYPTO', 'STOCK']).optional(),
+    pumpfun: z.string().optional(), // Can be a URL, let's keep it loose but validated as string
+    ca: z.string().regex(/^[a-zA-Z0-9]+$/).optional(),
+});
+
 export async function GET(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
 
@@ -22,14 +31,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const tweetUrl = searchParams.get('url');
-    const typeOverride = searchParams.get('type') as 'CRYPTO' | 'STOCK' | null;
-    const pumpfunUrl = searchParams.get('pumpfun'); // Optional: pump.fun/coin/<CA> URL
-    const caParam = searchParams.get('ca'); // Optional: Direct CA override
+    const rawParams = {
+        url: searchParams.get('url'),
+        type: searchParams.get('type'),
+        pumpfun: searchParams.get('pumpfun'),
+        ca: searchParams.get('ca'),
+    };
 
-    if (!tweetUrl) {
-        return NextResponse.json({ error: 'Missing tweet URL' }, { status: 400 });
+    const validation = analyzeSchema.safeParse(rawParams);
+
+    if (!validation.success) {
+        return NextResponse.json({ error: 'Invalid input parameters', details: validation.error.format() }, { status: 400 });
     }
+
+    const { url: tweetUrl, type: typeOverride, pumpfun: pumpfunUrl, ca: caParam } = validation.data;
 
     try {
         const tweetId = tweetUrl.split('/').pop()?.split('?')[0];
