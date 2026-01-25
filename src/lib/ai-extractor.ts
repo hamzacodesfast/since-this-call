@@ -66,20 +66,25 @@ function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO'
         symbol = matches[0][1].toUpperCase();
     } else {
         // Keyword matching for major assets and common names
-        const lower = text.toLowerCase();
-        if (lower.includes('bitcoin') || lower.includes('btc') || lower.includes('corn')) symbol = 'BTC';
-        else if (lower.includes('ethereum') || lower.includes('eth') || lower.includes('vitalik')) symbol = 'ETH';
-        else if (lower.includes('solana') || lower.includes('sol')) symbol = 'SOL';
-        else if (lower.includes('tesla') || lower.includes('tsla')) symbol = 'TSLA';
-        else if (lower.includes('apple') || lower.includes('aapl')) symbol = 'AAPL';
-        else if (lower.includes('nvidia') || lower.includes('nvda')) symbol = 'NVDA';
-        else if (lower.includes('silver') || lower.includes('slv')) symbol = 'SLV';
-        else if (lower.includes('gold') || lower.includes('gld')) symbol = 'GLD';
-        else if (lower.includes('microsoft') || lower.includes('msft')) symbol = 'MSFT';
-        else if (lower.includes('amazon') || lower.includes('amzn')) symbol = 'AMZN';
-        else if (lower.includes('palantir') || lower.includes('pltr')) symbol = 'PLTR';
-        else if (lower.includes('mcdonald') || lower.includes('golden arches')) symbol = 'MCD';
-        else if (lower.includes('microstrategy') || lower.includes('saylor')) symbol = 'MSTR';
+        // Strip usernames to avoid false positives (e.g. @MoEthWhale matching "eth")
+        const cleanForKeywords = text.replace(/@[A-Za-z0-9_]+/g, '').toLowerCase();
+
+        if (cleanForKeywords.includes('bitcoin') || cleanForKeywords.includes('btc') || cleanForKeywords.includes('corn')) symbol = 'BTC';
+        else if (cleanForKeywords.includes('ethereum') || cleanForKeywords.includes('eth') || cleanForKeywords.includes('vitalik')) symbol = 'ETH';
+        else if (cleanForKeywords.includes('solana') || cleanForKeywords.includes('sol')) symbol = 'SOL';
+        else if (cleanForKeywords.includes('tesla') || cleanForKeywords.includes('tsla')) symbol = 'TSLA';
+        else if (cleanForKeywords.includes('apple') || cleanForKeywords.includes('aapl')) symbol = 'AAPL';
+        else if (cleanForKeywords.includes('nvidia') || cleanForKeywords.includes('nvda')) symbol = 'NVDA';
+        else if (cleanForKeywords.includes('silver') || cleanForKeywords.includes('slv')) symbol = 'SLV';
+        else if (cleanForKeywords.includes('gold') || cleanForKeywords.includes('gld')) symbol = 'GLD';
+        else if (cleanForKeywords.includes('microsoft') || cleanForKeywords.includes('msft')) symbol = 'MSFT';
+        else if (cleanForKeywords.includes('amazon') || cleanForKeywords.includes('amzn')) symbol = 'AMZN';
+        else if (cleanForKeywords.includes('palantir') || cleanForKeywords.includes('pltr')) symbol = 'PLTR';
+        else if (cleanForKeywords.includes('mcdonald') || cleanForKeywords.includes('golden arches')) symbol = 'MCD';
+        else if (cleanForKeywords.includes('microstrategy') || cleanForKeywords.includes('saylor')) symbol = 'MSTR';
+        else if (cleanForKeywords.includes('aster')) symbol = 'ASTER';
+
+
 
 
         // Try strict uppercase word matching for 3-5 letter tickers
@@ -103,14 +108,16 @@ function extractWithRegex(text: string, dateStr: string, typeOverride?: 'CRYPTO'
 
     // 2. Determine Type
     // Default to CRYPTO if it was a cashtag $SYMBOL, as that's 99% of our usage
-    let type: 'CRYPTO' | 'STOCK' = typeOverride || (matches.length > 0 ? 'CRYPTO' : 'STOCK');
+    let type: 'CRYPTO' | 'STOCK' = typeOverride || (matches.length > 0 || text.toLowerCase().includes('aster') ? 'CRYPTO' : 'STOCK');
+
 
     const cryptoList = [
         'BTC', 'ETH', 'SOL', 'DOGE', 'DOT', 'ADA', 'XRP', 'LINK', 'AVAX', 'MATIC',
         'PEPE', 'WOJAK', 'SHIB', 'BONK', 'WIF', 'FLOKI', 'BRETT', 'MOG', 'TURBO',
         'SPX', 'SPX6900', 'PENGU', 'MOODENG', 'POPCAT', 'GPY', 'HYPE', 'VIRTUAL', 'AI16Z',
         'BULLISH', 'TRUMP', 'SCRT', 'ROSE', 'PYTH', 'JUP', 'RAY', 'ONDO', 'TIA', 'SEI',
-        'SUI', 'APT', 'OP', 'ARB', 'STRK', 'LDO', 'PENDLE', 'ENA', 'W', 'TNSR'
+        'SUI', 'APT', 'OP', 'ARB', 'STRK', 'LDO', 'PENDLE', 'ENA', 'W', 'TNSR', 'ASTER'
+
     ];
 
     if (cryptoList.includes(symbol)) {
