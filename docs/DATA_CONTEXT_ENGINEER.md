@@ -70,3 +70,15 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 *Blueprint Version: 2.2 (Jan 26, 2026)*
 
+### VI. Market Data Reliability Protocol
+*   **Stock Whitelisting**: Tickers that look like crypto but are stocks (e.g. `ONDS`, `ASST`) must be added to `KNOWN_STOCKS` in `market-data.ts`. This prevents DexScreener contamination.
+*   **Recent Date Fallback**: Yahoo Finance Historical API is unreliable for "Today's" data. Logic must fallback to **Current Price** if the historical fetch fails for a date < 24h old.
+*   **Type Enforcement**: Major assets (BTC, ETH, SOL) must be hard-coded as `CRYPTO` in `price-updater.ts` to prevent "Stock" misclassification (e.g. ETH -> Ethan Allen).
+
+### VII. Local Environment Protocol
+*   **Redis Client**: Do not use `eval('require')` hacks for `ioredis`. Configure `serverComponentsExternalPackages: ['ioredis']` in `next.config.mjs` to support local drivers natively.
+*   **Port Discipline**: Local apps run on 3000 (Main) and 3001 (Twitter Watcher). Ensure no zombie processes before starting `dev`.
+
+---
+
+*Blueprint Version: 2.3 (Jan 26, 2026)*
