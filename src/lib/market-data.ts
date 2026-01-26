@@ -33,7 +33,7 @@ const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
-    'OKLO', 'SMR'
+    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD'
 ]);
 
 /**
@@ -164,6 +164,9 @@ const COINGECKO_IDS: Record<string, string> = {
     'ASTER': 'aster-2',
     'LIT': 'lighter',
     'BULLISH': 'bullish',
+    'TRUMP': 'official-trump',
+    'MELANIA': 'melania-trump',
+    'GPY': 'gary-gensler-memecoin', // Placeholder
 };
 
 // Launch dates and initial prices for major assets
@@ -201,6 +204,12 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
     // Clean symbol (remove $ prefix if present)
     symbol = symbol.replace(/^\$/, '').toUpperCase();
 
+    // FORCE STOCK TYPE FOR KNOWN TICKERS
+    // This overrides any 'CRYPTO' tag the AI might have guessed
+    if (KNOWN_STOCKS.has(symbol)) {
+        type = 'STOCK';
+    }
+
     // Infer type if not provided
     if (!type) {
         type = inferAssetType(symbol);
@@ -213,7 +222,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         'SI_F': 'SI=F', // Silver
         'NQ_F': 'NQ=F', // Nasdaq Futures
         'ES_F': 'ES=F', // S&P 500 Futures
-        'GOLD': 'GC=F', // Common alias
+        'GOLD': 'GC=F', // Common alias (But not GLD)
     };
     if (STOCK_OVERRIDES[symbol]) {
         symbol = STOCK_OVERRIDES[symbol];
@@ -779,13 +788,14 @@ const INDEX_FALLBACKS: Record<string, string> = {
     'GOLD': 'GC=F',
     'XAUUSD': 'GC=F',
     'XAU': 'GC=F',
-    'GLD': 'GC=F',      // ETF fallback to futures
+    // 'GLD': 'GC=F',      // REMOVED: GLD should fetch ETF price, not Futures
 
     // Commodities - Silver
     'SILVER': 'SI=F',
     'XAGUSD': 'SI=F',
     'XAG': 'SI=F',
     'SLV': 'SI=F',      // ETF fallback to futures
+
 
     // Commodities - Oil
     'OIL': 'CL=F',
