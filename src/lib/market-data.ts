@@ -809,6 +809,16 @@ const INDEX_FALLBACKS: Record<string, string> = {
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     // 1. Try original symbol
     let price = await getYahooPriceInternal(symbol, date);
+
+    // Fallback: If historical fetch failed but date is recent (< 24h), try current price
+    if (price === null && date) {
+        const hoursOld = (Date.now() - date.getTime()) / (1000 * 60 * 60);
+        if (hoursOld < 24) {
+            console.log(`[MarketData] Historical fetch failed for ${symbol} (recent tweet), trying current price...`);
+            price = await getYahooPriceInternal(symbol);
+        }
+    }
+
     if (price !== null) return price;
 
     // 2. Check fallback map
@@ -823,6 +833,7 @@ async function getYahooPrice(symbol: string, date?: Date): Promise<number | null
     // or just rely on the map above.
     return null;
 }
+
 
 async function getYahooPriceInternal(symbol: string, date?: Date): Promise<number | null> {
     try {
