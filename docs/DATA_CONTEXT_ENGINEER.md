@@ -66,9 +66,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
     4.  **Verify**: Re-run the debug script to confirm the prompt change works.
     5.  **Repair**: Run a `fix-[case].ts` script to correct the specific Production entry.
 
----
 
-*Blueprint Version: 2.2 (Jan 26, 2026)*
 
 ### VI. Market Data Reliability Protocol
 *   **Stock Whitelisting**: Tickers that look like crypto but are stocks (e.g. `ONDS`, `ASST`) must be added to `KNOWN_STOCKS` in `market-data.ts`. This prevents DexScreener contamination.
