@@ -1,11 +1,193 @@
+nohup: ignoring input
 
 > since-this-call@0.1.0 dev
 > next dev
 
- ⚠ Port 3000 is in use, trying 3001 instead.
   ▲ Next.js 14.2.35
-  - Local:        http://localhost:3001
+  - Local:        http://localhost:3000
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1844ms
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 3.5s (928 modules)
+ GET / 200 in 4472ms
+ ✓ Compiled in 940ms (438 modules)
+ ○ Compiling /api/metrics ...
+ ✓ Compiled /api/metrics in 791ms (524 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/metrics 200 in 973ms
+ ○ Compiling /profiles ...
+ ✓ Compiled /profiles in 624ms (960 modules)
+ GET /profiles 200 in 848ms
+ ✓ Compiled /api/profiles in 324ms (610 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/profiles 200 in 506ms
+ GET /api/profiles 200 in 29ms
+ ○ Compiling /stats ...
+ ✓ Compiled /stats in 1648ms (1958 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/metrics 200 in 67ms
+ GET /api/metrics 200 in 11ms
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/profiles 200 in 81ms
+ GET /api/profiles 200 in 22ms
+ GET /stats 200 in 249ms
+ ✓ Compiled /icon.png in 439ms (1099 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /icon.png?e82170debad323cc 200 in 930ms
+ GET /api/metrics 200 in 800ms
+ GET /api/metrics 200 in 8ms
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/profiles 200 in 55ms
+ GET /api/profiles 200 in 18ms
+ GET /api/profiles 200 in 28ms
+ GET /api/profiles 200 in 22ms
+ GET /api/metrics 200 in 9ms
+ GET /api/metrics 200 in 13ms
+ GET /api/profiles 200 in 22ms
+ GET /api/profiles 200 in 18ms
+ GET /stats 200 in 228ms
+ GET /icon.png?e82170debad323cc 200 in 20ms
+ GET /api/metrics 200 in 20ms
+ GET /api/metrics 200 in 14ms
+ GET /api/profiles 200 in 26ms
+ GET /api/profiles 200 in 22ms
+ ○ Compiling /leaderboard ...
+ ✓ Compiled /leaderboard in 1411ms (1948 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/profiles 200 in 106ms
+ GET /api/profiles 200 in 21ms
+ ○ Compiling /recent ...
+ ✓ Compiled /recent in 1003ms (1979 modules)
+ ✓ Compiled / in 281ms (1142 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/metrics 200 in 46ms
+ GET /api/metrics 200 in 9ms
+[Wrapper] zrange global:analyses:timestamp 0-499 rev:true
+[Metrics] Found 0 refs from ZSET (Global Index)
+ POST /api/metrics 200 in 29ms
+ GET /api/metrics 200 in 18ms
+ ✓ Compiled in 1752ms (1962 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+[Metrics] ZSET Card: 634
+[Wrapper] zrange global:analyses:timestamp 0-499 rev:true
+[Metrics] Found 500 refs from ZSET (Global Index)
+ POST /api/metrics 200 in 60ms
+ GET / 200 in 178ms
+ ✓ Compiled /icon.png in 250ms (1050 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /icon.png?e82170debad323cc 200 in 673ms
+ GET /api/metrics 200 in 563ms
+ GET /api/metrics 200 in 17ms
+ GET /api/metrics 200 in 13ms
+ GET /api/metrics 200 in 32ms
+ ✓ Compiled /api/profiles in 192ms (1129 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+✅ IORedis initialized for redis://localhost:6379
+ GET /api/profiles 200 in 312ms
+ GET /api/profiles 200 in 24ms
+ ✓ Compiled in 526ms (2070 modules)
+ ✓ Compiled in 234ms (1129 modules)
+ GET /stats 200 in 218ms
+ GET /icon.png?e82170debad323cc 200 in 40ms
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+ GET /api/metrics 200 in 22ms
+ GET /api/metrics 200 in 20ms
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+ GET /api/profiles 200 in 70ms
+ GET /api/profiles 200 in 24ms
+ GET /stats 200 in 79ms
+ GET /icon.png?e82170debad323cc 200 in 23ms
+ GET /api/metrics 200 in 36ms
+ GET /api/metrics 200 in 20ms
+ GET /api/profiles 200 in 32ms
+ GET /api/profiles 200 in 28ms
+ GET /stats 200 in 41ms
+ GET /icon.png?e82170debad323cc 200 in 35ms
+ GET /api/metrics 200 in 51ms
+ GET /api/metrics 200 in 23ms
+ GET /api/profiles 200 in 35ms
+ GET /api/profiles 200 in 29ms
+ GET /stats 200 in 46ms
+ GET /api/metrics 200 in 15ms
+ GET /icon.png?e82170debad323cc 200 in 32ms
+ GET /api/metrics 200 in 31ms
+ GET /api/profiles 200 in 45ms
+ GET /api/profiles 200 in 25ms
+ GET /api/metrics 200 in 26ms
+ GET /api/metrics 200 in 18ms
+ GET /api/metrics 200 in 13ms
+ GET /api/metrics 200 in 19ms
+ GET /api/profiles 200 in 33ms
+ GET /api/profiles 200 in 27ms
+ GET /stats 200 in 44ms
+ GET /api/metrics 200 in 16ms
+ GET /api/metrics 200 in 30ms
+ GET /api/profiles 200 in 48ms
+ GET /icon.png?e82170debad323cc 200 in 55ms
+ GET /api/profiles 200 in 31ms
+ GET /api/profiles 200 in 24ms
+ GET /api/profiles 200 in 25ms
+ ○ Compiling /recent ...
+ ✓ Compiled /recent in 535ms (1137 modules)
+ ✓ Compiled /api/recent in 472ms (1140 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+ GET /api/recent 200 in 602ms
+ GET /api/recent 200 in 11ms
+ GET /api/profiles 200 in 29ms
+ GET /api/profiles 200 in 25ms
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+ GET /api/metrics 200 in 14ms
+ GET /api/metrics 200 in 22ms
+ GET /api/profiles 200 in 39ms
+ GET /api/profiles 200 in 35ms
+ ✓ Compiled /profiles in 199ms (1145 modules)
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+ GET /api/profiles 200 in 73ms
+ GET /api/profiles 200 in 32ms
+🔌 Initializing Local Redis Wrapper (Lazy IORedis)...
+ GET /api/metrics 200 in 16ms
+ GET /api/metrics 200 in 17ms
+ GET /api/profiles 200 in 29ms
+ GET /api/profiles 200 in 26ms
+ GET /stats 200 in 230ms
+ GET /icon.png?e82170debad323cc 200 in 37ms
+ GET /api/metrics 200 in 17ms
+ GET /api/metrics 200 in 15ms
+ GET /api/profiles 200 in 27ms
+ GET /api/profiles 200 in 25ms
+ GET /stats 200 in 58ms
+ GET /icon.png?e82170debad323cc 200 in 21ms
+ GET /api/metrics 200 in 17ms
+ GET /api/metrics 200 in 20ms
+ GET /api/profiles 200 in 42ms
+ GET /api/profiles 200 in 36ms
+ GET /stats 200 in 52ms
+ GET /icon.png?e82170debad323cc 200 in 21ms
+ GET /api/metrics 200 in 22ms
+ GET /api/metrics 200 in 24ms
+ GET /api/profiles 200 in 38ms
+ GET /api/profiles 200 in 29ms
+ GET /api/metrics 200 in 41ms
+ GET /api/metrics 200 in 23ms
+ GET /api/recent 200 in 20ms
+ GET /api/recent 200 in 14ms
+ GET /api/profiles 200 in 29ms
+ GET /api/profiles 200 in 34ms
+ GET /api/metrics 200 in 31ms
+ GET /api/metrics 200 in 33ms
+ GET /api/profiles 200 in 53ms
+ GET /api/profiles 200 in 78ms
+ GET /api/profiles 200 in 36ms
+ GET /api/profiles 200 in 75ms

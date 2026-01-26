@@ -9,8 +9,6 @@ export class LocalRedisWrapper {
     constructor(url: string) {
         console.log('🔌 Initializing Local Redis Wrapper (Lazy IORedis)...');
         try {
-            // Dynamic require via eval to strictly prevent Webpack from bundling ioredis in production
-            // This is necessary because Vercel/Next.js will statically analyze 'require' and include it.
             const r = eval('require');
             const IORedis = r('ioredis');
             this.client = new IORedis(url.replace('http://', 'redis://').replace(':8080', ':6379'));
@@ -24,12 +22,16 @@ export class LocalRedisWrapper {
         try { return val ? JSON.parse(val) : null; } catch { return val; }
     }
 
-    async set(key: string, value: any): Promise<any> {
+    async set(key: string, value: any, options?: { ex?: number }): Promise<any> {
         const val = typeof value === 'object' ? JSON.stringify(value) : value;
+        if (options?.ex) {
+            return this.client.set(key, val, 'EX', options.ex);
+        }
         return this.client.set(key, val);
     }
 
-    async del(key: string): Promise<number> {
+    async del(key: string | string[]): Promise<number> {
+        if (Array.isArray(key)) return this.client.del(...key);
         return this.client.del(key);
     }
 
@@ -92,6 +94,21 @@ export class LocalRedisWrapper {
         return this.client.setnx(key, val);
     }
 
+    async zadd(key: string, member: { score: number, member: any }): Promise<number> {
+        return this.client.zadd(key, member.score, member.member);
+    }
+
+    async zrange(key: string, start: number, stop: number, options?: { rev?: boolean }): Promise<any[]> {
+        if (options?.rev) {
+            return this.client.zrevrange(key, start, stop);
+        }
+        return this.client.zrange(key, start, stop);
+    }
+
+    async zcard(key: string): Promise<number> {
+        return this.client.zcard(key);
+    }
+
     async flushdb(): Promise<string> {
         return this.client.flushdb();
     }
@@ -101,18 +118,22 @@ export class LocalRedisWrapper {
     }
 }
 
-// Better approach: Return a Proxy that intercepts 'exec'
 function createPipelineProxy(ioredisPipe: any) {
     return new Proxy(ioredisPipe, {
         get(target, prop) {
             if (prop === 'exec') {
                 return async () => {
                     const results = await target.exec();
-                    // Map [error, result] -> result, throwing error if present
                     return results.map(([err, res]: [any, any]) => {
                         if (err) throw err;
                         return res;
                     });
+                };
+            }
+            // Add translation for Upstash-style pipeline commands if needed
+            if (prop === 'zadd') {
+                return (key: string, member: { score: number, member: any }) => {
+                    return target.zadd(key, member.score, member.member);
                 };
             }
             return target[prop];

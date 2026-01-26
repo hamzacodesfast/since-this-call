@@ -280,15 +280,23 @@ export interface UserProfile {
 }
 
 const ALL_USERS_KEY = 'all_users';
+const GLOBAL_ANALYSES_ZSET = 'global:analyses:timestamp';
 
 export async function updateUserProfile(analysis: StoredAnalysis): Promise<void> {
     try {
         const lowerUser = analysis.username.toLowerCase();
         const profileKey = `${USER_PROFILE_PREFIX}${lowerUser}`;
         const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
+        const analysisRef = `${lowerUser}:${analysis.id}`;
 
         // Track user in global set
         await redis.sadd(ALL_USERS_KEY, lowerUser);
+
+        // Record in global timestamp index (ZSET)
+        // This allows us to query the most recent N analyses across all users
+        await dualWrite(async (r) => {
+            await r.zadd(GLOBAL_ANALYSES_ZSET, { score: analysis.timestamp, member: analysisRef });
+        });
 
         // Get current history
         const historyData = await redis.lrange(historyKey, 0, -1);

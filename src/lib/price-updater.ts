@@ -46,7 +46,13 @@ export async function refreshUser(username: string, force: boolean = false) {
 
         // Determine type (Default to CRYPTO if missing - most are crypto)
         // Use updated inference logic to catch things like MSTR
-        const type = item.type || inferAssetType(item.symbol);
+        let type = item.type || inferAssetType(item.symbol);
+
+        // FORCE FIX: Major cryptos must be CRYPTO (Fixes legacy "Stock" misclassification for ETH)
+        if (['BTC', 'ETH', 'SOL', 'USDT', 'USDT.D', 'USDT.P'].includes(item.symbol.toUpperCase())) {
+            type = 'CRYPTO';
+        }
+
 
         // 1. Backfill Entry Price if missing OR Forced
         // 1. Backfill Entry Price if missing OR Forced

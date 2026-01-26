@@ -100,7 +100,26 @@ async function sync() {
                 await indexPipeline.exec();
             }
         }
-        console.log(`   ✅ Synced ${tickers.length} tickers.`);
+        // 4. Sync Global Analyses Index (ZSET)
+        console.log(' - Syncing global timestamp index...');
+        const GLOBAL_ANALYSES_ZSET = 'global:analyses:timestamp';
+        const zrange = await source.zrange(GLOBAL_ANALYSES_ZSET, 0, -1, { withScores: true });
+
+        if (zrange.length > 0) {
+            const zsetPipeline = dest.pipeline();
+            // Upstash returns [member, score, member, score...] or [{member, score}...] depending on client version
+            // But typical ioredis/upstash zrange withScores returns alternating array.
+            // Let's safe-handle it.
+            for (let i = 0; i < zrange.length; i += 2) {
+                const member = zrange[i];
+                const score = zrange[i + 1];
+                if (member && score) {
+                    zsetPipeline.zadd(GLOBAL_ANALYSES_ZSET, { score: Number(score), member: String(member) });
+                }
+            }
+            await zsetPipeline.exec();
+        }
+        console.log(`   ✅ Synced global index (${zrange.length / 2} items).`);
 
         const metrics = await source.get('platform_metrics');
         if (metrics) await dest.set('platform_metrics', metrics);

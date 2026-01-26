@@ -46,140 +46,115 @@ export interface PlatformMetrics {
  * Compute metrics from Redis data (expensive - cached)
  */
 async function computeMetrics(): Promise<PlatformMetrics> {
-    // Get all users
+    // 1. Get Summary Stats (Overall)
     const allUsers = await redis.smembers('all_users') as string[];
-
     let totalAnalyses = 0;
     let totalWins = 0;
     let totalLosses = 0;
 
     // Aggregate wins/losses from user profiles
+    const profilePipeline = redis.pipeline();
     for (const username of allUsers) {
-        const profile = await redis.hgetall(`user:profile:${username}`) as Record<string, any>;
+        profilePipeline.hgetall(`user:profile:${username}`);
+    }
+    const profiles = await profilePipeline.exec();
+
+    profiles.forEach((profile: any) => {
         if (profile && profile.totalAnalyses) {
             totalAnalyses += parseInt(profile.totalAnalyses) || 0;
             totalWins += parseInt(profile.wins) || 0;
             totalLosses += parseInt(profile.losses) || 0;
         }
-    }
-
-    // Get platform-wide Ticker Stats
-    const trackedTickers = await redis.smembers('tracked_tickers') as string[];
-    const tickerCounts: { key: string, count: number }[] = [];
-
-    // Sort all tickers by call count (using SCARD is cheap)
-    const pipeline = redis.pipeline();
-    for (const key of trackedTickers) {
-        pipeline.scard(`ticker_index:${key}`);
-    }
-    const counts = await pipeline.exec();
-
-    trackedTickers.forEach((key, i) => {
-        tickerCounts.push({ key, count: counts[i] as number });
     });
 
-    const topTickerKeys = tickerCounts
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
+    // 2. Sample 500 Most Recent Analyses for Top Tickers & Distributions
+    // This provides a rolling window of "Trends"
+    const GLOBAL_ANALYSES_ZSET = 'global:analyses:timestamp';
+    const recentRefs = await redis.zrange(GLOBAL_ANALYSES_ZSET, 0, 499, { rev: true }) as string[];
 
-    const topTickers: TickerStats[] = [];
+    // Group refs by user to minimize Redis calls
+    const userMap: Record<string, Set<string>> = {};
+    recentRefs.forEach(ref => {
+        const [user, id] = ref.split(':');
+        if (!userMap[user]) userMap[user] = new Set();
+        userMap[user].add(id);
+    });
 
-    // For the top 5, aggregate their sentiment/win stats
-    for (const { key, count } of topTickerKeys) {
-        const symbol = key.split(':').pop() || key;
-        const refs = await redis.smembers(`ticker_index:${key}`) as string[];
-
-        let bullish = 0;
-        let bearish = 0;
-        let wins = 0;
-        let losses = 0;
-
-        // Fetch each analysis ref
-        const analysisPipeline = redis.pipeline();
-        for (const ref of refs) {
-            const [user, id] = ref.split(':');
-            analysisPipeline.lrange(`user:history:${user.toLowerCase()}`, 0, -1);
-        }
-        const userHistories = await analysisPipeline.exec();
-
-        // Find the specific analysis in the history list
-        refs.forEach((ref, i) => {
-            const [user, id] = ref.split(':');
-            const history = userHistories[i] as any[];
-            const analysis = history.find(h => {
-                const p = typeof h === 'string' ? JSON.parse(h) : h;
-                return p.id === id;
-            });
-
-            if (analysis) {
-                const p = typeof analysis === 'string' ? JSON.parse(analysis) : analysis;
-                if (p.sentiment === 'BULLISH') bullish++;
-                else bearish++;
-                if (p.isWin) wins++;
-                else losses++;
-            }
-        });
-
-        // Aggregate stats
-        refs.forEach((ref, i) => {
-            // ... existing finding logic ...
-        });
-
-        // Find the first valid analysis to get the Display Symbol
-        // (The key might be CA:0x... or CRYPTO:BTC, but analysis.symbol is "BTC" or "APE")
-        let displaySymbol = symbol;
-        const firstValid = userHistories.find(h => {
-            if (!Array.isArray(h)) return false;
-            return h.some(item => {
-                const p = typeof item === 'string' ? JSON.parse(item) : item;
-                return refs.some(ref => ref.includes(p.id));
-            });
-        });
-
-        // Actually, simpler: iterate refs until we find one that resolves
-        for (let i = 0; i < refs.length; i++) {
-            const [user, id] = refs[i].split(':');
-            const history = userHistories[i] as any[];
-            if (!history) continue;
-            const item = history.find(h => {
-                const p = typeof h === 'string' ? JSON.parse(h) : h;
-                return p.id === id;
-            });
-            if (item) {
-                const p = typeof item === 'string' ? JSON.parse(item) : item;
-                if (p.symbol) {
-                    displaySymbol = p.symbol;
-                    break;
-                }
-            }
-        }
-
-        topTickers.push({
-            symbol: displaySymbol,
-            callCount: count,
-            bullish,
-            bearish,
-            wins,
-            losses
-        });
+    // Fetch histories for all users in the sample
+    const historyPipeline = redis.pipeline();
+    const usersInSample = Object.keys(userMap);
+    for (const user of usersInSample) {
+        historyPipeline.lrange(`user:history:${user}`, 0, -1);
     }
+    const historyResults = await historyPipeline.exec();
 
-    // Still scan most recent for distributions (sentiment/type)
+    // Flatten and filter the 500 targeted analyses
+    const windowAnalyses: any[] = [];
+    usersInSample.forEach((user, idx) => {
+        const historyData = historyResults[idx] as any[];
+        const targetIds = userMap[user];
+        if (historyData) {
+            historyData.forEach(item => {
+                const p = typeof item === 'string' ? JSON.parse(item) : item;
+                if (targetIds.has(String(p.id))) {
+                    windowAnalyses.push(p);
+                }
+            });
+        }
+    });
+
+    // 3. Aggregate Stats from the 500-tweet window
+    const tickerMap: Record<string, TickerStats> = {};
     let bullishCalls = 0;
     let bearishCalls = 0;
     let cryptoCalls = 0;
     let stockCalls = 0;
 
-    const recentAnalyses = await redis.lrange('recent_analyses', 0, 99);
-    for (const item of recentAnalyses) {
-        const analysis = typeof item === 'string' ? JSON.parse(item) : item;
-        if (analysis.sentiment === 'BULLISH') bullishCalls++;
-        else if (analysis.sentiment === 'BEARISH') bearishCalls++;
+    // Resetting aggregation logic
+    bullishCalls = 0;
+    bearishCalls = 0;
+
+    windowAnalyses.forEach(analysis => {
+        const symbol = analysis.symbol || 'UNKNOWN';
+        const tickerKey = analysis.contractAddress && analysis.contractAddress.length > 10
+            ? `CA:${analysis.contractAddress}`
+            : `${analysis.type || 'CRYPTO'}:${symbol}`;
+
+        if (!tickerMap[tickerKey]) {
+            tickerMap[tickerKey] = {
+                symbol: symbol,
+                callCount: 0,
+                bullish: 0,
+                bearish: 0,
+                wins: 0,
+                losses: 0
+            };
+        }
+
+        const stats = tickerMap[tickerKey];
+        stats.callCount++;
+
+        if (analysis.sentiment === 'BULLISH') {
+            stats.bullish++;
+            bullishCalls++;
+        } else {
+            stats.bearish++;
+            bearishCalls++;
+        }
+
+        if (analysis.isWin) stats.wins++;
+        else stats.losses++;
+
         if (analysis.type === 'CRYPTO') cryptoCalls++;
         else if (analysis.type === 'STOCK') stockCalls++;
-    }
+    });
 
-    const winRate = totalAnalyses > 0
+    // Sort and slice top 5 tickers
+    const topTickers = Object.values(tickerMap)
+        .sort((a, b) => b.callCount - a.callCount)
+        .slice(0, 5);
+
+    const winRate = (totalWins + totalLosses) > 0
         ? Math.round((totalWins / (totalWins + totalLosses)) * 100)
         : 0;
 
@@ -189,7 +164,7 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         totalWins,
         totalLosses,
         winRate,
-        uniqueTickers: trackedTickers.length,
+        uniqueTickers: await redis.scard('tracked_tickers') || 0,
         bullishCalls,
         bearishCalls,
         cryptoCalls,
