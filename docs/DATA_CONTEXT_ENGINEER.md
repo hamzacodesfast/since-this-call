@@ -57,5 +57,16 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 *   **Data**: Redis (Upstash/LocalProxy) with a focus on Hash/List parity.
 *   **Pricing**: CA-Aware Waterfall (GeckoTerminal Historical -> DexScreener -> CoinGecko -> Yahoo Finance).
 
+### V. Context Hardening Protocol
+*   **The Problem**: AI sometimes misinterprets nuance (e.g., "Buying Dips" = Bearish).
+*   **The Process**:
+    1.  **Debug**: Create a script (`scripts/debug-[case].ts`) to fetch the raw AI output. Identify the specific "Reasoning" failure.
+    2.  **RCA**: Determine if the error is due to a prompt rule (e.g., "Target Rule") overriding intuition.
+    3.  **Harden**: Update `ai-extractor.ts` prompt with a specific **OVERRIDE RULE**. Use explicit triggers ("Best Chart", "Accumulating") to force the correct sentiment.
+    4.  **Verify**: Re-run the debug script to confirm the prompt change works.
+    5.  **Repair**: Run a `fix-[case].ts` script to correct the specific Production entry.
+
 ---
-*Blueprint Version: 2.1 (Jan 24, 2026)*
+
+*Blueprint Version: 2.2 (Jan 26, 2026)*
+
