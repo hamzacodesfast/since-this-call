@@ -2,7 +2,7 @@
 
 **Project:** SinceThisCall (STC) - "Call Receipts for Crypto/Meme Twitter"  
 **Current Status:** Production (Main Branch - Hardened)  
-**Last Updated:** January 24, 2026  
+**Last Updated:** January 26, 2026  
 
 ---
 
@@ -18,9 +18,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 564 |
-| Unique Gurus | 245 |
-| Tracked Tickers | 211 |
+| Total Analyses | 772 |
+| Unique Gurus | 304 |
+| Tracked Tickers | 241 |
 | Platform Win Rate| 39% |
 | Verified Edge Cases| 101 |
 
@@ -50,6 +50,11 @@
     - Two-step flow on homepage: Choose "Analyze Crypto" or "Analyze Stock" first.
 4.  **Main-First Maintenance Scripts**
     - `refresh-metrics.ts` and `refresh-stats.ts` now prioritize `.env.production`.
+5.  **Metrics Engine Upgrade** (Jan 26)
+    - **Logic**: "Most Tracked" now uses a strictly timestamp-sorted window of the last 500 tweets.
+    - **Fix**: Resolved "ghost calls" discrepancy by forcing cache refresh on production.
+6.  **Full Environment Parity**
+    - Local dev environment now fully synced with production snapshot (700+ analyses).
 
 ## 📂 Key Files
 

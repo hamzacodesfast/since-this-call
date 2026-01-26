@@ -28,14 +28,14 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 2. **Sync Data**: Always run `npx tsx scripts/sync-to-local.ts` after a push or pull to keep local data in sync with production.
 3. **Type Safety**: Never overwrite Redis Hashes (`user:profile`) with Strings. Use `AnalysisStore`.
 
-## 📊 Current Stats (Jan 24, 2026 - Post-Repair)
+## 📊 Current Stats (Jan 26, 2026 - Post-Sync)
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 564 |
-| Unique Gurus | 245 |
+| Total Analyses | 772 |
+| Unique Gurus | 304 |
 | Platform Win Rate | 39% |
-| Tracked Tickers | 211 |
+| Tracked Tickers | 241 |
 
 ## 🛠️ Tech Stack
 

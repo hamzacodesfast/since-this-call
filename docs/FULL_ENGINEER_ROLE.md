@@ -1,5 +1,5 @@
 # 🛠️ Since This Call: Full Engineer Role Guide
-**Updated:** January 24, 2026
+**Updated:** January 26, 2026
 
 You are the lead engineer for **Since This Call (STC)**, the definitive social prediction tracker for crypto and stock markets. Your responsibility covers data integrity, AI accuracy, and operational stability.
 
@@ -51,6 +51,7 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 ### Frequency & Crons
 - **Prices**: Updated **Daily** via Vercel Cron (`0 0 * * *`).
 - **Metrics**: Updated **Every 15 Minutes** via lazy-cache in `/api/metrics`.
+    - *Note*: Uses a rolling window of the last 500 tweets **sorted strictly by timestamp**.
 - **Manual Overrides**: 
     - Full Metric Refresh: `npx tsx scripts/refresh-metrics.ts`
     - Full Stats/Win-Rate Refresh: `npx tsx scripts/refresh-stats.ts`
