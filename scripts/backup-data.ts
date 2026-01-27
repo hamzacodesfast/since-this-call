@@ -79,20 +79,13 @@ async function backup() {
         fs.mkdirSync(backupDir, { recursive: true });
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `backup-local-${timestamp}.json`;
+    const filename = `local_database_backup.json`;
     const filepath = path.join(backupDir, filename);
 
     fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
     console.log(`\n✅ Backup complete!`);
     console.log(`   File: ${filepath}`);
     console.log(`   Size: ${(fs.statSync(filepath).size / 1024).toFixed(2)} KB`);
-
-    // Also create a "latest" symlink for easy access
-    const latestPath = path.join(backupDir, 'latest.json');
-    if (fs.existsSync(latestPath)) fs.unlinkSync(latestPath);
-    fs.copyFileSync(filepath, latestPath);
-    console.log(`   Latest: ${latestPath}`);
 
     process.exit(0);
 }
