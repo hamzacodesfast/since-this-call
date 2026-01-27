@@ -33,7 +33,7 @@ const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
-    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM'
+    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY'
 ]);
 
 /**
@@ -803,6 +803,10 @@ const INDEX_FALLBACKS: Record<string, string> = {
     'WTI': 'CL=F',
     'CRUDE': 'CL=F',
     'USO': 'CL=F',      // ETF fallback to futures
+
+    // US Dollar Index
+    'DXY': 'DX-Y.NYB',
+    'USDX': 'DX-Y.NYB',
 };
 
 
