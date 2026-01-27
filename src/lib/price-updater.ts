@@ -145,10 +145,10 @@ export async function refreshUser(username: string, force: boolean = false) {
                     item.performance = newPerformance;
                     item.isWin = isWin;
                     hasItemChanges = true;
-
-                    // Sync to global feed immediately
-                    await updateGlobalRecentAnalysis(item);
                 }
+
+                // Self-healing: Always attempt to sync to global feed if this item is in the top list
+                await updateGlobalRecentAnalysis(item);
             }
         }
 
