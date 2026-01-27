@@ -149,10 +149,10 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         else if (analysis.type === 'STOCK') stockCalls++;
     });
 
-    // Sort and slice top 5 tickers
+    // Sort and return top 100 tickers to allow for meaningful search
     const topTickers = Object.values(tickerMap)
         .sort((a, b) => b.callCount - a.callCount)
-        .slice(0, 5);
+        .slice(0, 100);
 
     const winRate = (totalWins + totalLosses) > 0
         ? Math.round((totalWins / (totalWins + totalLosses)) * 100)

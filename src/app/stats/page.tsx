@@ -208,7 +208,10 @@ export default function StatsPage() {
                                                 return <div className="text-center py-8 text-muted-foreground italic">No tickers found matching "{searchTerm}"</div>;
                                             }
 
-                                            return filtered.map((ticker, i) => {
+                                            // If not searching, only show top 10. If searching, show all matches.
+                                            const displayList = searchTerm ? filtered : filtered.slice(0, 10);
+
+                                            return displayList.map((ticker, i) => {
                                                 const totalCalls = ticker.bullish + ticker.bearish;
                                                 const bullishPct = totalCalls > 0 ? Math.round((ticker.bullish / totalCalls) * 100) : 0;
                                                 const winRate = (ticker.wins + ticker.losses) > 0
