@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BarChart3, TrendingUp, Users, Target, Flame } from 'lucide-react';
+import { ArrowLeft, BarChart3, TrendingUp, Users, Target, Flame, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlatformStats } from '@/components/charts/platform-stats';
 import { AsterDexBanner } from '@/components/asterdex-banner';
@@ -34,6 +35,7 @@ interface StatsData {
 export default function StatsPage() {
     const [stats, setStats] = useState<StatsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -179,51 +181,72 @@ export default function StatsPage() {
                         {stats.topTickers && stats.topTickers.length > 0 && (
                             <Card className="bg-background/40 mb-8">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Flame className="w-5 h-5 text-orange-500" />
-                                        Most Tracked Tickers
+                                    <CardTitle className="flex flex-col md:flex-row md:items-center gap-4 w-full">
+                                        <div className="flex items-center gap-2">
+                                            <Flame className="w-5 h-5 text-orange-500" />
+                                            Most Tracked Tickers
+                                        </div>
+                                        <div className="relative md:ml-auto w-full md:max-w-xs">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Search ticker..."
+                                                className="pl-9 h-9 bg-background/50 backdrop-blur"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {stats.topTickers.map((ticker, i) => {
-                                            const totalCalls = ticker.bullish + ticker.bearish;
-                                            const bullishPct = totalCalls > 0 ? Math.round((ticker.bullish / totalCalls) * 100) : 0;
-                                            const winRate = (ticker.wins + ticker.losses) > 0
-                                                ? Math.round((ticker.wins / (ticker.wins + ticker.losses)) * 100)
-                                                : 0;
-                                            return (
-                                                <div key={ticker.symbol} className="flex items-center gap-4 p-4 rounded-lg border bg-background/20">
-                                                    <div className="text-2xl font-bold text-muted-foreground w-8">
-                                                        #{i + 1}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span className="text-xl font-bold">${ticker.symbol}</span>
-                                                            <span className="text-sm text-muted-foreground">
-                                                                {ticker.callCount} calls
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex gap-4 text-sm">
-                                                            <span className="text-green-500">
-                                                                📈 {ticker.bullish} bullish ({bullishPct}%)
-                                                            </span>
-                                                            <span className="text-red-500">
-                                                                📉 {ticker.bearish} bearish ({100 - bullishPct}%)
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className={`text-lg font-bold ${winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                                                            {winRate}% win rate
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            {ticker.wins}W / {ticker.losses}L
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        {(() => {
+                                            const filtered = stats.topTickers.filter(t =>
+                                                t.symbol.toLowerCase().includes(searchTerm.toLowerCase())
                                             );
-                                        })}
+
+                                            if (filtered.length === 0) {
+                                                return <div className="text-center py-8 text-muted-foreground italic">No tickers found matching "{searchTerm}"</div>;
+                                            }
+
+                                            return filtered.map((ticker, i) => {
+                                                const totalCalls = ticker.bullish + ticker.bearish;
+                                                const bullishPct = totalCalls > 0 ? Math.round((ticker.bullish / totalCalls) * 100) : 0;
+                                                const winRate = (ticker.wins + ticker.losses) > 0
+                                                    ? Math.round((ticker.wins / (ticker.wins + ticker.losses)) * 100)
+                                                    : 0;
+                                                return (
+                                                    <div key={ticker.symbol} className="flex items-center gap-4 p-4 rounded-lg border bg-background/20">
+                                                        <div className="text-2xl font-bold text-muted-foreground w-8">
+                                                            #{i + 1}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className="text-xl font-bold">${ticker.symbol}</span>
+                                                                <span className="text-sm text-muted-foreground">
+                                                                    {ticker.callCount} calls
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex gap-4 text-sm">
+                                                                <span className="text-green-500">
+                                                                    📈 {ticker.bullish} bullish ({bullishPct}%)
+                                                                </span>
+                                                                <span className="text-red-500">
+                                                                    📉 {ticker.bearish} bearish ({100 - bullishPct}%)
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className={`text-lg font-bold ${winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
+                                                                {winRate}% win rate
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {ticker.wins}W / {ticker.losses}L
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
                                     </div>
                                 </CardContent>
                             </Card>
