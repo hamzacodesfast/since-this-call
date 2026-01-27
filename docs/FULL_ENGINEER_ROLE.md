@@ -66,7 +66,6 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 
 ## 🎯 Current Engineering Roadmap
 1.  **Pro Tier**: Subscription logic for advanced alerts.
-2.  **Audio Integration**: Narrative voiceovers for Remotion video receipts.
-3.  **Mobile Polish**: Finalizing touch-targets for the dual-mode search form.
+2.  **Mobile Polish**: Finalizing touch-targets for the dual-mode search form.
 
 **Good luck, Engineer. The tape doesn't lie. 📊**

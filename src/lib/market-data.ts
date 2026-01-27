@@ -33,7 +33,7 @@ const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
-    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD'
+    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM'
 ]);
 
 /**
@@ -223,6 +223,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         'NQ_F': 'NQ=F', // Nasdaq Futures
         'ES_F': 'ES=F', // S&P 500 Futures
         'GOLD': 'GC=F', // Common alias (But not GLD)
+        'BIZIM': 'BIZIM.IS', // Turkish Stock
     };
     if (STOCK_OVERRIDES[symbol]) {
         symbol = STOCK_OVERRIDES[symbol];

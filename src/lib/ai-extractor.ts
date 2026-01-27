@@ -134,6 +134,20 @@ export async function extractCallFromText(
         - LIMIT ENTRY / LOWER BIDS (CRITICAL): If a user says "Looking to long at X", "Bidding X", or "Buy limit at X" where X is lower than current price, the Action MUST be SELL. They expect a drop. Do not say "Buy" because they want to buy *later*. The immediate view is bearish.
         - STINK BIDS / LOW ENTRY: If a user suggests placing "stink bids", "bids down to", or "fishing" at levels significantly lower than current (e.g. 17 when price is 22), the immediate sentiment is BEARISH (SELL). Expectation is lower prices.
         - SPECIFIC CONTEXT: For $HYPE, a target of 17-18 is a BEARISH (SELL) signal (Lower than 20s).
+        
+        - STILL BULLISH FOR NOW (ABSOLUTE): If a user says "I'm still bullish for now" or "Bullish until...", the Action MUST be BUY (BULLISH). Do NOT let any bearish price target or "if this happens" condition change this. Current active stance is law.
+        
+        - AVAX / RED 🔺: The $AVAX logo is RED. Phrases like "Wave of RED", "Red army", or using the 🔺 emoji are BULLISH (BUY). Do NOT interpret "RED" as BEARISH for AVAX unless coupled with "Sell Now" or "Shorting".
+        
+        - SKEPTICAL TONE / IMPENDING CRASH: If a user describes a bullish pattern (e.g. "every dip bought") but follows it with "...At some point...?", "At some point it stops", or "...?!", the sentiment is BEARISH (SELL). They are predicting the end of the trend.
+        
+        - TA PATTERNS (CRITICAL): 
+            * Falling Wedge: Is a BULLISH reversal pattern. Price is consolidating within narrowing lower highs and lower lows. Breakdown is the EXCEPTION. If you see a wedge pointing DOWN, it is a BUY (BULLISH) setup.
+            * "Praying for a bounce": BULLISH. Intent is to see the price go UP.
+        
+        - ETF ANTICIPATION: If a ticker is mentioned alongside "ETF anticipation", "ETF incoming", or "ETF approval", the sentiment is BULLISH (BUY).
+        
+        - OVERSOLD vs [Sector]: If a ticker is called "oversold versus [competitor/index]", it is a BULLISH (BUY) setup.
 
 
 

@@ -3,17 +3,15 @@
  * Usage: npx tsx scripts/backup-data.ts
  */
 
-import { Redis } from '@upstash/redis';
+import { LocalRedisWrapper } from '../src/lib/redis-wrapper';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
-    token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
-});
+// Use local wrapper which connects to 6379 directly
+const redis = new LocalRedisWrapper(process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || 'http://localhost:8080');
 
 interface BackupData {
     timestamp: string;
@@ -25,7 +23,7 @@ interface BackupData {
 }
 
 async function backup() {
-    console.log('🔄 Starting backup...');
+    console.log('🔄 Starting backup (Local Native)...');
 
     const data: BackupData = {
         timestamp: new Date().toISOString(),
@@ -39,19 +37,13 @@ async function backup() {
     // 1. Backup recent_analyses
     console.log('📋 Backing up recent_analyses...');
     const recentAnalyses = await redis.lrange('recent_analyses', 0, -1);
-    data.recentAnalyses = recentAnalyses.map(item =>
-        typeof item === 'string' ? JSON.parse(item) : item
-    );
+    data.recentAnalyses = recentAnalyses;
     console.log(`   Found ${data.recentAnalyses.length} analyses`);
 
-    // 2. Get all user keys and backup profiles/histories
+    // 2. Get all user keys from all_users set
     console.log('👤 Backing up user data...');
-
-    // Get unique usernames from analyses
-    const usernames = new Set<string>();
-    data.recentAnalyses.forEach(a => {
-        if (a.username) usernames.add(a.username.toLowerCase());
-    });
+    const usernames = await redis.smembers('all_users');
+    console.log(`   Found ${usernames.length} users in all_users set`);
 
     for (const username of usernames) {
         try {
@@ -68,15 +60,15 @@ async function backup() {
             // Backup history
             const history = await redis.lrange(`user:history:${username}`, 0, -1);
             if (history.length > 0) {
-                data.userHistories[username] = history.map(item =>
-                    typeof item === 'string' ? JSON.parse(item) : item
-                );
+                data.userHistories[username] = history;
             }
         } catch (e) {
-            console.log(`   ⚠️ Skipping history for ${username} (different type)`);
+            console.log(`   ⚠️ Skipping history for ${username}`);
         }
     }
-    console.log(`   Found ${Object.keys(data.userProfiles).length} profiles`);
+
+    console.log(`   Exported ${Object.keys(data.userProfiles).length} profiles`);
+    console.log(`   Exported ${Object.keys(data.userHistories).length} histories`);
 
     // 3. Skip pumpfun prices for now (can be regenerated from analyses)
     console.log('💰 Skipping price data (can be regenerated from analyses)');
@@ -88,7 +80,7 @@ async function backup() {
     }
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `backup-${timestamp}.json`;
+    const filename = `backup-local-${timestamp}.json`;
     const filepath = path.join(backupDir, filename);
 
     fs.writeFileSync(filepath, JSON.stringify(data, null, 2));

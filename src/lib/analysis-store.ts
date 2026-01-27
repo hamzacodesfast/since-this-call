@@ -26,7 +26,7 @@ const redis = getRedisClient();
 
 // Secondary Redis client (Production) - Only used for Dual-Write
 // We instantiate this directly as Upstash client since it's strictly for cloud URL
-const redisProd = process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL
+const redisProd = (process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL && process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL.startsWith('https'))
     ? new Redis({
         url: process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL,
         token: process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
@@ -39,8 +39,20 @@ const redisProd = process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL
 async function dualWrite<T>(fn: (r: Redis) => Promise<T>): Promise<T> {
     const primaryResult = await fn(redis as Redis);
     if (redisProd) {
-        // Fire and forget secondary write
-        fn(redisProd).catch(e => console.error('[AnalysisStore] Secondary Dual-Write Failed:', e));
+        try {
+            // Check if it's a valid Upstash client and we are in a context that supports it
+            // We fire-and-forget but wrap carefully
+            const runSecondary = async () => {
+                try {
+                    await fn(redisProd);
+                } catch (e) {
+                    // console.error('[AnalysisStore] Secondary Dual-Write Error:', e);
+                }
+            };
+            runSecondary();
+        } catch (e) {
+            // Synchronous error from fn(redisProd) call
+        }
     }
     return primaryResult;
 }
