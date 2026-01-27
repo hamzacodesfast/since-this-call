@@ -1,6 +1,6 @@
 import { getRedisClient } from './redis-client';
 import { getPrice, calculatePerformance, inferAssetType } from './market-data';
-import { updateUserProfile, StoredAnalysis } from './analysis-store';
+import { updateUserProfile, updateGlobalRecentAnalysis, StoredAnalysis } from './analysis-store';
 
 const redis = getRedisClient();
 
@@ -145,6 +145,9 @@ export async function refreshUser(username: string, force: boolean = false) {
                     item.performance = newPerformance;
                     item.isWin = isWin;
                     hasItemChanges = true;
+
+                    // Sync to global feed immediately
+                    await updateGlobalRecentAnalysis(item);
                 }
             }
         }

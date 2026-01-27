@@ -243,6 +243,42 @@ export async function getRecentAnalyses(limit: number = 20): Promise<StoredAnaly
     }
 }
 
+/**
+ * Update a specific analysis in the recent_analyses list if it exists.
+ * Used for maintaining consistency when prices/stats are refreshed.
+ */
+export async function updateGlobalRecentAnalysis(updatedItem: StoredAnalysis): Promise<void> {
+    try {
+        // Fetch ALL recent items (to find the one to update)
+        const currentData = await redis.lrange(RECENT_KEY, 0, -1);
+        let items: StoredAnalysis[] = currentData.map((item: any) =>
+            typeof item === 'string' ? JSON.parse(item) : item
+        );
+
+        const index = items.findIndex(item => item.id === updatedItem.id);
+
+        if (index !== -1) {
+            // Update the item
+            items[index] = { ...items[index], ...updatedItem };
+
+            const serializedItems = items.map(item => JSON.stringify(item));
+
+            // Persist
+            await dualWrite(async (r) => {
+                await r.del(RECENT_KEY);
+                const pipeline = r.pipeline();
+                for (const s of serializedItems) {
+                    pipeline.rpush(RECENT_KEY, s);
+                }
+                await pipeline.exec();
+            });
+            // console.log(`[AnalysisStore] Updated global recent analysis for ${updatedItem.id}`);
+        }
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to update global recent analysis:', error);
+    }
+}
+
 export async function getAnalysisCount(): Promise<number> {
     try {
         return await redis.llen(RECENT_KEY);

@@ -9,7 +9,7 @@ dotenv.config();
 
 import { getRedisClient } from '../src/lib/redis-client';
 import { getPrice, calculatePerformance, inferAssetType } from '../src/lib/market-data';
-import { StoredAnalysis } from '../src/lib/analysis-store';
+import { StoredAnalysis, updateGlobalRecentAnalysis } from '../src/lib/analysis-store';
 
 const redis = getRedisClient();
 
@@ -135,6 +135,9 @@ async function main() {
                                 item.type = usedType; // Ensure type is saved
                                 hasChanges = true;
                                 userUpdates++;
+
+                                // Sync to global feed immediately
+                                await updateGlobalRecentAnalysis(item);
                             }
                         } else {
                             // console.log(`[NeutralRefresh] Failed to fetch Current Price for ${item.symbol} (Type: ${usedType})`);
