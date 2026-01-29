@@ -10,8 +10,11 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Since This Call",
-    description: "Social Prediction Tracker",
+    description: 'The AI Powered Social Prediction Tracker. Track the performance of financial influencers on X (Twitter) with verified price receipts.',
+    openGraph: {
+        title: 'Since This Call | AI Powered Social Prediction Tracker',
+        description: 'The AI Powered Social Prediction Tracker. Verify every financial guru call with immutable receipts.',
+    },
 };
 
 export default function RootLayout({

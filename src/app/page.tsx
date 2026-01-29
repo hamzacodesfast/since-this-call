@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock, Trophy, BarChart3 } from 'lucide-react';
+import { ArrowRight, Search, Loader2, Sparkles, TrendingUp, Clock, Trophy, BarChart3, BadgeAlert } from 'lucide-react';
 import { AnalysisView } from '@/components/analysis-view';
 import { MetricsBar } from '@/components/metrics-bar';
 import { Button } from '@/components/ui/button';
@@ -125,7 +125,7 @@ export default function Home() {
             <div className="mb-12 space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10">
                     <NextImage src="/logo.png" alt="Since This Call" width={16} height={16} className="mr-2" />
-                    Social Prediction Tracker
+                    The AI Powered Social Prediction Tracker
                 </Badge>
 
                 <h1 className="text-5xl md:text-8xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40 pb-2">
@@ -254,35 +254,35 @@ export default function Home() {
                         <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
                             <div className="flex items-center gap-2 text-primary">
                                 <Sparkles className="w-5 h-5" />
-                                <h3 className="font-semibold text-lg">Supported Assets</h3>
+                                <h3 className="font-semibold text-lg">Coverage Intelligence</h3>
                             </div>
-                            <ul className="space-y-2 text-sm text-muted-foreground">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 mt-0.5">✓</span>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                                     <div>
-                                        <strong className="text-foreground">Stocks</strong>
-                                        <p className="text-xs opacity-80">All tickers via Yahoo Finance (AAPL, TSLA, etc.)</p>
+                                        <strong className="text-foreground block mb-0.5">Equities & ETFs</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">Universal coverage of US Stocks (NYSE/NASDAQ) via Yahoo Finance.</p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 mt-0.5">✓</span>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
                                     <div>
-                                        <strong className="text-foreground">Major Crypto</strong>
-                                        <p className="text-xs opacity-80">BTC, ETH, SOL, DOGE, XRP, BNB + 50 more via CoinGecko</p>
+                                        <strong className="text-foreground block mb-0.5">Crypto & DeFi</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">Instant mapping of 20,000+ assets across CEX and DEX protocols.</p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 mt-0.5">✓</span>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-pink-500 shrink-0" />
                                     <div>
-                                        <strong className="text-foreground">Meme Coins & Pump.fun</strong>
-                                        <p className="text-xs opacity-80">Auto-discovery via DexScreener & GeckoTerminal</p>
+                                        <strong className="text-foreground block mb-0.5">Meme Economy</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">Direct integration with Pump.fun & DexScreener for micro-caps.</p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-green-500 mt-0.5">✓</span>
+                                <li className="flex items-start gap-3">
+                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                                     <div>
-                                        <strong className="text-foreground">Live Tracking</strong>
-                                        <p className="text-xs opacity-80">Prices update automatically, badges flip in real-time</p>
+                                        <strong className="text-foreground block mb-0.5">Live PnL Engine</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">Real-time performance marking against the exact minute of the call.</p>
                                     </div>
                                 </li>
                             </ul>
@@ -291,29 +291,29 @@ export default function Home() {
                         {/* Limitations */}
                         <div className="p-6 rounded-2xl bg-card/50 backdrop-blur-sm border shadow-sm space-y-4">
                             <div className="flex items-center gap-2 text-amber-500">
-                                <TrendingUp className="w-5 h-5" />
-                                <h3 className="font-semibold text-lg">Limitations</h3>
+                                <BadgeAlert className="w-5 h-5" />
+                                <h3 className="font-semibold text-lg">System Constraints</h3>
                             </div>
-                            <ul className="space-y-2 text-sm text-muted-foreground">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                            <ul className="space-y-3 text-sm text-muted-foreground">
+                                <li className="flex items-start gap-3">
+                                    <span className="text-amber-500 mt-0.5 text-xs">●</span>
                                     <div>
-                                        <strong className="text-foreground">Old Tweets (&gt;7 days)</strong>
-                                        <p className="text-xs opacity-80">May lack precise historical prices for obscure tokens</p>
+                                        <strong className="text-foreground block mb-0.5">Liquidity Delay</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">Tokens less than 5 minutes old may not have stable pricing data.</p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                                <li className="flex items-start gap-3">
+                                    <span className="text-amber-500 mt-0.5 text-xs">●</span>
                                     <div>
-                                        <strong className="text-foreground">Brand New Tokens</strong>
-                                        <p className="text-xs opacity-80">Need at least a few minutes of trading history</p>
+                                        <strong className="text-foreground block mb-0.5">Historical Granularity</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">Tweets older than 30 days use daily-close data instead of minute-precision.</p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                                <li className="flex items-start gap-3">
+                                    <span className="text-amber-500 mt-0.5 text-xs">●</span>
                                     <div>
-                                        <strong className="text-foreground">Ambiguous Calls</strong>
-                                        <p className="text-xs opacity-80">AI may misinterpret vague or sarcastic tweets</p>
+                                        <strong className="text-foreground block mb-0.5">Linguistic Nuance</strong>
+                                        <p className="text-xs opacity-80 leading-relaxed">The AI is tuned for calls; heavy sarcasm or "doom-posting" can be misread.</p>
                                     </div>
                                 </li>
                             </ul>
