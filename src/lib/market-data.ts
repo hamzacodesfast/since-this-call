@@ -807,6 +807,9 @@ const INDEX_FALLBACKS: Record<string, string> = {
     // US Dollar Index
     'DXY': 'DX-Y.NYB',
     'USDX': 'DX-Y.NYB',
+
+    // Commodities - Copper
+    'COPPER': 'HG=F',
 };
 
 

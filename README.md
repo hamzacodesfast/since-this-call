@@ -11,7 +11,7 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 - **Asset Type Selection**: Explicit "Crypto" vs "Stock" search modes for maximum accuracy
 - **AI-Powered Extraction**: Uses **Google Gemini 2.0 Flash** to intelligently parse tweets, identifying asset symbols, sentiment (Bullish/Bearish), and prediction dates
 - **📊 Stats Dashboard**: Charts and analytics at `/stats` showing platform-wide performance
-- **📈 Most Tracked Tickers**: See which assets gurus are calling most (BTC, ETH, SOL, etc.)
+- **📈 Trending Tickers**: See which assets gurus are calling most (BTC, ETH, SOL, etc.)
 - **Live Price Updates**: Automatic price refresh to keep call receipts accurate
 - **Multi-Asset Support**:
   - **Crypto**: Real-time prices via **CoinGecko** & **DexScreener** (Meme coins supported!)

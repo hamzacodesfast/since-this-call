@@ -29,12 +29,12 @@ import { getPumpfunPrice, storePumpfunPrice } from '@/lib/analysis-store';
 function cleanSymbol(symbol: string): string {
     let clean = symbol.replace(/^\$/, '').toUpperCase();
 
-    const suffixes = ['USDT', 'USD', 'PERP'];
+    const suffixes = ['USDT', 'USD', 'PERP', '.P', '.D'];
     for (const suffix of suffixes) {
         if (clean.endsWith(suffix) && clean.length > suffix.length) {
             const base = clean.slice(0, -suffix.length);
             // Clean trailing separator like BTC-USD -> BTC
-            if (base.endsWith('-') || base.endsWith('/')) {
+            if (base.endsWith('-') || base.endsWith('/') || base.endsWith('.')) {
                 clean = base.slice(0, -1);
             } else {
                 clean = base;

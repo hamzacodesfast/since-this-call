@@ -184,7 +184,7 @@ export default function StatsPage() {
                                     <CardTitle className="flex flex-col md:flex-row md:items-center gap-4 w-full">
                                         <div className="flex items-center gap-2">
                                             <Flame className="w-5 h-5 text-orange-500" />
-                                            Most Tracked Tickers
+                                            Trending Tickers
                                         </div>
                                         <div className="relative md:ml-auto w-full md:max-w-xs">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
