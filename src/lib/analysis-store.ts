@@ -134,6 +134,8 @@ export interface TickerProfile {
     wins: number;
     losses: number;
     neutral: number;
+    bullish: number;
+    bearish: number;
     winRate: number;
     lastAnalyzed: number;
 }
@@ -570,6 +572,8 @@ export async function updateTickerStats(analysis: StoredAnalysis, isNew: boolean
             wins: parseInt(existing?.wins || '0'),
             losses: parseInt(existing?.losses || '0'),
             neutral: parseInt(existing?.neutral || '0'),
+            bullish: parseInt(existing?.bullish || '0'),
+            bearish: parseInt(existing?.bearish || '0'),
             winRate: parseFloat(existing?.winRate || '0'),
             lastAnalyzed: parseInt(existing?.lastAnalyzed || '0')
         };
@@ -579,6 +583,10 @@ export async function updateTickerStats(analysis: StoredAnalysis, isNew: boolean
             if (Math.abs(oldAnalysis.performance) < 0.01) stats.neutral--;
             else if (oldAnalysis.isWin) stats.wins--;
             else stats.losses--;
+
+            if (oldAnalysis.sentiment === 'BULLISH') stats.bullish--;
+            else if (oldAnalysis.sentiment === 'BEARISH') stats.bearish--;
+
             stats.totalAnalyses--;
         }
 
@@ -586,6 +594,10 @@ export async function updateTickerStats(analysis: StoredAnalysis, isNew: boolean
         if (Math.abs(analysis.performance) < 0.01) stats.neutral++;
         else if (analysis.isWin) stats.wins++;
         else stats.losses++;
+
+        if (analysis.sentiment === 'BULLISH') stats.bullish++;
+        else if (analysis.sentiment === 'BEARISH') stats.bearish++;
+
         stats.totalAnalyses++;
         stats.lastAnalyzed = Date.now();
 
@@ -622,6 +634,8 @@ export async function removeTickerStats(analysis: StoredAnalysis): Promise<void>
             wins: parseInt(existing.wins || '0'),
             losses: parseInt(existing.losses || '0'),
             neutral: parseInt(existing.neutral || '0'),
+            bullish: parseInt(existing.bullish || '0'),
+            bearish: parseInt(existing.bearish || '0'),
             winRate: parseFloat(existing.winRate || '0'),
             lastAnalyzed: parseInt(existing.lastAnalyzed || '0')
         };
@@ -630,6 +644,10 @@ export async function removeTickerStats(analysis: StoredAnalysis): Promise<void>
         if (Math.abs(analysis.performance) < 0.01) stats.neutral--;
         else if (analysis.isWin) stats.wins--;
         else stats.losses--;
+
+        if (analysis.sentiment === 'BULLISH') stats.bullish--;
+        else if (analysis.sentiment === 'BEARISH') stats.bearish--;
+
         stats.totalAnalyses--;
 
         // Recalc Win Rate
@@ -670,6 +688,8 @@ export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
                     wins: parseInt(data.wins || '0'),
                     losses: parseInt(data.losses || '0'),
                     neutral: parseInt(data.neutral || '0'),
+                    bullish: parseInt(data.bullish || '0'),
+                    bearish: parseInt(data.bearish || '0'),
                     winRate: parseFloat(data.winRate || '0'),
                     lastAnalyzed: parseInt(data.lastAnalyzed || '0')
                 });
@@ -696,6 +716,8 @@ export async function getTickerProfile(symbol: string, type: 'CRYPTO' | 'STOCK' 
             wins: parseInt(profile.wins || '0'),
             losses: parseInt(profile.losses || '0'),
             neutral: parseInt(profile.neutral || '0'),
+            bullish: parseInt(profile.bullish || '0'),
+            bearish: parseInt(profile.bearish || '0'),
             winRate: parseFloat(profile.winRate || '0'),
             lastAnalyzed: parseInt(profile.lastAnalyzed || '0')
         };

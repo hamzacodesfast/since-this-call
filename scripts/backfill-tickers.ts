@@ -70,6 +70,8 @@ async function backfillTickerProfiles() {
                     wins: 0,
                     losses: 0,
                     neutral: 0,
+                    bullish: 0,
+                    bearish: 0,
                     winRate: 0,
                     lastAnalyzed: 0
                 });
@@ -85,6 +87,12 @@ async function backfillTickerProfiles() {
                 stats.wins++;
             } else {
                 stats.losses++;
+            }
+
+            if (analysis.sentiment === 'BULLISH') {
+                stats.bullish++;
+            } else if (analysis.sentiment === 'BEARISH') {
+                stats.bearish++;
             }
 
             // Index

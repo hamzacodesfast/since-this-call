@@ -16,6 +16,8 @@ interface TickerProfile {
     wins: number;
     losses: number;
     neutral: number;
+    bullish: number;
+    bearish: number;
     winRate: number;
     lastAnalyzed: number;
 }
@@ -143,9 +145,14 @@ export default function TickerDetailPage() {
                                 <CardContent>
                                     <div className="text-3xl font-bold">{profile.totalAnalyses}</div>
                                     <div className="flex items-center gap-2 mt-1 text-xs">
-                                        <span className="text-green-500 flex items-center"><TrendingUp className="w-3 h-3 mr-0.5" />{profile.wins}</span>
-                                        <span className="text-red-500 flex items-center"><TrendingDown className="w-3 h-3 mr-0.5" />{profile.losses}</span>
-                                        <span className="text-yellow-500 flex items-center"><Minus className="w-3 h-3 mr-0.5" />{profile.neutral}</span>
+                                        <span className="text-green-500 flex items-center"><TrendingUp className="w-3 h-3 mr-0.5" />{profile.wins}W</span>
+                                        <span className="text-red-500 flex items-center"><TrendingDown className="w-3 h-3 mr-0.5" />{profile.losses}L</span>
+                                        <span className="text-yellow-500 flex items-center"><Minus className="w-3 h-3 mr-0.5" />{profile.neutral}N</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-muted/20 text-xs">
+                                        <span className="text-green-400 font-semibold">{profile.bullish || 0} Bullish</span>
+                                        <span className="text-muted-foreground">/</span>
+                                        <span className="text-red-400 font-semibold">{profile.bearish || 0} Bearish</span>
                                     </div>
                                 </CardContent>
                             </Card>
