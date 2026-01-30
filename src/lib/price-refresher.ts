@@ -513,7 +513,8 @@ export async function refreshByTicker(): Promise<RefreshResult> {
 
             // Get all analysis references for this ticker
             const indexKey = `ticker_index:${ticker}`;
-            const analysisRefs = await redis.smembers(indexKey) as string[];
+            // Use zrange for ZSET (fetching all members)
+            const analysisRefs = await redis.zrange(indexKey, 0, -1) as string[];
 
             for (const ref of analysisRefs) {
                 const [username, tweetId] = ref.split(':');

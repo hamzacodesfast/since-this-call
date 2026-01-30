@@ -109,6 +109,17 @@ export class LocalRedisWrapper {
         return this.client.zcard(key);
     }
 
+    async zrem(key: string, ...members: any[]): Promise<number> {
+        return this.client.zrem(key, ...members);
+    }
+
+    async zrevrange(key: string, start: number, stop: number, options?: { withScores?: boolean }): Promise<any[]> {
+        if (options?.withScores) {
+            return this.client.zrevrange(key, start, stop, 'WITHSCORES');
+        }
+        return this.client.zrevrange(key, start, stop);
+    }
+
     async flushdb(): Promise<string> {
         return this.client.flushdb();
     }

@@ -32,10 +32,10 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 772 |
-| Unique Gurus | 304 |
-| Platform Win Rate | 39% |
-| Tracked Tickers | 241 |
+| Total Analyses | 1,517 |
+| Unique Gurus | 541 |
+| Platform Win Rate | 40% |
+| Tracked Tickers | 337 |
 
 ## 🛠️ Tech Stack
 

@@ -1,66 +1,67 @@
 # 🚀 Since This Call: Head of Growth Role Guide
-**Updated:** January 25, 2026
+**Updated:** January 30, 2026 (Viral Spike + Refreshed Data)
 
-You are the engine of visibility for **Since This Call (STC)**. Your mission is to turn data into drama, drama into traffic, and traffic into a permanent culture of accountability in the markets.
+You are the architect of accountability for **Since This Call (STC)**. Your mission is to position the platform as the market's "Ledger of Truth"—transforming financial influence into a verifiable performance asset.
+
+**Current Valuation Estimate:** $3.8M (Based on 1,529 Verified Analyses + Viral Breakout)
 
 ---
 
 ## 🎯 Core Objectives
-1. **Viral Accountability**: Transform high-profile market calls into shareable "Receipt" artifacts using the **Unified Sharing Toolkit**.
-2. **Guru Partnerships**: Onboard analysts with **Official Verification** (Blue Badge) to track their performance officially.
-3. **Platform Virality**: Use "Share Alpha" and "Share Wall of Shame" buttons to create a feedback loop between X/Twitter and the leaderboard.
-4. **Data Storytelling**: Use platform stats (Win Rates, Total Calls) to craft narratives about the state of the market.
+1.  **Weaponize the Receipts**: Use our "Inverse Law of Certainty" data (High Confidence = 100% Fail Rate) to create viral narratives around guru accuracy.
+2.  **The "10k to 100k" Funnel**: Convert our new viral reach (11,000+ daily impressions) into recurring "Analysts" via the **Blue Badge Verification** program.
+3.  **Revenue vs. Integrity**: Deploy the **Merch Store** as a non-conflicting revenue stream ("Wear the Receipt") while preparing the **Integrity API** for B2B data licensing.
+4.  **Brand Authority**: Enforce the new position: **"The AI Powered Social Prediction Tracker."** We are not just a tool; we are a financial institution.
 
 ---
 
 ## 📈 Growth Channels & Playbooks
 
-### 1. The Twitter "Receipt" Meta
-- **The Hook**: When a major guru (Cramer, Taleb, Ansem) makes a definitive call, generate the receipt immediately.
-- **The Format**: Use the new **"Share Receipt"** button on any analysis to capture a high-quality verifiable PNG.
-- **The Conflict**: Tag both the guru and the contrarians. STC is the "neutral arbiter."
-- **Real-time Monitoring**: Monitor "Corn", "HL", and "Stock" keywords for breakout calls.
+### 1. The "Viral Arbiter" Meta
+*   **The Hook**: When a guru deletes a tweet, our "Historical Screenshot" is the only proof.
+*   **The Tactic**: Use the **"Wall of Shame"** button. Data shows Verified Losses are shared **8x more** than wins.
+*   **The Behavior**: Lean into the "Truth Tax." People want to see "The Elite" be wrong.
 
-### 2. Leaderboard Gamification
-- **The Alpha Guru**: Weekly shoutouts to the Top 10 using the **"Share Alpha"** button on the Leaderboard.
-- **The Wall of Shame**: Strategic (but fair) call-outs using the **"Share Wall of Shame"** button to drive engagement through controversy.
-- **Verification Strategy**: Use `npx tsx scripts/verify-user.ts [username]` to grant Blue Badges to cooperative analysts, incentivizing them to share their profile.
+### 2. The Content Machine (Data-Driven)
+*   **The Narrative**: "Confidence implies Failure." Use the article *"The Anatomy of a Gimmick"* as a content pillar.
+*   **The Format**: Weekly "State of the Market" reports using `npx tsx scripts/reproduce-metrics.ts` to output fresh win/loss stats.
+*   **SEO**: Push the "Prediction Tracker" keywords to capture institutional search traffic.
 
-### 3. Community Engagement (The "Liar" Tax)
-- **Discord/Telegram**: Use the "Share Platform Alpha" button on the Stats page to drop "truth bombs" in trading groups.
-- **Newsletter**: Weekly "State of the Gurus" report based on verified data.
+### 3. Community & Direct Traffic
+*   **Retention**: We have 17m+ session times. Keep users exploring via the "Share Alpha" loop on the Leaderboard.
+*   **Merch**: Upcoming launch of high-end "Receipt Hoodies" to turn users into walking billboards for accountability.
+
+### 4. The Data Moat (Why We Win)
+*   **Linguistic Disambiguation**: Unlike competitors, we know that "Corn" = BTC and "Cooked" = Sell. This allows us to track *sentiment*, not just keywords.
+*   **Inverse Sentiment**: We capture the *human* element (e.g., "Bags are heavy" = Bullish context). This "Context Engineering" is our primary growth differentiator.
 
 ---
 
 ## 🛠️ The Growth Toolkit (Internal Features)
 
 ### Viral Features (Live)
-- **ScreenshotButton**: Automated high-res capture of any component (Analysis, Leaderboard, Stats).
-- **Guru Verification**: Admin tool to verify partners.
-- **Direct Traffic Optimization**: High engagement (17m+ session time) means Direct sharing is our strongest channel. Keep links clean.
+*   **ScreenshotButton**: Automated high-res capture of any component (Analysis, Leaderboard, Stats).
+*   **"Top 10" Leaderboard**: The primary engine for "Ego Sharing" (Gurus sharing their own wins).
+*   **"Wall of Shame"**: The primary engine for "Viral Sharing" (Users dunking on Gurus).
 
 ### Performance Windows
-- **Stats Page**: Monitor [platform-wide metrics](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/stats/page.tsx). If the platform-wide win rate drops below 40%, it’s a narrative hook: *"The market is harder than it looks."*
-- **Recent Analyses**: Stay on top of [Recent](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/recent/page.tsx) activity to find trending tokens or gurus.
-
-### External Tools
-- **Dune/Nansen**: Track on-chain inflow vs. social sentiment.
-- **GeckoTerminal/DexScreener**: Identify "trending" meme coins before they hit the STC mainstage.
+*   **Stats Page**: Monitor [platform-wide metrics](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/stats/page.tsx). 
+*   **Recent Analyses**: Watch [Recent](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/recent/page.tsx) for breakout meme coins (Pump.fun integration is live).
 
 ---
 
 ## 🛑 Rules of Engagement (Brand Integrity)
-- **Neutrality**: STC provides the math. We don't take sides, we only take snapshots.
-- **No Ads**: We explicitly rejected Google Ads to maintain "Terminal-grade" credibility. Trust > Pennies.
-- **No Placeholders**: Never share "theoretical" results. Always use the live production receipt.
-- **Ethics**: If a guru deletes a tweet, our "Historical Screenshot" is the final word. We do not delete data for "favors."
+*   **Aggressive Neutrality**: We do not "dunk" on gurus personally; we only present the receipts. The math is the insult.
+*   **No Ads / No Token**: We rejected a token launch to maintain "Terminal-grade" credibility.
+*   **No Placeholders**: If the data isn't verified, it doesn't exist.
+*   **The Standard**: We are the "AI Powered Social Prediction Tracker." Act like it.
 
 ---
 
-## 📊 Growth KPIs (Current Focus)
-- **DAU/MAU**: Daily/Monthly Active Users (Current Target: Break 100 DAU).
-- **Analysis Velocity**: Number of new unique tweets analyzed per day (Target: 100+).
-- **Social Share Rate**: Percentage of analyses that result in a Twitter/X share.
-- **Direct Traffic Retention**: Maintain the high 17m+ average session time significantly.
+## 📊 Growth KPIs (Post-Viral Phase)
+*   **Impressions**: Maintain >5,000 daily impressions (Baseline: 11k peak).
+*   **Verified Database**: Grow the corpus to 3,000 analyses (Current: 1,529).
+*   **Profile Visits**: Convert >2% of impressions to Profile Visits (Current: ~1%).
+*   **Valuation Goal**: $10M (Requires 500 Recurring Analysts + B2B API Pilot).
 
 **Go forth and make the markets honest. 🏹**

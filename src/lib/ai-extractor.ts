@@ -148,6 +148,9 @@ export async function extractCallFromText(
         - ETF ANTICIPATION: If a ticker is mentioned alongside "ETF anticipation", "ETF incoming", or "ETF approval", the sentiment is BULLISH (BUY).
         
         - OVERSOLD vs [Sector]: If a ticker is called "oversold versus [competitor/index]", it is a BULLISH (BUY) setup.
+        
+        - FRACTAL DOOM (CRITICAL): If a user mentions a "Fractal" being "hated" or "playing out", AND implies "they said it wouldn't happen", it is a BEARISH (SELL) signal. The "never happen" part is the user mocking the bulls who denied the crash pattern.
+
 
 
 

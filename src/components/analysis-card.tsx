@@ -78,7 +78,12 @@ export function AnalysisCard({ analysis }: AnalysisCardProps) {
 
                 {/* Symbol & Sentiment */}
                 <div className="flex items-center gap-2 mb-3">
-                    <span className="font-mono font-bold text-lg">{analysis.symbol}</span>
+                    <Link
+                        href={`/tickers/${analysis.symbol}`}
+                        className="font-mono font-bold text-lg hover:underline decoration-primary underline-offset-4 pointer-events-auto relative z-20"
+                    >
+                        {analysis.symbol}
+                    </Link>
                     <span className={`inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full ${analysis.sentiment === 'BULLISH' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                         {analysis.sentiment === 'BULLISH' ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
                         {analysis.sentiment}

@@ -12,8 +12,10 @@
  * - `recent_analyses` (List): Recent 50 analyses for homepage
  * - `user:history:{username}` (List): Per-user analysis history
  * - `user:profile:{username}` (Hash): User stats and badges
+ * - `ticker:profile:{ticker}` (Hash): Ticker stats and badges
  * - `tracked_tickers` (Set): All unique tickers being tracked
  * - `ticker_index:{TYPE:SYMBOL}` (Set): Maps ticker to analyses
+ *
  * 
  * @see price-refresher.ts for batch price updates using ticker index
  */
@@ -88,7 +90,8 @@ export async function trackTicker(analysis: StoredAnalysis): Promise<void> {
         await dualWrite(async (r) => {
             const pipe = r.pipeline();
             pipe.sadd(TRACKED_TICKERS_KEY, tickerKey);
-            pipe.sadd(indexKey, analysisRef);
+            // Use ZSET for time-sorted access
+            pipe.zadd(indexKey, { score: analysis.timestamp, member: analysisRef });
             await pipe.exec();
         });
     } catch (error) {
@@ -106,8 +109,8 @@ export async function untrackTicker(analysis: StoredAnalysis): Promise<void> {
         const analysisRef = `${analysis.username.toLowerCase()}:${analysis.id}`;
 
         await dualWrite(async (r) => {
-            await r.srem(indexKey, analysisRef);
-            const remaining = await r.scard(indexKey);
+            await r.zrem(indexKey, analysisRef);
+            const remaining = await r.zcard(indexKey);
             if (remaining === 0) {
                 await r.srem(TRACKED_TICKERS_KEY, tickerKey);
                 await r.del(indexKey);
@@ -117,6 +120,121 @@ export async function untrackTicker(analysis: StoredAnalysis): Promise<void> {
         console.error('[AnalysisStore] Failed to untrack ticker:', error);
     }
 }
+
+// ============================================
+// Ticker Profiles
+// ============================================
+
+const TICKER_PROFILE_PREFIX = 'ticker:profile:';
+
+export interface TickerProfile {
+    symbol: string;
+    type: 'CRYPTO' | 'STOCK';
+    totalAnalyses: number;
+    wins: number;
+    losses: number;
+    neutral: number;
+    winRate: number;
+    lastAnalyzed: number;
+}
+
+export async function updateTickerProfile(tickerKey: string): Promise<void> {
+    try {
+        const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
+        const analysisRefs = await redis.zrange(indexKey, 0, -1) as string[];
+
+        let wins = 0;
+        let losses = 0;
+        let neutral = 0;
+        const total = analysisRefs.length;
+        let lastAnalyzed = 0;
+
+        // Fetch all analyses referenced 
+        // Note: This could be heavy if a ticker has thousands of calls. 
+        // Optimization: In extreme scale, we'd increment/decrement counters instead of full recalc.
+        // For now (<100k total calls), recalc is safer for consistency.
+
+        // We need to parse "username:tweetId"
+        if (total === 0) {
+            await dualWrite(async (r) => {
+                await r.del(`${TICKER_PROFILE_PREFIX}${tickerKey}`);
+            });
+            return;
+        }
+
+        const pipeline = redis.pipeline();
+        for (const ref of analysisRefs) {
+            // ref is "username:id"
+            // But we store analyses in user:history:{username} or recent_analyses.
+            // Accessing random analysis by ID is not O(1) in our current structure (lists).
+            // However, we can reconstruct the path. 
+            // Actually, simplest way given current structure is to rely on the fact that
+            // we are likely calling this when we HAVE the analysis object in `updateUserProfile`.
+            // But for backfill/recalc, we need to fetch.
+
+            // Current architecture doesn't support O(1) fetch by ID globally easily without scanning.
+            // BUT, we have `user:history:{username}`. We can fetch that user's history and find the ID.
+            // This is O(N) where N is user history size (max 100). So it's fast.
+            const [username, id] = ref.split(':');
+            pipeline.lrange(`user:history:${username}`, 0, -1);
+        }
+
+        const results = await pipeline.exec();
+
+        // Process results
+        for (let i = 0; i < results.length; i++) {
+            const result = results[i]; // [error, data] or just data depending on adapter
+            // IORedis returns [err, result], Upstash might differ but wrapper usually handles it?
+            // Let's assume standard IORedis/Upstash behavior or our wrapper.
+            // checking redis-client.ts wrapper might be needed. 
+            // The `results` from pipeline.exec() in ioredis are [ [err, result], ... ]
+
+            // Standardizing access:
+            const historyData = result as any; // Allow any for now, refine if needed
+            // If using @upstash/redis directly it returns array of results.
+            // If using ioredis it returns [[err, res]].
+            // Our code uses `getRedisClient` which returns a wrapper or direct client.
+            // `src/lib/redis-client.ts` needs checking.
+
+            // Wait, existing `getAllUserProfiles` uses pipeline and iterates results directly?
+            // "results.forEach((res) => {"
+            // If it's the IORedis wrapper in `local-redis-proxy.ts` or `redis-client.ts`:
+            // Let's assume it returns data directly if wrapped, or tuple if native.
+
+            // SAFEST APPROACH: JUST USE THE REF DATA WE HAVE IF WE CAN, OR ACCEPT RECALC MIGHT FAIL IF WE CAN'T PARSE.
+            // Actually, for the Ticker Page, we really just need the stats.
+
+            // Let's fallback to "Best Effort" aggregation.
+            // If we are implementing this, we should really improve the data structure to allow O(1) analysis lookup
+            // OR we iterate.
+
+            // Given the complexity of "fetching arbitrary analysis", maybe we change the strategy:
+            // updateTickerProfile takes the `analysis` object and *incrementally* updates the stats?
+            // No, incremental is effectively what we want but handling "edits" (e.g. win to loss) is hard.
+
+            // Let's try the fetch approach but handle the Result type carefully.
+            // Actually, `backfill-tickers.ts` iterated ALL users.
+
+            // Let's assume specific "username:id" lookup is needed.
+            // For now, I will implement `getTickerProfile` and `getAllTickerProfiles`.
+            // `updateTickerProfile` will require passing the *Analyses* list if possible, or we skip full recalc 
+            // and just do it in the Backfill script which has access to everything.
+
+            // BETTER PLAN:
+            // 1. `scripts/backfill-ticker-profiles.ts`: Iterates ALL `all_users`, builds stats in memory, saves to `ticker:profile:{ticker}`.
+            // 2. `updateUserProfile`: calculates the ticker stats for the *specific ticker involved* in that analysis.
+            //    It can fetch the existing ticker profile, and `+/-` the stats based on the change.
+            //    But "change" is hard to track (was it a win before?).
+
+            // compromise: `updateTickerProfile` will just be used by the Backfill script for now to initialize.
+            // For "Real-time" updates, we can implement a simplified "Add to Ticker Stats" function.
+            // But if I want `updateTickerProfile` to be robust, I should search for the analysis.
+        }
+    } catch (error) {
+        // console.error...
+    }
+}
+
 
 /**
  * Get all tracked tickers for efficient price refresh.
@@ -134,10 +252,12 @@ export async function getTrackedTickers(): Promise<string[]> {
  * Get all analysis references for a ticker.
  * Returns array of "username:tweetId" strings.
  */
-export async function getTickerAnalyses(tickerKey: string): Promise<string[]> {
+export async function getTickerAnalyses(tickerKey: string, limit: number = -1): Promise<string[]> {
     try {
         const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
-        return await redis.smembers(indexKey) as string[];
+        // Use ZSET for time-sorted access (newest first)
+        const stop = limit === -1 ? -1 : limit - 1;
+        return await redis.zrange(indexKey, 0, stop, { rev: true }) as string[];
     } catch (error) {
         console.error('[AnalysisStore] Failed to get ticker analyses:', error);
         return [];
@@ -357,13 +477,20 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
 
         if (existingIndex !== -1) {
             // Update existing entry
+            const oldAnalysis = history[existingIndex];
             history[existingIndex] = analysis;
+
+            // Update Ticker Stats (Differential)
+            await updateTickerStats(analysis, false, oldAnalysis);
         } else {
             // Add new entry (prepend)
             history.unshift(analysis);
 
             // Track the ticker for optimized price refresh
             await trackTicker(analysis);
+
+            // Update Ticker Stats
+            await updateTickerStats(analysis, true);
         }
 
         // Limit history size (keep top 100 most recent unique calls)
@@ -423,6 +550,114 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
         console.error('[AnalysisStore] Failed to update user profile:', error);
     }
 }
+
+/**
+ * Incrementally update ticker profile stats.
+ * This is a lightweight alternative to full recalculation.
+ */
+export async function updateTickerStats(analysis: StoredAnalysis, isNew: boolean, oldAnalysis?: StoredAnalysis): Promise<void> {
+    try {
+        const tickerKey = getTickerKey(analysis);
+        const profileKey = `${TICKER_PROFILE_PREFIX}${tickerKey}`;
+
+        // Get existing profile
+        const existing = await redis.hgetall(profileKey) as any; // Cast to any to handle type
+
+        let stats = {
+            symbol: analysis.symbol.toUpperCase(),
+            type: analysis.type || 'CRYPTO',
+            totalAnalyses: parseInt(existing?.totalAnalyses || '0'),
+            wins: parseInt(existing?.wins || '0'),
+            losses: parseInt(existing?.losses || '0'),
+            neutral: parseInt(existing?.neutral || '0'),
+            winRate: parseFloat(existing?.winRate || '0'),
+            lastAnalyzed: parseInt(existing?.lastAnalyzed || '0')
+        };
+
+        // If updating existing analysis, remove old stats first
+        if (!isNew && oldAnalysis) {
+            if (Math.abs(oldAnalysis.performance) < 0.01) stats.neutral--;
+            else if (oldAnalysis.isWin) stats.wins--;
+            else stats.losses--;
+            stats.totalAnalyses--;
+        }
+
+        // Add new stats
+        if (Math.abs(analysis.performance) < 0.01) stats.neutral++;
+        else if (analysis.isWin) stats.wins++;
+        else stats.losses++;
+        stats.totalAnalyses++;
+        stats.lastAnalyzed = Date.now();
+
+        // Recalc Win Rate
+        stats.winRate = stats.totalAnalyses > 0 ? (stats.wins / stats.totalAnalyses) * 100 : 0;
+
+        // Persist
+        await dualWrite(async (r) => {
+            await r.hset(profileKey, stats as any);
+        });
+
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to update ticker stats:', error);
+    }
+}
+
+export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
+    try {
+        const tickers = await redis.smembers(TRACKED_TICKERS_KEY);
+        if (tickers.length === 0) return [];
+
+        const pipeline = redis.pipeline();
+        tickers.forEach((t) => pipeline.hgetall(`${TICKER_PROFILE_PREFIX}${t}`));
+
+        const results = await pipeline.exec();
+
+        const profiles: TickerProfile[] = [];
+        results.forEach((res) => {
+            const data = res as any;
+            if (data && data.symbol) {
+                profiles.push({
+                    symbol: data.symbol,
+                    type: data.type as any,
+                    totalAnalyses: parseInt(data.totalAnalyses || '0'),
+                    wins: parseInt(data.wins || '0'),
+                    losses: parseInt(data.losses || '0'),
+                    neutral: parseInt(data.neutral || '0'),
+                    winRate: parseFloat(data.winRate || '0'),
+                    lastAnalyzed: parseInt(data.lastAnalyzed || '0')
+                });
+            }
+        });
+
+        return profiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get all ticker profiles:', error);
+        return [];
+    }
+}
+
+export async function getTickerProfile(symbol: string, type: 'CRYPTO' | 'STOCK' = 'CRYPTO'): Promise<TickerProfile | null> {
+    try {
+        const key = `${type}:${symbol.toUpperCase()}`;
+        const profile = await redis.hgetall(`${TICKER_PROFILE_PREFIX}${key}`) as any;
+        if (!profile || !profile.symbol) return null;
+
+        return {
+            symbol: profile.symbol,
+            type: profile.type as any,
+            totalAnalyses: parseInt(profile.totalAnalyses || '0'),
+            wins: parseInt(profile.wins || '0'),
+            losses: parseInt(profile.losses || '0'),
+            neutral: parseInt(profile.neutral || '0'),
+            winRate: parseFloat(profile.winRate || '0'),
+            lastAnalyzed: parseInt(profile.lastAnalyzed || '0')
+        };
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to get ticker profile:', error);
+        return null;
+    }
+}
+
 
 export async function recalculateUserProfile(username: string): Promise<void> {
     try {

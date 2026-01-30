@@ -1,0 +1,285 @@
+# ----------------------------------------
+# Reports snapshot
+# Account: SinceThisCall
+# Property: sincethiscall
+# ----------------------------------------
+#  
+# Start date: 20260101
+# End date: 20260128
+Nth day,Active users
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,0
+0017,17
+0018,11
+0019,20
+0020,17
+0021,25
+0022,22
+0023,15
+0024,11
+0025,10
+0026,13
+0027,6
+
+# Start date: 20260101
+# End date: 20260128
+Nth day,New users
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,0
+0017,17
+0018,7
+0019,16
+0020,12
+0021,20
+0022,16
+0023,11
+0024,5
+0025,6
+0026,8
+0027,3
+
+# Start date: 20260101
+# End date: 20260128
+Nth day,Average engagement time per active user
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,0
+0017,171.35294117647058
+0018,170.45454545454547
+0019,137.2
+0020,219.1764705882353
+0021,269.08
+0022,390.1363636363636
+0023,941.8
+0024,412.6363636363636
+0025,712.1
+0026,373.9230769230769
+0027,458.6666666666667
+
+# Start date: 20260101
+# End date: 20260128
+Nth day,Total revenue
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,0
+0017,0
+0018,0
+0019,0
+0020,0
+0021,0
+0022,0
+0023,0
+0024,0
+0025,0
+0026,0
+0027,0
+
+# Where do your new users come from?
+# Start date: 20260101
+# End date: 20260128
+First user primary channel group (Default Channel Group),New users
+Direct,69
+Organic Social,49
+Paid Search,2
+Organic Search,1
+
+#  
+# Start date: 20260101
+# End date: 20260128
+Session primary channel group (Default Channel Group),Sessions
+Organic Social,173
+Direct,130
+Paid Search,2
+Organic Search,1
+Referral,1
+Unassigned,1
+
+#  
+# Start date: 20260101
+# End date: 20260128
+Country ID,Active users
+AE,1
+AU,1
+BE,2
+BR,1
+CA,34
+CH,4
+CN,1
+CO,3
+CZ,1
+DE,5
+ES,1
+FR,4
+GB,6
+GE,2
+HU,1
+IE,1
+IL,2
+IN,2
+JP,2
+KZ,1
+LT,2
+NL,5
+PK,1
+SG,2
+SI,1
+TH,1
+TR,1
+US,28
+VN,2
+
+# Start date: 20260101
+# End date: 20260128
+Country,Active users
+CA,34
+US,28
+GB,6
+DE,5
+NL,5
+CH,4
+FR,4
+
+# How are active users trending?
+# Start date: 20260101
+# End date: 20260128
+Nth day,30 days,7 days,1 day
+0000,0,0,0
+0001,0,0,0
+0002,0,0,0
+0003,0,0,0
+0004,0,0,0
+0005,0,0,0
+0006,0,0,0
+0007,0,0,0
+0008,0,0,0
+0009,0,0,0
+0010,0,0,0
+0011,0,0,0
+0012,0,0,0
+0013,0,0,0
+0014,0,0,0
+0015,0,0,0
+0016,0,0,0
+0017,17,17,17
+0018,24,24,11
+0019,40,40,20
+0020,52,52,17
+0021,72,72,25
+0022,88,88,22
+0023,99,99,15
+0024,104,91,11
+0025,110,91,10
+0026,118,84,13
+0027,121,76,6
+
+# How well do you retain your users?
+# Start date: 20251214
+# End date: 20260124
+Date,Week 0,Week 1,Week 2,Week 3,Week 4,Week 5
+Dec 14 - Dec 20,0,0,0,0,0,0
+Dec 21 - Dec 27,0,0,0,0,0,-1
+Dec 28 - Jan 3,0,0,0,0,-1,-1
+Jan 4 - Jan 10,0,0,0,-1,-1,-1
+Jan 11 - Jan 17,0,0,-1,-1,-1,-1
+Jan 18 - Jan 24,99,-1,-1,-1,-1,-1
+
+#  
+# Start date: 20260101
+# End date: 20260128
+Page title and screen class,Views
+Since This Call,7085
+404: This page could not be found.,6
+
+#  
+# Start date: 20260101
+# End date: 20260128
+Event name,Event count
+page_view,7098
+user_engagement,1674
+form_submit,1090
+click,849
+scroll,739
+form_start,355
+session_start,307
+first_visit,121
+
+# What are your top performing key events?
+# Start date: 20260101
+# End date: 20260128
+Event name,Key events
+
+
+# Where does your average 120d value come from?
+# Start date: 20260101
+# End date: 20260128
+First user primary channel group (Default Channel Group),Average 120d value
+
+
+#  
+# Start date: 20260101
+# End date: 20260128
+Item name,Items purchased
+
+
+# How does activity on your platforms compare?
+# Start date: 20260101
+# End date: 20260128
+Platform,Key events

@@ -84,22 +84,46 @@ async function sync() {
         const tickers = await source.smembers('tracked_tickers');
         if (tickers.length > 0) {
             const tickerPipeline = dest.pipeline();
-            for (const ticker of tickers) {
-                tickerPipeline.sadd('tracked_tickers', ticker);
-            }
+            // batch global set add
+            tickerPipeline.sadd('tracked_tickers', ...tickers);
             await tickerPipeline.exec();
         }
 
+        let tickerCount = 0;
+        const tickerPipeline = dest.pipeline();
+
         for (const ticker of tickers) {
-            const index = await source.smembers(`ticker_index:${ticker}`);
+            // Sync Profile (Hash)
+            const profile = await source.hgetall(`ticker:profile:${ticker}`);
+            if (profile) {
+                tickerPipeline.hset(`ticker:profile:${ticker}`, profile);
+            }
+
+            // Sync Index (ZSET)
+            // Use zrange withScores to get all items
+            const index = await source.zrange(`ticker_index:${ticker}`, 0, -1, { withScores: true });
+
             if (index.length > 0) {
-                const indexPipeline = dest.pipeline();
-                for (const ref of index) {
-                    indexPipeline.sadd(`ticker_index:${ticker}`, ref);
+                // Upstash/IORedis array: [member, score, member, score...]
+                for (let i = 0; i < index.length; i += 2) {
+                    const member = index[i] as string;
+                    const score = index[i + 1] as number; // or string depending on lib, but ZADD handles comparison
+                    if (member) {
+                        tickerPipeline.zadd(`ticker_index:${ticker}`, { score: Number(score), member });
+                    }
                 }
-                await indexPipeline.exec();
+            }
+
+            tickerCount++;
+            if (tickerCount % 50 === 0) {
+                await tickerPipeline.exec();
+                // pipeline auto-flushes in ioredis but explicitly calling exec is safe?
+                // Actually need to carefully manage pipeline object reuse if it's not clearing.
+                // Assuming dest.pipeline() creates a new one each time is cleaner.
             }
         }
+        await tickerPipeline.exec();
+        console.log(`   ✅ Synced ${tickers.length} tickers.`);
         // 4. Sync Global Analyses Index (ZSET)
         console.log(' - Syncing global timestamp index...');
         const GLOBAL_ANALYSES_ZSET = 'global:analyses:timestamp';

@@ -1,0 +1,303 @@
+# ----------------------------------------
+# Reports snapshot
+# Account: SinceThisCall
+# Property: sincethiscall
+# ----------------------------------------
+#  
+# Start date: 20260102
+# End date: 20260129
+Nth day,Active users
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,17
+0017,11
+0018,20
+0019,17
+0020,25
+0021,22
+0022,15
+0023,11
+0024,10
+0025,13
+0026,6
+0027,135
+
+# Start date: 20260102
+# End date: 20260129
+Nth day,New users
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,17
+0017,7
+0018,16
+0019,12
+0020,20
+0021,16
+0022,11
+0023,5
+0024,6
+0025,8
+0026,3
+0027,115
+
+# Start date: 20260102
+# End date: 20260129
+Nth day,Average engagement time per active user
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,171.35294117647058
+0017,170.45454545454547
+0018,137.2
+0019,219.1764705882353
+0020,269.08
+0021,390.1363636363636
+0022,941.8
+0023,412.6363636363636
+0024,712.1
+0025,373.9230769230769
+0026,508.3333333333333
+0027,88.04444444444445
+
+# Start date: 20260102
+# End date: 20260129
+Nth day,Total revenue
+0000,0
+0001,0
+0002,0
+0003,0
+0004,0
+0005,0
+0006,0
+0007,0
+0008,0
+0009,0
+0010,0
+0011,0
+0012,0
+0013,0
+0014,0
+0015,0
+0016,0
+0017,0
+0018,0
+0019,0
+0020,0
+0021,0
+0022,0
+0023,0
+0024,0
+0025,0
+0026,0
+0027,0
+
+# Where do your new users come from?
+# Start date: 20260102
+# End date: 20260129
+First user primary channel group (Default Channel Group),New users
+Organic Social,135
+Direct,93
+Organic Search,6
+Paid Search,2
+
+#  
+# Start date: 20260102
+# End date: 20260129
+Session primary channel group (Default Channel Group),Sessions
+Organic Social,281
+Direct,169
+Unassigned,103
+Organic Search,8
+Paid Search,2
+Referral,1
+
+#  
+# Start date: 20260102
+# End date: 20260129
+Country ID,Active users
+AE,3
+AT,1
+AU,6
+BE,3
+BG,1
+BR,1
+BY,1
+CA,48
+CH,7
+CN,1
+CO,3
+CZ,1
+DE,17
+ES,4
+ET,1
+FI,1
+FR,9
+GB,17
+GE,2
+HU,1
+ID,1
+IE,2
+IL,2
+IN,9
+IT,4
+JP,4
+KR,1
+KZ,1
+LT,2
+LU,1
+MX,7
+MY,1
+NL,11
+NO,2
+PK,3
+PL,6
+PT,1
+SE,1
+SG,3
+SI,1
+TH,1
+TR,2
+US,46
+VN,4
+XK,1
+ZA,1
+
+# Start date: 20260102
+# End date: 20260129
+Country,Active users
+CA,48
+US,46
+DE,17
+GB,17
+NL,11
+FR,9
+IN,9
+
+# How are active users trending?
+# Start date: 20260102
+# End date: 20260129
+Nth day,30 days,7 days,1 day
+0000,0,0,0
+0001,0,0,0
+0002,0,0,0
+0003,0,0,0
+0004,0,0,0
+0005,0,0,0
+0006,0,0,0
+0007,0,0,0
+0008,0,0,0
+0009,0,0,0
+0010,0,0,0
+0011,0,0,0
+0012,0,0,0
+0013,0,0,0
+0014,0,0,0
+0015,0,0,0
+0016,17,17,17
+0017,24,24,11
+0018,40,40,20
+0019,52,52,17
+0020,72,72,25
+0021,88,88,22
+0022,99,99,15
+0023,104,91,11
+0024,110,91,10
+0025,118,84,13
+0026,121,76,6
+0027,249,186,135
+
+# How well do you retain your users?
+# Start date: 20251214
+# End date: 20260124
+Date,Week 0,Week 1,Week 2,Week 3,Week 4,Week 5
+Dec 14 - Dec 20,0,0,0,0,0,0
+Dec 21 - Dec 27,0,0,0,0,0,-1
+Dec 28 - Jan 3,0,0,0,0,-1,-1
+Jan 4 - Jan 10,0,0,0,-1,-1,-1
+Jan 11 - Jan 17,0,0,-1,-1,-1,-1
+Jan 18 - Jan 24,99,-1,-1,-1,-1,-1
+
+#  
+# Start date: 20260102
+# End date: 20260129
+Page title and screen class,Views
+Since This Call,7930
+404: This page could not be found.,6
+Seit diesem Anruf,3
+
+#  
+# Start date: 20260102
+# End date: 20260129
+Event name,Event count
+page_view,8375
+user_engagement,1864
+form_submit,1130
+click,933
+scroll,891
+session_start,463
+form_start,378
+first_visit,236
+
+# What are your top performing key events?
+# Start date: 20260102
+# End date: 20260129
+Event name,Key events
+
+
+# Where does your average 120d value come from?
+# Start date: 20260102
+# End date: 20260129
+First user primary channel group (Default Channel Group),Average 120d value
+
+
+#  
+# Start date: 20260102
+# End date: 20260129
+Item name,Items purchased
+
+
+# How does activity on your platforms compare?
+# Start date: 20260102
+# End date: 20260129
+Platform,Key events

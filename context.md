@@ -2,7 +2,7 @@
 
 **Project:** SinceThisCall (STC) - "Call Receipts for Crypto/Meme Twitter"  
 **Current Status:** Production (Main Branch - Hardened)  
-**Last Updated:** January 26, 2026  
+**Last Updated:** January 30, 2026  
 
 ---
 
@@ -14,14 +14,14 @@
 
 ---
 
-## 📊 Current Metrics (Jan 24, 2026 - Post-Repair)
+## 📊 Current Metrics (Jan 30, 2026 - Post-Sync)
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 772 |
-| Unique Gurus | 304 |
-| Tracked Tickers | 241 |
-| Platform Win Rate| 39% |
+| Total Analyses | 1,517 |
+| Unique Gurus | 541 |
+| Tracked Tickers | 337 |
+| Platform Win Rate| 40% |
 | Verified Edge Cases| 101 |
 
 ---
@@ -54,7 +54,9 @@
     - **Logic**: "Most Tracked" now uses a strictly timestamp-sorted window of the last 500 tweets.
     - **Fix**: Resolved "ghost calls" discrepancy by forcing cache refresh on production.
 6.  **Full Environment Parity**
-    - Local dev environment now fully synced with production snapshot (700+ analyses).
+    - Local dev environment now fully synced with production snapshot (1,500+ analyses).
+7.  **UX Enhancement (Jan 30)**
+    - **Renaming**: "Most Tracked Tickers" -> "Trending Tickers" to better reflect the dynamic nature of the list.
 
 ## 📂 Key Files
 
