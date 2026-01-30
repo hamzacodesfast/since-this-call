@@ -45,7 +45,10 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### IV. Fix Protocols
 *   **Main First**: Data repairs (scripts) must target **Production** first. Local environment is downstream from Main.
+*   **Force-Fix**: For stubborn data points where AI/Market Data fails, use the `scripts/force-fix-[case].ts` pattern to manually inject the correct `StoredAnalysis` object directly into production Redis.
 *   **Scripted Repairs**: Never manually edit database entries. Create reusable scripts committed to `main`:
+    *   `scripts/bulk-process-main.ts`: For processing a queue of tweets with optional manual overrides (Symbol/Sentiment/Type).
+    *   `scripts/remove-production.ts`: For surgical removal of bad data points directly from the cloud instance.
     *   `scripts/repair-all-users.ts`: For historical timestamp/price corrections.
     *   `scripts/backfill-tickers.ts`: For rebuilding the ticker index.
     *   `scripts/reanalyze.ts`: For individual fix-ups.
@@ -69,7 +72,9 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 
 ### VI. Market Data Reliability Protocol
-*   **Stock Whitelisting**: Tickers that look like crypto but are stocks (e.g. `ONDS`, `ASST`) must be added to `KNOWN_STOCKS` in `market-data.ts`. This prevents DexScreener contamination.
+*   **Stock Whitelisting**: Tickers that look like crypto but are stocks (e.g. `ONDS`, `ASST`, `BIZIM`, `DXY`) must be added to `KNOWN_STOCKS` in `market-data.ts`.
+*   **Index Mapping**: Use `INDEX_FALLBACKS` in `market-data.ts` to map commodities/indices to their Futures equivalents (e.g., `COPPER` -> `HG=F`, `DXY` -> `DX-Y.NYB`).
+*   **Symbol Cleaning**: Logic in `analyzer.ts` must handle exotic suffixes (`.P` for Perpetuals, `.D` for Dominance) to extract cleanliness (e.g. `PUMP` from `PUMPUSDT.P`).
 *   **Recent Date Fallback**: Yahoo Finance Historical API is unreliable for "Today's" data. Logic must fallback to **Current Price** if the historical fetch fails for a date < 24h old.
 *   **Type Enforcement**: Major assets (BTC, ETH, SOL) must be hard-coded as `CRYPTO` in `price-updater.ts` to prevent "Stock" misclassification (e.g. ETH -> Ethan Allen).
 
@@ -79,4 +84,4 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ---
 
-*Blueprint Version: 2.3 (Jan 26, 2026)*
+*Blueprint Version: 2.5 (Jan 30, 2026)*
