@@ -602,6 +602,53 @@ export async function updateTickerStats(analysis: StoredAnalysis, isNew: boolean
     }
 }
 
+/**
+ * Remove an analysis from ticker stats.
+ */
+export async function removeTickerStats(analysis: StoredAnalysis): Promise<void> {
+    try {
+        const tickerKey = getTickerKey(analysis);
+        const profileKey = `${TICKER_PROFILE_PREFIX}${tickerKey}`;
+
+        // Get existing profile
+        const existing = await redis.hgetall(profileKey) as any;
+
+        if (!existing) return;
+
+        let stats = {
+            symbol: analysis.symbol.toUpperCase(),
+            type: analysis.type || 'CRYPTO',
+            totalAnalyses: parseInt(existing.totalAnalyses || '0'),
+            wins: parseInt(existing.wins || '0'),
+            losses: parseInt(existing.losses || '0'),
+            neutral: parseInt(existing.neutral || '0'),
+            winRate: parseFloat(existing.winRate || '0'),
+            lastAnalyzed: parseInt(existing.lastAnalyzed || '0')
+        };
+
+        // Remove stats
+        if (Math.abs(analysis.performance) < 0.01) stats.neutral--;
+        else if (analysis.isWin) stats.wins--;
+        else stats.losses--;
+        stats.totalAnalyses--;
+
+        // Recalc Win Rate
+        stats.winRate = stats.totalAnalyses > 0 ? (stats.wins / stats.totalAnalyses) * 100 : 0;
+
+        // Persist
+        await dualWrite(async (r) => {
+            if (stats.totalAnalyses <= 0) {
+                await r.del(profileKey);
+            } else {
+                await r.hset(profileKey, stats as any);
+            }
+        });
+
+    } catch (error) {
+        console.error('[AnalysisStore] Failed to remove ticker stats:', error);
+    }
+}
+
 export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
     try {
         const tickers = await redis.smembers(TRACKED_TICKERS_KEY);

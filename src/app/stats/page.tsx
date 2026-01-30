@@ -218,35 +218,37 @@ export default function StatsPage() {
                                                     ? Math.round((ticker.wins / (ticker.wins + ticker.losses)) * 100)
                                                     : 0;
                                                 return (
-                                                    <div key={ticker.symbol} className="flex items-center gap-4 p-4 rounded-lg border bg-background/20">
-                                                        <div className="text-2xl font-bold text-muted-foreground w-8">
-                                                            #{i + 1}
+                                                    <Link href={`/tickers/${ticker.symbol}`} key={ticker.symbol} className="block">
+                                                        <div className="flex items-center gap-4 p-4 rounded-lg border bg-background/20 hover:bg-background/40 transition-colors cursor-pointer">
+                                                            <div className="text-2xl font-bold text-muted-foreground w-8">
+                                                                #{i + 1}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-xl font-bold">${ticker.symbol}</span>
+                                                                    <span className="text-sm text-muted-foreground">
+                                                                        {ticker.callCount} calls
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex gap-4 text-sm">
+                                                                    <span className="text-green-500">
+                                                                        📈 {ticker.bullish} bullish ({bullishPct}%)
+                                                                    </span>
+                                                                    <span className="text-red-500">
+                                                                        📉 {ticker.bearish} bearish ({100 - bullishPct}%)
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className={`text-lg font-bold ${winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
+                                                                    {winRate}% win rate
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {ticker.wins}W / {ticker.losses}L
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <span className="text-xl font-bold">${ticker.symbol}</span>
-                                                                <span className="text-sm text-muted-foreground">
-                                                                    {ticker.callCount} calls
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex gap-4 text-sm">
-                                                                <span className="text-green-500">
-                                                                    📈 {ticker.bullish} bullish ({bullishPct}%)
-                                                                </span>
-                                                                <span className="text-red-500">
-                                                                    📉 {ticker.bearish} bearish ({100 - bullishPct}%)
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <div className={`text-lg font-bold ${winRate >= 50 ? 'text-green-500' : 'text-red-500'}`}>
-                                                                {winRate}% win rate
-                                                            </div>
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {ticker.wins}W / {ticker.losses}L
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    </Link>
                                                 );
                                             });
                                         })()}

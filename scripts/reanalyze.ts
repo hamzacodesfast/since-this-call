@@ -17,7 +17,7 @@ import type { StoredAnalysis } from '../src/lib/analysis-store';
 async function reanalyze() {
     // Dynamic imports to ensure env vars are loaded first
     const { analyzeTweet } = await import('../src/lib/analyzer');
-    const { recalculateUserProfile, trackTicker, untrackTicker } = await import('../src/lib/analysis-store');
+    const { recalculateUserProfile, trackTicker, untrackTicker, updateTickerStats } = await import('../src/lib/analysis-store');
     const { getRedisClient } = await import('../src/lib/redis-client');
 
     const redis = getRedisClient();
@@ -147,6 +147,14 @@ async function reanalyze() {
         // Then track new one
         await trackTicker(newAnalysis);
         console.log(`   - Updated ticker tracking (removed old: ${oldAnalysis.symbol}, added new: ${newAnalysis.symbol})`);
+
+        // 7. Update Ticker Stats
+        // Remove old stats logic is tricky, but updateTickerStats handles "existing replaced by new" if we pass oldAnalysis
+        // But here we are NOT replacing in place in the stats function, we are conceptually "editing".
+        // updateTickerStats takes (analysis, isNew, oldAnalysis).
+        // If isNew=false and oldAnalysis provided, it decrements old and increments new.
+        await updateTickerStats(newAnalysis, false, oldAnalysis);
+        console.log(`   - Updated ticker stats (decremented old, incremented new)`);
 
         console.log('\n✅ Re-analysis complete! Changes are live.');
         process.exit(0);
