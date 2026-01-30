@@ -98,10 +98,12 @@ export class LocalRedisWrapper {
         return this.client.zadd(key, member.score, member.member);
     }
 
-    async zrange(key: string, start: number, stop: number, options?: { rev?: boolean }): Promise<any[]> {
+    async zrange(key: string, start: number, stop: number, options?: { rev?: boolean, withScores?: boolean }): Promise<any[]> {
         if (options?.rev) {
+            if (options.withScores) return this.client.zrevrange(key, start, stop, 'WITHSCORES');
             return this.client.zrevrange(key, start, stop);
         }
+        if (options?.withScores) return this.client.zrange(key, start, stop, 'WITHSCORES');
         return this.client.zrange(key, start, stop);
     }
 

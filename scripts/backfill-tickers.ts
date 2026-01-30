@@ -4,14 +4,13 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Load Env
-dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+// fallback
 dotenv.config();
 
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
-    token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
-});
+import { getRedisClient } from '../src/lib/redis-client';
+
+const redis = getRedisClient();
 
 const TRACKED_TICKERS_KEY = 'tracked_tickers';
 const TICKER_PROFILE_PREFIX = 'ticker:profile:';

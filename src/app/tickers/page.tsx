@@ -23,24 +23,43 @@ interface TickerProfile {
 
 export default function TickersPage() {
     const [profiles, setProfiles] = useState<TickerProfile[]>([]);
+    const [trendingTickers, setTrendingTickers] = useState<TickerProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
-    const fetchProfiles = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/tickers');
-            const data = await res.json();
-            setProfiles(data.profiles || []);
+            const [tickersRes, metricsRes] = await Promise.all([
+                fetch('/api/tickers'),
+                fetch('/api/metrics')
+            ]);
+
+            const tickersData = await tickersRes.json();
+            const metricsData = await metricsRes.json();
+
+            const allProfiles: TickerProfile[] = tickersData.profiles || [];
+            setProfiles(allProfiles);
+
+            // Derive trending from metrics.topTickers to match Stats page
+            if (metricsData.topTickers) {
+                const profileMap = new Map(allProfiles.map(p => [p.symbol, p]));
+                const trending = metricsData.topTickers
+                    .map((t: any) => profileMap.get(t.symbol))
+                    .filter((p: TickerProfile | undefined) => p !== undefined)
+                    .slice(0, 4);
+
+                setTrendingTickers(trending as TickerProfile[]);
+            }
         } catch (e) {
-            console.error('Failed to fetch ticker profiles:', e);
+            console.error('Failed to fetch ticker data:', e);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchProfiles();
+        fetchData();
     }, []);
 
     const filtered = profiles.filter(p =>
@@ -67,7 +86,7 @@ export default function TickersPage() {
                             className="rounded"
                         />
                         <h1 className="text-2xl font-bold flex items-center gap-2">
-                            tracked tickers <span className="text-muted-foreground text-base font-normal">({profiles.length})</span>
+                            Tracked Tickers <span className="text-muted-foreground text-base font-normal">({profiles.length})</span>
                         </h1>
                     </div>
 
@@ -81,27 +100,23 @@ export default function TickersPage() {
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
-                        <Button variant="outline" size="icon" onClick={fetchProfiles} disabled={loading}>
+                        <Button variant="outline" size="icon" onClick={fetchData} disabled={loading}>
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         </Button>
                     </div>
                 </div>
 
                 {/* Trending Section */}
-                {!search && !loading && profiles.length > 0 && (
+                {!search && !loading && trendingTickers.length > 0 && (
                     <div className="mb-12">
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-amber-500" />
-                            Trending Now
+                            Trending Tickers
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                            {[...profiles]
-                                .sort((a, b) => b.lastAnalyzed - a.lastAnalyzed)
-                                .slice(0, 4)
-                                .map((profile) => (
-                                    <TickerCard key={`trending-${profile.symbol}`} ticker={profile} />
-                                ))
-                            }
+                            {trendingTickers.map((profile) => (
+                                <TickerCard key={`trending-${profile.symbol}`} ticker={profile} />
+                            ))}
                         </div>
                     </div>
                 )}

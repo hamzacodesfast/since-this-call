@@ -20,6 +20,9 @@ interface BackupData {
     userProfiles: Record<string, any>;
     userHistories: Record<string, any[]>;
     pumpfunPrices: Record<string, any>;
+    trackedTickers: string[];
+    tickerProfiles: Record<string, any>;
+    tickerIndices: Record<string, any[]>;
 }
 
 async function backup() {
@@ -32,6 +35,9 @@ async function backup() {
         userProfiles: {},
         userHistories: {},
         pumpfunPrices: {},
+        trackedTickers: [],
+        tickerProfiles: {},
+        tickerIndices: {},
     };
 
     // 1. Backup recent_analyses
@@ -70,7 +76,28 @@ async function backup() {
     console.log(`   Exported ${Object.keys(data.userProfiles).length} profiles`);
     console.log(`   Exported ${Object.keys(data.userHistories).length} histories`);
 
-    // 3. Skip pumpfun prices for now (can be regenerated from analyses)
+    // 3. Backup Tickers
+    console.log('📈 Backing up ticker data...');
+    const tickers = await redis.smembers('tracked_tickers');
+    data.trackedTickers = tickers;
+    console.log(`   Found ${tickers.length} tracked tickers`);
+
+    for (const ticker of tickers) {
+        try {
+            const profile = await redis.hgetall(`ticker:profile:${ticker}`);
+            if (profile) data.tickerProfiles[ticker] = profile;
+
+            const index = await redis.zrange(`ticker_index:${ticker}`, 0, -1, { withScores: true });
+            if (index && index.length > 0) {
+                data.tickerIndices[ticker] = index;
+            }
+        } catch (e) {
+            console.log(`   ⚠️ Skipping ticker data for ${ticker}`);
+        }
+    }
+    console.log(`   Exported ${Object.keys(data.tickerProfiles).length} ticker profiles`);
+
+    // 4. Skip pumpfun prices for now (can be regenerated from analyses)
     console.log('💰 Skipping price data (can be regenerated from analyses)');
 
     // 4. Write to file
