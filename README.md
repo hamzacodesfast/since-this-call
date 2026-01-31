@@ -18,7 +18,7 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 - **📈 Trending Tickers**: See which assets gurus are calling most (BTC, ETH, SOL, etc.)
 - **Live Price Updates**: Automatic price refresh to keep call receipts accurate
 - **Multi-Asset Support**:
-  - **Crypto**: Real-time prices via **CoinGecko** & **DexScreener** (Meme coins supported!)
+  - **Crypto**: Real-time prices via **CoinMarketCap** & **CoinGecko** (Authoritative assets only)
   - **Stocks & ETFs**: Free data via **Yahoo Finance**
   - **Index Fallbacks**: Automatically resolves SPX→SPY, NQ→QQQ, DJI→DIA
 - **Leaderboard**: Track the top (and worst) financial gurus with win/loss records
@@ -32,14 +32,14 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 2. **Sync Data**: Always run `npx tsx scripts/sync-to-local.ts` after a push or pull to keep local data in sync with production.
 3. **Type Safety**: Never overwrite Redis Hashes (`user:profile`) with Strings. Use `AnalysisStore`.
 
-## 📊 Current Stats (Jan 26, 2026 - Post-Sync)
+## 📊 Current Stats (Jan 31, 2026 - Post-Deep Purge)
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 1,517 |
-| Unique Gurus | 541 |
-| Platform Win Rate | 40% |
-| Tracked Tickers | 337 |
+| Total Analyses | ~1,464 |
+| Unique Gurus | 562 |
+| Platform Win Rate | ~39% |
+| Tracked Tickers | 212 |
 
 ## 🛠️ Tech Stack
 

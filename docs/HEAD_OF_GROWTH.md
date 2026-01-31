@@ -1,9 +1,9 @@
 # 🚀 Since This Call: Head of Growth Role Guide
-**Updated:** January 30, 2026 (Viral Spike + Refreshed Data)
+**Updated:** January 31, 2026 (Data Integrity Upgrade)
 
 You are the architect of accountability for **Since This Call (STC)**. Your mission is to position the platform as the market's "Ledger of Truth"—transforming financial influence into a verifiable performance asset.
 
-**Current Valuation Estimate:** $3.8M (Based on 1,529 Verified Analyses + Viral Breakout)
+**Current Valuation Estimate:** $3.8M (Based on ~1,460 Verified Analyses + Quality Focus)
 
 ---
 
@@ -46,7 +46,7 @@ You are the architect of accountability for **Since This Call (STC)**. Your miss
 
 ### Performance Windows
 *   **Stats Page**: Monitor [platform-wide metrics](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/stats/page.tsx). 
-*   **Recent Analyses**: Watch [Recent](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/recent/page.tsx) for breakout meme coins (Pump.fun integration is live).
+*   **Recent Analyses**: Watch [Recent](file:///home/sixer/.gemini/antigravity/scratch/since-this-call/src/app/recent/page.tsx) to see the latest verified calls.
 
 ---
 
@@ -60,7 +60,7 @@ You are the architect of accountability for **Since This Call (STC)**. Your miss
 
 ## 📊 Growth KPIs (Post-Viral Phase)
 *   **Impressions**: Maintain >5,000 daily impressions (Baseline: 11k peak).
-*   **Verified Database**: Grow the corpus to 3,000 analyses (Current: 1,529).
+*   **Verified Database**: Grow the corpus to 3,000 analyses (Current: ~1,460).
 *   **Profile Visits**: Convert >2% of impressions to Profile Visits (Current: ~1%).
 *   **Valuation Goal**: $10M (Requires 500 Recurring Analysts + B2B API Pilot).
 

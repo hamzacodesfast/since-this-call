@@ -6,7 +6,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 ---
 
 > [!IMPORTANT]
-> **OPERATIONAL RULE**: Do NOT use Moltbot. Use only **Antigravity** models for all linguistic and context tasks.
+> **OPERATIONAL RULE**: Use only **Antigravity** models for all linguistic and context tasks.
 
 
 ## 🛠️ Core Competencies
@@ -24,7 +24,8 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### 3. Entity Proxy Resolution (The "Symbol" Layer)
 *   **Nicknames**: Mapping "Corn" (BTC), "Vitalik" (ETH), and "The Dog" (DOGE).
-*   **Contract Addresses (CA)**: Automatically detecting Solana/Base addresses (e.g. `85V...`) and treating them as the primary ticker for meme coins.
+*   **Authoritative Assets**: We ONLY track assets found on Yahoo Finance, CoinMarketCap, or CoinGecko.
+*   **No Meme Coins**: Contract addresses and DEX-only tokens are strictly filtered out.
 *   **Proxy Overrides**: Identifying when a stock (MSTR) is used as a proxy for the underlying (BTC). For official Strategy/Saylor accounts, the data subject is **BTC**.
 *   **Dominance Parsing**: Understanding that a "Bearish" view on `USDT.D` (USDT Dominance) is a **BULLISH** signal for the crypto market.
 
@@ -44,7 +45,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### III. Validation & Logic Enforcement
 *   **Strict Timestamp Integrity**: The API (`/api/recent`) must **REJECT** any request without a valid timestamp. There is no fallback to `Date.now()` (Search Time). Timeline integrity is paramount.
-*   **Asset Type Segregation**: Stock searches initiated by the user must **strictly** bypass DexScreener/Crypto APIs to prevent meme-coin contamination of ticker symbols (e.g. $MSTR, $AAPL).
+*   **Asset Type Segregation**: Stock searches initiated by the user must **strictly** bypass Crypto APIs to prevent ticker collisions (e.g. $MSTR, $AAPL).
 *   **Dynamic Market Context**: The AI must be fed real-time prices (BTC/ETH/SOL) via `MARKET_CONTEXT` injection to correctly validate "Numerical Directionality" (e.g. Buying BTC at $90k when market is $100k = Bearish/Short).
 
 ### IV. Fix Protocols
@@ -62,7 +63,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 ## 🧪 Tech Stack Proficiency
 *   **AI**: Gemini 2.0 Flash (Multimodal) for text + chart analysis.
 *   **Data**: Redis (Upstash/LocalProxy) with a focus on Hash/List parity.
-*   **Pricing**: CA-Aware Waterfall (GeckoTerminal Historical -> DexScreener -> CoinGecko -> Yahoo Finance).
+*   **Pricing**: Authoritative Waterfall (Yahoo Finance -> CoinMarketCap -> CoinGecko).
 
 ### V. Context Hardening Protocol
 *   **The Problem**: AI sometimes misinterprets nuance (e.g., "Buying Dips" = Bearish).
