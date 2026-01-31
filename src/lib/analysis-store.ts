@@ -20,6 +20,7 @@
  * @see price-refresher.ts for batch price updates using ticker index
  */
 import { getRedisClient } from './redis-client';
+import { KNOWN_CAS } from './market-data';
 import { z } from 'zod';
 import { Redis } from '@upstash/redis';
 
@@ -71,11 +72,17 @@ const TICKER_INDEX_PREFIX = 'ticker_index:';
  * Format: "CRYPTO:BTC", "STOCK:AAPL", or "CA:abc123..." for contract addresses
  */
 function getTickerKey(analysis: { symbol: string; type?: string; contractAddress?: string }): string {
-    if (analysis.contractAddress && analysis.contractAddress.length > 10) {
-        return `CA:${analysis.contractAddress}`;
+    const symbol = analysis.symbol.toUpperCase();
+
+    // Check for authoritative CA override
+    const knownCA = KNOWN_CAS[symbol];
+    const effectiveCA = knownCA ? knownCA.ca : analysis.contractAddress;
+
+    if (effectiveCA && effectiveCA.length > 10) {
+        return `CA:${effectiveCA}`;
     }
     const type = analysis.type || 'CRYPTO';
-    return `${type}:${analysis.symbol.toUpperCase()}`;
+    return `${type}:${symbol}`;
 }
 
 /**
@@ -138,6 +145,7 @@ export interface TickerProfile {
     bearish: number;
     winRate: number;
     lastAnalyzed: number;
+    contractAddress?: string;
 }
 
 export async function updateTickerProfile(tickerKey: string): Promise<void> {
@@ -691,7 +699,8 @@ export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
                     bullish: parseInt(data.bullish || '0'),
                     bearish: parseInt(data.bearish || '0'),
                     winRate: parseFloat(data.winRate || '0'),
-                    lastAnalyzed: parseInt(data.lastAnalyzed || '0')
+                    lastAnalyzed: parseInt(data.lastAnalyzed || '0'),
+                    contractAddress: data.contractAddress
                 });
             }
         });
@@ -705,8 +714,13 @@ export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
 
 export async function getTickerProfile(symbol: string, type: 'CRYPTO' | 'STOCK' = 'CRYPTO'): Promise<TickerProfile | null> {
     try {
-        const key = `${type}:${symbol.toUpperCase()}`;
-        const profile = await redis.hgetall(`${TICKER_PROFILE_PREFIX}${key}`) as any;
+        const cleanSymbol = symbol.toUpperCase();
+
+        // 1. Check for authoritative CA
+        const knownCA = KNOWN_CAS[cleanSymbol];
+        const tickerKey = knownCA ? `CA:${knownCA.ca}` : `${type}:${cleanSymbol}`;
+
+        const profile = await redis.hgetall(`${TICKER_PROFILE_PREFIX}${tickerKey}`) as any;
         if (!profile || !profile.symbol) return null;
 
         return {
@@ -719,7 +733,8 @@ export async function getTickerProfile(symbol: string, type: 'CRYPTO' | 'STOCK' 
             bullish: parseInt(profile.bullish || '0'),
             bearish: parseInt(profile.bearish || '0'),
             winRate: parseFloat(profile.winRate || '0'),
-            lastAnalyzed: parseInt(profile.lastAnalyzed || '0')
+            lastAnalyzed: parseInt(profile.lastAnalyzed || '0'),
+            contractAddress: profile.contractAddress
         };
     } catch (error) {
         console.error('[AnalysisStore] Failed to get ticker profile:', error);
