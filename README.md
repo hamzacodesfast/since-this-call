@@ -1,4 +1,8 @@
-# Since This Call 📉📈
+# Since This Call
+
+> [!IMPORTANT]
+> **DEVELOPMENT RULE**: Do NOT use Moltbot for any development tasks. Use **Antigravity** and its models strictly.
+ 📉📈
 
 **Since This Call** is a "Social Prediction Tracker" that tracks the performance of crypto and stock predictions ("calls") made on X (formerly Twitter).
 

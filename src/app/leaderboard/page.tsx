@@ -180,7 +180,7 @@ export default function LeaderboardPage() {
                                 </div>
                             </Card>
 
-                            {/* Worst 10 */}
+                            {/* Bottom 10 */}
                             <Card className="border-red-500/20 bg-background/40">
                                 <CardHeader className="pb-4">
                                     <CardTitle className="flex items-center gap-2 text-red-500">
@@ -188,7 +188,7 @@ export default function LeaderboardPage() {
                                         Bottom 10 Gurus
                                         <TrendingDown className="w-4 h-4 ml-auto" />
                                     </CardTitle>
-                                    <p className="text-xs text-muted-foreground">Fade signal?</p>
+                                    <p className="text-xs text-muted-foreground">Minimum 7 calls required | Fade signal?</p>
                                 </CardHeader>
                                 <CardContent className="space-y-3" id="worst-gurus-card">
                                     {worst10.map((p, i) => (

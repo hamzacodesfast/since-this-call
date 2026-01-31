@@ -5,6 +5,10 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ---
 
+> [!IMPORTANT]
+> **OPERATIONAL RULE**: Do NOT use Moltbot. Use only **Antigravity** models for all linguistic and context tasks.
+
+
 ## 🛠️ Core Competencies
 
 ### 1. Linguistic Disambiguation (The "Slang" Layer)

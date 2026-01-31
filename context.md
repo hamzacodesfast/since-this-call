@@ -6,6 +6,10 @@
 
 ---
 
+> [!CAUTION]
+> **DEVELOPMENT MANDATE**: Do NOT use Moltbot for any development, coding, or data tasks. Use **Antigravity** and its models strictly.
+
+
 ## 🛑 HARD RULES (FOR AGENTS)
 1. **PUSH TO MAIN FIRST**: All logic/code changes MUST be committed and pushed to `main` before any other actions.
 2. **SYNC-TO-LOCAL**: Run `npx tsx scripts/sync-to-local.ts` after any push to ensure your local environment reflects the live production data.
@@ -14,14 +18,14 @@
 
 ---
 
-## 📊 Current Metrics (Jan 30, 2026 - Post-Sync)
+## 📊 Current Metrics (Jan 31, 2026 - Live Refresh)
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 1,517 |
-| Unique Gurus | 541 |
-| Tracked Tickers | 337 |
-| Platform Win Rate| 40% |
+| Total Analyses | 1,900 |
+| Unique Gurus | 553 |
+| Tracked Tickers | 299 |
+| Platform Win Rate| 41% |
 | Verified Edge Cases| 101 |
 
 ---

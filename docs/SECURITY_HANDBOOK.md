@@ -5,6 +5,10 @@ The Vibe Coders' approach to keeping the "Receipts" safe.
 
 ---
 
+> [!CRITICAL]
+> **AI PROTOCOL**: Use of "Moltbot" is strictly prohibited for any development. Use **Antigravity** models only.
+
+
 ## 🏗️ The Cheat Sheet
 
 - **Access**: Deny by default. Check permissions on every request, not just the front door.

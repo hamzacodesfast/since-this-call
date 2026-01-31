@@ -5,6 +5,10 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 
 ---
 
+> [!IMPORTANT]
+> **OPERATIONAL RULE**: Do NOT use Moltbot. Use only **Antigravity** models for all engineering tasks.
+
+
 ## 🏗️ Technical Stack
 - **Framework**: Next.js 14 (App Router) / TypeScript / Tailwind CSS / shadcn/ui.
 - **AI Engine**: Gemini 2.0 Flash (via Vercel AI SDK).

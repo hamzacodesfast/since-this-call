@@ -33,7 +33,7 @@ const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
-    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY'
+    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD'
 ]);
 
 /**
@@ -222,7 +222,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         'SI_F': 'SI=F', // Silver
         'NQ_F': 'NQ=F', // Nasdaq Futures
         'ES_F': 'ES=F', // S&P 500 Futures
-        'GOLD': 'GC=F', // Common alias (But not GLD)
+        'GOLD': 'GLD', // Unified Gold tracking
         'BIZIM': 'BIZIM.IS', // Turkish Stock
     };
     if (STOCK_OVERRIDES[symbol]) {
@@ -786,16 +786,14 @@ const INDEX_FALLBACKS: Record<string, string> = {
     '^VIX': 'VIXY',
 
     // Commodities - Gold
-    'GOLD': 'GC=F',
-    'XAUUSD': 'GC=F',
-    'XAU': 'GC=F',
-    // 'GLD': 'GC=F',      // REMOVED: GLD should fetch ETF price, not Futures
+    'GOLD': 'GLD',
+    'XAUUSD': 'GLD',
+    'XAU': 'GLD',
 
     // Commodities - Silver
-    'SILVER': 'SI=F',
-    'XAGUSD': 'SI=F',
-    'XAG': 'SI=F',
-    'SLV': 'SI=F',      // ETF fallback to futures
+    'SILVER': 'SLV',
+    'XAGUSD': 'SLV',
+    'XAG': 'SLV',
 
 
     // Commodities - Oil
