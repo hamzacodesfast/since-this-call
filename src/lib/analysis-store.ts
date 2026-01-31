@@ -20,7 +20,6 @@
  * @see price-refresher.ts for batch price updates using ticker index
  */
 import { getRedisClient } from './redis-client';
-import { KNOWN_CAS } from './market-data';
 import { z } from 'zod';
 import { Redis } from '@upstash/redis';
 
@@ -71,16 +70,8 @@ const TICKER_INDEX_PREFIX = 'ticker_index:';
  * Get the ticker key for an analysis.
  * Format: "CRYPTO:BTC", "STOCK:AAPL", or "CA:abc123..." for contract addresses
  */
-function getTickerKey(analysis: { symbol: string; type?: string; contractAddress?: string }): string {
+function getTickerKey(analysis: { symbol: string; type?: string }): string {
     const symbol = analysis.symbol.toUpperCase();
-
-    // Check for authoritative CA override
-    const knownCA = KNOWN_CAS[symbol];
-    const effectiveCA = knownCA ? knownCA.ca : analysis.contractAddress;
-
-    if (effectiveCA && effectiveCA.length > 10) {
-        return `CA:${effectiveCA}`;
-    }
     const type = analysis.type || 'CRYPTO';
     return `${type}:${symbol}`;
 }
@@ -145,7 +136,6 @@ export interface TickerProfile {
     bearish: number;
     winRate: number;
     lastAnalyzed: number;
-    contractAddress?: string;
 }
 
 export async function updateTickerProfile(tickerKey: string): Promise<void> {
@@ -287,7 +277,6 @@ export interface StoredAnalysis {
     entryPrice?: number; // Price at tweet time
     currentPrice?: number; // Price at analysis time (or last update)
     type?: 'CRYPTO' | 'STOCK';
-    contractAddress?: string; // For pump.fun/DexScreener tokens
     // Context Engine fields
     ticker?: string;
     action?: 'BUY' | 'SELL';
@@ -315,7 +304,6 @@ export const StoredAnalysisSchema = z.object({
     entryPrice: z.number().optional(),
     currentPrice: z.number().optional(),
     type: z.enum(['CRYPTO', 'STOCK']).optional(),
-    contractAddress: z.string().optional(),
     ticker: z.string().optional(),
     action: z.enum(['BUY', 'SELL']).optional(),
     confidence_score: z.number().optional(),
@@ -699,8 +687,7 @@ export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
                     bullish: parseInt(data.bullish || '0'),
                     bearish: parseInt(data.bearish || '0'),
                     winRate: parseFloat(data.winRate || '0'),
-                    lastAnalyzed: parseInt(data.lastAnalyzed || '0'),
-                    contractAddress: data.contractAddress
+                    lastAnalyzed: parseInt(data.lastAnalyzed || '0')
                 });
             }
         });
@@ -715,10 +702,7 @@ export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
 export async function getTickerProfile(symbol: string, type: 'CRYPTO' | 'STOCK' = 'CRYPTO'): Promise<TickerProfile | null> {
     try {
         const cleanSymbol = symbol.toUpperCase();
-
-        // 1. Check for authoritative CA
-        const knownCA = KNOWN_CAS[cleanSymbol];
-        const tickerKey = knownCA ? `CA:${knownCA.ca}` : `${type}:${cleanSymbol}`;
+        const tickerKey = `${type}:${cleanSymbol}`;
 
         const profile = await redis.hgetall(`${TICKER_PROFILE_PREFIX}${tickerKey}`) as any;
         if (!profile || !profile.symbol) return null;
@@ -733,8 +717,7 @@ export async function getTickerProfile(symbol: string, type: 'CRYPTO' | 'STOCK' 
             bullish: parseInt(profile.bullish || '0'),
             bearish: parseInt(profile.bearish || '0'),
             winRate: parseFloat(profile.winRate || '0'),
-            lastAnalyzed: parseInt(profile.lastAnalyzed || '0'),
-            contractAddress: profile.contractAddress
+            lastAnalyzed: parseInt(profile.lastAnalyzed || '0')
         };
     } catch (error) {
         console.error('[AnalysisStore] Failed to get ticker profile:', error);
@@ -927,63 +910,4 @@ export async function removeAnalysisByTweetId(tweetId: string): Promise<boolean>
     }
 }
 
-// ============================================
-// Pump.fun Price History Storage
-// ============================================
-
-const PUMPFUN_PRICE_PREFIX = 'pumpfun:price:';
-
-export interface StoredPumpfunPrice {
-    price: number;
-    symbol: string;
-    timestamp: number;
-}
-
-/**
- * Store first-seen price for a pump.fun token.
- * Only stores if no existing price record exists (preserves original price).
- */
-export async function storePumpfunPrice(
-    contractAddress: string,
-    price: number,
-    symbol: string
-): Promise<boolean> {
-    try {
-        const key = `${PUMPFUN_PRICE_PREFIX}${contractAddress}`;
-
-        const payload = JSON.stringify({
-            price,
-            symbol,
-            timestamp: Date.now(),
-        } as StoredPumpfunPrice);
-
-        const results = await dualWrite(async (r) => {
-            return await r.setnx(key, payload);
-        });
-
-        return results === 1;
-    } catch (error) {
-        console.error('[AnalysisStore] Failed to store pumpfun price:', error);
-        return false;
-    }
-}
-
-/**
- * Get stored historical price for a pump.fun token.
- */
-export async function getPumpfunPrice(contractAddress: string): Promise<StoredPumpfunPrice | null> {
-    try {
-        const key = `${PUMPFUN_PRICE_PREFIX}${contractAddress}`;
-        const data = await redis.get(key);
-
-        if (!data) return null;
-
-        if (typeof data === 'string') {
-            return JSON.parse(data);
-        }
-        return data as StoredPumpfunPrice;
-    } catch (error) {
-        console.error('[AnalysisStore] Failed to get pumpfun price:', error);
-        return null;
-    }
-}
+// End of file

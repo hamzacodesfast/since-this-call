@@ -5,9 +5,10 @@ import path from 'path';
 
 // Load Env
 dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config();
 
 import { getRedisClient } from '../src/lib/redis-client';
-import { KNOWN_CAS } from '../src/lib/market-data';
 
 const redis = getRedisClient();
 
@@ -16,23 +17,17 @@ const TICKER_PROFILE_PREFIX = 'ticker:profile:';
 const TICKER_INDEX_PREFIX = 'ticker_index:';
 
 function getTickerKey(analysis: any): string {
-    const symbol = analysis.symbol.toUpperCase();
-    const knownCA = KNOWN_CAS[symbol];
-    const effectiveCA = knownCA ? knownCA.ca : analysis.contractAddress;
-
-    if (effectiveCA && effectiveCA.length > 10) {
-        return `CA:${effectiveCA}`;
-    }
+    const symbol = (analysis.symbol || 'UNKNOWN').toUpperCase();
     const type = analysis.type || 'CRYPTO';
     return `${type}:${symbol}`;
 }
 
 async function backfillTickerProfiles() {
-    console.log('🔄 Backfilling ticker profiles and index (ZSET conversion)...\n');
+    console.log('🔄 Backfilling ticker profiles (PURGING MEME COINS)...\n');
 
     // 1. Get existing tickers to clear
     const existingTickers = await redis.smembers(TRACKED_TICKERS_KEY) as string[];
-    console.log(`Clearing data for ${existingTickers.length} existing tickers...`);
+    console.log(`Clearing ${existingTickers.length} old tickers from index...`);
 
     if (existingTickers.length > 0) {
         const pipeline = redis.pipeline();
@@ -51,6 +46,7 @@ async function backfillTickerProfiles() {
     const tickerStats = new Map<string, any>();
     const tickerAnalyses = new Map<string, { member: string, score: number }[]>();
     let totalAnalyses = 0;
+    let skippedMemes = 0;
 
     // 3. Aggregate stats in memory
     for (const username of users) {
@@ -61,12 +57,19 @@ async function backfillTickerProfiles() {
         );
 
         for (const analysis of history) {
+            // FILTER: Skip anything with a contract address
+            // This now removes EVERYTHING that was ever indexed with a CA, including previous "known" ones.
+            if (analysis.contractAddress) {
+                skippedMemes++;
+                continue;
+            }
+            const symbol = (analysis.symbol || 'UNKNOWN').toUpperCase();
             const tickerKey = getTickerKey(analysis);
 
             // Stats
             if (!tickerStats.has(tickerKey)) {
                 tickerStats.set(tickerKey, {
-                    symbol: analysis.symbol.toUpperCase(),
+                    symbol: symbol,
                     type: analysis.type || 'CRYPTO',
                     totalAnalyses: 0,
                     wins: 0,
@@ -75,8 +78,7 @@ async function backfillTickerProfiles() {
                     bullish: 0,
                     bearish: 0,
                     winRate: 0,
-                    lastAnalyzed: 0,
-                    contractAddress: tickerKey.startsWith('CA:') ? tickerKey.split(':')[1] : undefined
+                    lastAnalyzed: 0
                 });
             }
 
@@ -84,7 +86,8 @@ async function backfillTickerProfiles() {
             stats.totalAnalyses++;
             stats.lastAnalyzed = Math.max(stats.lastAnalyzed, analysis.timestamp || 0);
 
-            if (Math.abs(analysis.performance) < 0.01) {
+            const perf = analysis.performance || 0;
+            if (Math.abs(perf) < 0.01) {
                 stats.neutral++;
             } else if (analysis.isWin) {
                 stats.wins++;
@@ -111,11 +114,10 @@ async function backfillTickerProfiles() {
         }
     }
 
-    // 4. Save Everything
-    console.log(`\n💾 Saving data for ${tickerStats.size} tickers...`);
+    console.log(`\nAggregated ${totalAnalyses} analyses. Skipped ${skippedMemes} meme coins.`);
 
     // 4. Save Everything
-    console.log(`\n💾 Saving data for ${tickerStats.size} tickers...`);
+    console.log(`💾 Saving data for ${tickerStats.size} tickers...`);
 
     let count = 0;
     for (const [key, stats] of tickerStats.entries()) {
@@ -123,15 +125,9 @@ async function backfillTickerProfiles() {
 
         try {
             const pipeline = redis.pipeline();
-            // Add to global set
             pipeline.sadd(TRACKED_TICKERS_KEY, key);
+            pipeline.hset(`${TICKER_PROFILE_PREFIX}${key}`, stats);
 
-            // Save Profile (Remove undefined fields to avoid RedisEmptyError)
-            const cleanStats = { ...stats };
-            if (!cleanStats.contractAddress) delete cleanStats.contractAddress;
-
-            pipeline.hset(`${TICKER_PROFILE_PREFIX}${key}`, cleanStats);
-            // Save Index (ZSET)
             const analyses = tickerAnalyses.get(key) || [];
             for (const item of analyses) {
                 pipeline.zadd(`${TICKER_INDEX_PREFIX}${key}`, { score: item.score, member: item.member });
@@ -147,11 +143,15 @@ async function backfillTickerProfiles() {
         }
     }
 
+    // 5. Clear metrics cache
+    await redis.del('leaderboard_metrics_cache');
+    await redis.del('platform_metrics_cache');
+
     console.log(`\n✅ Backfill complete!`);
-    console.log(`   Total analyses processed: ${totalAnalyses}`);
+    console.log(`   Total analyses indexed: ${totalAnalyses}`);
     console.log(`   Unique tickers profiled: ${tickerStats.size}`);
 
     process.exit(0);
 }
 
-backfillTickerProfiles();
+backfillTickerProfiles().catch(console.error);

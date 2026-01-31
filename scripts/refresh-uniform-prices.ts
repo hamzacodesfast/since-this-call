@@ -8,8 +8,8 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
 
 import { getRedisClient } from '../src/lib/redis-client';
-import { getPrice, calculatePerformance, getPriceByContractAddress } from '../src/lib/market-data';
-import { StoredAnalysis, updateUserProfile } from '../src/lib/analysis-store';
+import { getPrice, calculatePerformance } from '../src/lib/market-data';
+import { StoredAnalysis } from '../src/lib/analysis-store';
 
 const redis = getRedisClient();
 
@@ -35,9 +35,8 @@ async function main() {
         try {
             let price: number | null = null;
             if (key.startsWith('CA:')) {
-                const ca = key.split(':')[1];
-                const data = await getPriceByContractAddress(ca);
-                price = data?.price || null;
+                // We no longer support CA-based tracking. Skip.
+                continue;
             } else {
                 const [type, symbol] = key.split(':');
                 price = await getPrice(symbol, type as any);
@@ -59,8 +58,8 @@ async function main() {
     const affectedUsers: Record<string, { id: string, tickerKey: string }[]> = {};
 
     for (const tickerKey of Object.keys(priceMap)) {
-        const refs = await redis.smembers(`${TICKER_INDEX_PREFIX}${tickerKey}`);
-        for (const ref of refs) {
+        const refs = await redis.zrange(`${TICKER_INDEX_PREFIX}${tickerKey}`, 0, -1);
+        for (const ref of refs as string[]) {
             const [username, id] = ref.split(':');
             if (!affectedUsers[username]) affectedUsers[username] = [];
             affectedUsers[username].push({ id, tickerKey });
@@ -83,10 +82,8 @@ async function main() {
 
         let hasHistoryChanges = false;
         for (const item of history) {
-            // Reconstruct ticker key
-            const tickerKey = item.contractAddress && item.contractAddress.length > 10
-                ? `CA:${item.contractAddress}`
-                : `${item.type || 'CRYPTO'}:${item.symbol.toUpperCase()}`;
+            // Reconstruct ticker key (new logic: no contractAddress check)
+            const tickerKey = `${item.type || 'CRYPTO'}:${item.symbol.toUpperCase()}`;
 
             const newPrice = priceMap[tickerKey];
             if (newPrice && item.entryPrice) {
@@ -110,7 +107,7 @@ async function main() {
             let losses = 0;
             let neutral = 0;
             for (const hItem of history) {
-                if (Math.abs(hItem.performance) < 0.05) neutral++; // Use standard 0.05 threshold
+                if (Math.abs(hItem.performance) < 0.05) neutral++;
                 else if (hItem.isWin) wins++;
                 else losses++;
             }
@@ -126,7 +123,7 @@ async function main() {
                 lastAnalyzed: Date.now()
             });
 
-            // Save History (Reverse because of LPUSH)
+            // Save History
             await redis.del(historyKey);
             const pipeline = redis.pipeline();
             for (let i = history.length - 1; i >= 0; i--) {
@@ -145,9 +142,7 @@ async function main() {
 
     let hasRecentChanges = false;
     for (const item of recentItems) {
-        const tickerKey = item.contractAddress && item.contractAddress.length > 10
-            ? `CA:${item.contractAddress}`
-            : `${item.type || 'CRYPTO'}:${item.symbol.toUpperCase()}`;
+        const tickerKey = `${item.type || 'CRYPTO'}:${item.symbol.toUpperCase()}`;
 
         const newPrice = priceMap[tickerKey];
         if (newPrice && item.entryPrice) {
@@ -166,7 +161,7 @@ async function main() {
     if (hasRecentChanges) {
         await redis.del(RECENT_KEY);
         const pipeline = redis.pipeline();
-        for (const item of recentItems.reverse()) { // Reverse to preserve order
+        for (const item of recentItems.reverse()) {
             pipeline.lpush(RECENT_KEY, JSON.stringify(item));
         }
         await pipeline.exec();
