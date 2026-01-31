@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Github, Twitter, Mail } from 'lucide-react';
+import { Github, Twitter, Mail, BookOpen } from 'lucide-react';
 
 // Custom TikTok icon (not in lucide)
 const TikTokIcon = () => (
@@ -44,6 +44,9 @@ export function Footer() {
                     </a>
                     <a href="https://www.instagram.com/sincethiscall" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="Instagram">
                         <InstagramIcon />
+                    </a>
+                    <a href="https://www.moltbook.com/u/sincethiscall" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" title="Moltbook">
+                        <BookOpen className="w-5 h-5" />
                     </a>
                     <a href="mailto:info@sincethiscall.com" className="text-muted-foreground hover:text-foreground transition-colors" title="Contact">
                         <Mail className="w-5 h-5" />
