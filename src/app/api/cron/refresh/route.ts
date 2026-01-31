@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { refreshAllAnalyses } from '@/lib/price-refresher';
+import { refreshByTicker } from '@/lib/price-refresher';
 
 
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now();
 
     try {
-        const result = await refreshAllAnalyses();
+        const result = await refreshByTicker();
         const duration = Date.now() - startTime;
 
         console.log(`[Cron] Completed in ${duration}ms`);
