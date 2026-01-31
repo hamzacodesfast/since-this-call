@@ -12,6 +12,7 @@
  */
 import { NextResponse } from 'next/server';
 import { getRedisClient } from '@/lib/redis-client';
+import { KNOWN_CAS } from '@/lib/market-data';
 
 const redis = getRedisClient();
 
@@ -115,9 +116,14 @@ async function computeMetrics(): Promise<PlatformMetrics> {
     bearishCalls = 0;
 
     windowAnalyses.forEach(analysis => {
-        const symbol = analysis.symbol || 'UNKNOWN';
-        const tickerKey = analysis.contractAddress && analysis.contractAddress.length > 10
-            ? `CA:${analysis.contractAddress}`
+        const symbol = (analysis.symbol || 'UNKNOWN').toUpperCase();
+
+        // Authoritative CA check (Uniform Identity)
+        const knownCA = KNOWN_CAS[symbol];
+        const effectiveCA = knownCA ? knownCA.ca : analysis.contractAddress;
+
+        const tickerKey = effectiveCA && effectiveCA.length > 10
+            ? `CA:${effectiveCA}`
             : `${analysis.type || 'CRYPTO'}:${symbol}`;
 
         if (!tickerMap[tickerKey]) {
