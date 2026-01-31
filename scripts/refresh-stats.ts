@@ -10,8 +10,13 @@ dotenv.config();
 async function main() {
     console.log('🔄 Refreshing all user profiles (Main First)...');
     // Dynamic import to ensure env vars are loaded first
-    const { refreshAllProfiles } = await import('../src/lib/price-updater');
-    await refreshAllProfiles(true);
+    try {
+        console.log('🔄 Triggering Uniform Price Refresh...');
+        execSync('npx tsx scripts/refresh-uniform-prices.ts', { stdio: 'inherit' });
+    } catch (e) {
+        console.error('❌ Failed to run refresh-uniform-prices:', e);
+        process.exit(1);
+    }
 
     console.log('🔄 Triggering Ticker Backfill to sync stats...');
     try {
