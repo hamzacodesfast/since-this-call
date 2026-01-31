@@ -38,9 +38,10 @@ async function bulkAnalyze() {
 
     const redis = getRedisClient();
     const inputFile = process.argv[2];
+    const force = process.argv.includes('--force');
 
     if (!inputFile) {
-        console.error('❌ Usage: npx tsx scripts/bulk-analyze.ts <INPUT_FILE>');
+        console.error('❌ Usage: npx tsx scripts/bulk-analyze.ts <INPUT_FILE> [--force]');
         process.exit(1);
     }
 
@@ -108,9 +109,11 @@ async function bulkAnalyze() {
                     return parsed.id === id;
                 });
 
-                if (exists) {
+                if (exists && !force) {
                     console.log(`⏭️  Skipping duplicate for @${username}`);
                     isDuplicate = true;
+                } else if (exists && force) {
+                    console.log(`🔄 Force re-analyzing @${username}...`);
                 }
             } else {
                 // If no username provided, we can't easily check specific user history without analyzing first to get the author.
@@ -144,10 +147,12 @@ async function bulkAnalyze() {
                     return parsed.id === id;
                 });
 
-                if (exists) {
+                if (exists && !force) {
                     console.log(`⏭️  Skipping duplicate for @${finalUsername} (detected after fetch)`);
                     skippedCount++;
                     continue;
+                } else if (exists && force) {
+                    console.log(`🔄 Overwriting existing analysis for @${finalUsername}...`);
                 }
             }
 
@@ -162,7 +167,7 @@ async function bulkAnalyze() {
                 sentiment: result.analysis.sentiment,
                 performance: result.market.performance,
                 isWin: result.market.performance > 0,
-                timestamp: Date.now(),
+                timestamp: new Date(result.tweet.date).getTime(),
                 entryPrice: result.market.callPrice,
                 currentPrice: result.market.currentPrice,
                 type: result.analysis.type,

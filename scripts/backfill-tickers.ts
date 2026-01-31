@@ -4,9 +4,7 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Load Env
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-// fallback
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 
 import { getRedisClient } from '../src/lib/redis-client';
 

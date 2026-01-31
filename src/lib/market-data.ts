@@ -25,15 +25,16 @@ const YAHOO_BASE = 'https://query2.finance.yahoo.com/v8/finance/chart';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
 // Known contract addresses for tokens with fake/imposter pairs
-const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
+export const KNOWN_CAS: Record<string, { ca: string, chainId: string }> = {
     'ME': { ca: 'MEFNBXixkEbait3xn9bkm8WsJzXtVsaJEn4c8Sam21u', chainId: 'solana' }, // Magic Eden
     'PUMP': { ca: 'pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn', chainId: 'solana' }, // Pump.fun
+    'MOLT': { ca: '0x5df2300ab6d1F0c39FCc3dc33FDCa0fb037418EF', chainId: 'ethereum' },
 };
 
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
-    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD'
+    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD', 'OPEN'
 ]);
 
 /**
@@ -166,7 +167,7 @@ const COINGECKO_IDS: Record<string, string> = {
     'BULLISH': 'bullish',
     'TRUMP': 'official-trump',
     'MELANIA': 'melania-trump',
-    'GPY': 'gary-gensler-memecoin', // Placeholder
+    'GPY': 'gary-gensler-memecoin',
 };
 
 // Launch dates and initial prices for major assets
@@ -263,6 +264,14 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
 
     // 1. Try Yahoo Finance first (Best for Stocks & Major Crypto)
     if (type === 'CRYPTO') {
+        // 0. Check Known Contract Addresses (Authoritative Override)
+        // This prevents Yahoo/CMC from returning bad data for tickers with imposters/stale pairs
+        const knownToken = KNOWN_CAS[symbol.toUpperCase()];
+        if (knownToken) {
+            console.log(`[MarketData] Using known CA for ${symbol}: ${knownToken.ca}`);
+            const data = await getPriceByContractAddress(knownToken.ca);
+            if (data) return data.price;
+        }
         const mapping: Record<string, string> = {
             'BTC': 'BTC-USD',
             'ETH': 'ETH-USD',
@@ -302,13 +311,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
             if (cgPrice !== null) return cgPrice;
         }
 
-        // 4. Check if we have a known CA for this symbol
-        const knownToken = KNOWN_CAS[symbol.toUpperCase()];
-        if (knownToken) {
-            console.log(`[MarketData] Using known CA for ${symbol}: ${knownToken.ca}`);
-            const data = await getPriceByContractAddress(knownToken.ca);
-            if (data) return data.price;
-        }
+        // 4. Check if we have a known CA for this symbol (Moved to top)
 
         // 5. Fallback: DexScreener Search (Generic)
         console.log(`[MarketData] Yahoo/CMC/CoinGecko failed for ${symbol}, trying DexScreener Search...`);
@@ -341,6 +344,35 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
     }
 
     return null;
+}
+
+// Removed broken block
+
+/**
+ * Get current price from DexScreener by searching for the symbol.
+ * Returns the price of the most liquid pair.
+ */
+export async function getDexScreenerPrice(symbol: string): Promise<number | null> {
+    try {
+        // Use clean symbol
+        const clean = symbol.toUpperCase();
+        const url = `https://api.dexscreener.com/latest/dex/search/?q=${clean}`;
+
+        const response = await fetch(url, { cache: 'no-store' } as any);
+        if (!response.ok) return null;
+
+        const json = await response.json();
+        if (!json.pairs || json.pairs.length === 0) return null;
+
+        // Sort by liquidity to get the best price source
+        const pairs = json.pairs.sort((a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
+        const bestPair = pairs[0];
+
+        return parseFloat(bestPair.priceUsd);
+    } catch (e) {
+        console.error('[DexScreener] Price fetch error:', e);
+        return null;
+    }
 }
 
 const CMC_BASE = 'https://pro-api.coinmarketcap.com/v1'; // Or v2 depending on endpoint

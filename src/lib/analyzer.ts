@@ -20,7 +20,7 @@
  */
 import { getTweet } from 'react-tweet/api';
 import { extractCallFromText } from '@/lib/ai-extractor';
-import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA, getMajorIndicesPrices } from '@/lib/market-data';
+import { getPrice, calculatePerformance, getPriceByContractAddress, getGeckoTerminalPrice, getPairInfoByCA, getMajorIndicesPrices, KNOWN_CAS } from '@/lib/market-data';
 import { getPumpfunPrice, storePumpfunPrice } from '@/lib/analysis-store';
 
 /**
@@ -108,6 +108,15 @@ export async function analyzeTweetContent(
 
     // 5. Clean the symbol (strip $ and USDT/USD suffixes)
     const symbol = cleanSymbol(callData.ticker);
+
+    // 5.1 Authoritative CA Override (Identity Unification)
+    // If we have a known authoritative CA for this symbol, force it.
+    // This merges all mentions of the ticker into one profile.
+    const knownCA = KNOWN_CAS[symbol.toUpperCase()];
+    if (knownCA) {
+        console.log(`[Analyzer] Authoritative identity for ${symbol}: ${knownCA.ca}`);
+        callData.contractAddress = knownCA.ca;
+    }
 
     // Map Context Engine fields
     const sentiment = callData.action === 'BUY' ? 'BULLISH' : 'BEARISH';

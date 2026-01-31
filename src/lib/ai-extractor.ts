@@ -78,10 +78,11 @@ export async function extractCallFromText(
 
         YOUR CORE DIRECTIVES (CRITICAL OVERRIDES):
         1. BEARISH SLANG (ABSOLUTE): If tweet contains "Cooked", "Survive", "Avoiding", "Avoided", or "The pain", action MUST be SELL. Ignore any "if/then" chart analysis. The sentiment is fundamentally broken.
-        2. PATIENCE / WAITING: "Patience" or "Wait" (standalone) = SELL (Waiting for lower entrance). Only BUY if "Accumulating" is explicit.
-        3. SURVIVAL MODE: "Survive" = SELL (Market is crashing).
-        4. TEASER LISTS: If a user lists tickers and says they have "bets/holds/avoids" in a new video, extract SELL if "avoiding" is mentioned. Pick the first tagged ticker as the subject. Do NOT return NULL.
-        5. NUMERICAL COMPARISON (CRITICAL): You MUST perform accurate math. If a target (e.g. 200) is LOWER than current price (e.g. 370), the Action is SELL. Do not hallucinate that a lower number is bullish.
+        2. STILL BUYING / BUYING THE CRASH (ABSOLUTE): If a user says they are "still buying" or "buying the dip/crash", implied sentiment is BULLISH (BUY). They are accumulating. Do NOT interpret "crashing" as a bearish signal if the user is BUYING it.
+        3. PATIENCE / WAITING: "Patience" or "Wait" (standalone) = SELL (Waiting for lower entrance). Only BUY if "Accumulating" is explicit.
+        4. SURVIVAL MODE: "Survive" = SELL (Market is crashing).
+        5. TEASER LISTS: If a user lists tickers and says they have "bets/holds/avoids" in a new video, extract SELL if "avoiding" is mentioned. Pick the first tagged ticker as the subject. Do NOT return NULL.
+        6. NUMERICAL COMPARISON (CRITICAL): You MUST perform accurate math. If a target (e.g. 200) is LOWER than current price (e.g. 370), the Action is SELL. Do not hallucinate that a lower number is bullish.
         
         STANDARD DIRECTIVES:
 
@@ -145,6 +146,8 @@ export async function extractCallFromText(
             * Falling Wedge: Is a BULLISH reversal pattern. Price is consolidating within narrowing lower highs and lower lows. Breakdown is the EXCEPTION. If you see a wedge pointing DOWN, it is a BUY (BULLISH) setup.
             * "Praying for a bounce": BULLISH. Intent is to see the price go UP.
         
+        - FINANCIAL ILLITERACY MOCKERY (CRITICAL): If a user mocks a group (e.g., "Army", "Holders") or specific people by calling them "financially illiterate" or "I tried to warn you", it is a BEARISH (SELL) signal. The "devotion" is sarcasm.
+        
         - ETF ANTICIPATION: If a ticker is mentioned alongside "ETF anticipation", "ETF incoming", or "ETF approval", the sentiment is BULLISH (BUY).
         
         - OVERSOLD vs [Sector]: If a ticker is called "oversold versus [competitor/index]", it is a BULLISH (BUY) setup.
@@ -158,6 +161,8 @@ export async function extractCallFromText(
 
 
         - REGRET / FORGIVENESS: "I will never forgive myself for [Action] $X" implies a bad outcome. If [Action] is "buying", "holding", "fullporting" (all-in), or "investing", it is a BEARISH (SELL) signal/mock.
+
+
         - "We are so back" (in the context of weird/distractive news) -> is_sarcasm: true, action: "SELL".
 
 
@@ -177,13 +182,11 @@ export async function extractCallFromText(
 
         5. Entity Resolution (The "Nicknames" Database):
         - Map slang terms to PURE Ticker Symbols (No $):
-          * "Corn" -> BTC
+          * "Corn" or "Crypto" (standalone) -> BTC
           * "Vitalik's coin" or "Vitalik's token" -> ETH
           * "Saylor's bags" or "Saylor's buys" -> BTC
           * "Golden Arches" -> MCD
           * "The dog" -> DOGE (or SHIB if context implies)
-          * "HL" or "Hyperliquid" -> HYPE
-          
           * "HL" or "Hyperliquid" -> HYPE
           
         6. MSTR/Saylor/Strategy Accumulation (PROXY RULE):
@@ -225,6 +228,10 @@ export async function extractCallFromText(
         - If a tweet lists multiple assets (e.g. ETF flows), and the user's text focuses on a "Run", "Pump", or "Season", PRIORITIZE the Bullish/Inflow asset.
         - Example: "BTC Outflow -100m, ETH Inflow +50m. Alt run soon?" -> Focus on ETH (BUY) because "Alt run" matches the Inflow direction.
         - Example: "BTC Outflow -100m, ETH Inflow +50m. Alt run soon?" -> Focus on ETH (BUY) because "Alt run" matches the Inflow direction.
+        // - "CASH IS TRASH" (CRITICAL): If user says "cash is trash", they are BULLISH on the asset mentioned (usually BTC or hard assets).
+        // - "COOKED" (CRITICAL): If the asset is "cooked", the sentiment is BEARISH.
+
+        // - FINANCIAL ILLITERACY MOCKERY (CRITICAL): If a user mocks a group (e.g., "Army", "Holders") or specific people by calling them "financially illiterate" or "I tried to warn you", it is a BEARISH (SELL) signal. The "devotion" is sarcasm.
         - If ambiguous, default to the first mentioned asset.
         - If the user says the asset is "cooked", "dead", or "bearish", BUT says they will buy lower -> The Call is SELL (Bearish) because the immediate move is down.
 
