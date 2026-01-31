@@ -35,9 +35,7 @@ export async function GET(
         }
 
         // 2. Get Recent Analyses IDs
-        const tickerKey = profile.contractAddress
-            ? `CA:${profile.contractAddress}`
-            : `${profile.type}:${symbol}`;
+        const tickerKey = `${profile.type}:${symbol}`;
 
         const analysisRefs = await getTickerAnalyses(tickerKey, 50); // Limit 50
 
