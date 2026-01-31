@@ -4,8 +4,9 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Load Env
-dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+// Load Env in correct order (Local first)
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 dotenv.config();
 
 import { getRedisClient } from '../src/lib/redis-client';

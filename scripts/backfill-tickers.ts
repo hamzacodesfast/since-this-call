@@ -4,8 +4,9 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Load Env
-dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+// Load Env in correct order (Local first)
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 dotenv.config();
 
 import { getRedisClient } from '../src/lib/redis-client';
@@ -25,18 +26,18 @@ function getTickerKey(analysis: any): string {
 async function backfillTickerProfiles() {
     console.log('🔄 Backfilling ticker profiles (PURGING MEME COINS)...\n');
 
-    // 1. Get existing tickers to clear
+    // 2. Clear existing indices using the TRACKED_TICKERS set (safer than KEYS)
     const existingTickers = await redis.smembers(TRACKED_TICKERS_KEY) as string[];
     console.log(`Clearing ${existingTickers.length} old tickers from index...`);
 
     if (existingTickers.length > 0) {
-        const pipeline = redis.pipeline();
-        for (const t of existingTickers) {
-            pipeline.del(`${TICKER_PROFILE_PREFIX}${t}`);
-            pipeline.del(`${TICKER_INDEX_PREFIX}${t}`);
+        const p = redis.pipeline();
+        for (const tickerKey of existingTickers) {
+            p.del(`${TICKER_INDEX_PREFIX}${tickerKey}`);
+            p.del(`${TICKER_PROFILE_PREFIX}${tickerKey}`);
         }
-        pipeline.del(TRACKED_TICKERS_KEY);
-        await pipeline.exec();
+        p.del(TRACKED_TICKERS_KEY);
+        await p.exec();
     }
 
     // 2. Get all users
