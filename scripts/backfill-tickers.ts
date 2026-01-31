@@ -7,6 +7,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 
 import { getRedisClient } from '../src/lib/redis-client';
+import { KNOWN_CAS } from '../src/lib/market-data';
 
 const redis = getRedisClient();
 
@@ -15,11 +16,15 @@ const TICKER_PROFILE_PREFIX = 'ticker:profile:';
 const TICKER_INDEX_PREFIX = 'ticker_index:';
 
 function getTickerKey(analysis: any): string {
-    if (analysis.contractAddress && analysis.contractAddress.length > 10) {
-        return `CA:${analysis.contractAddress}`;
+    const symbol = analysis.symbol.toUpperCase();
+    const knownCA = KNOWN_CAS[symbol];
+    const effectiveCA = knownCA ? knownCA.ca : analysis.contractAddress;
+
+    if (effectiveCA && effectiveCA.length > 10) {
+        return `CA:${effectiveCA}`;
     }
     const type = analysis.type || 'CRYPTO';
-    return `${type}:${analysis.symbol.toUpperCase()}`;
+    return `${type}:${symbol}`;
 }
 
 async function backfillTickerProfiles() {
@@ -70,7 +75,8 @@ async function backfillTickerProfiles() {
                     bullish: 0,
                     bearish: 0,
                     winRate: 0,
-                    lastAnalyzed: 0
+                    lastAnalyzed: 0,
+                    contractAddress: tickerKey.startsWith('CA:') ? tickerKey.split(':')[1] : undefined
                 });
             }
 
@@ -108,60 +114,38 @@ async function backfillTickerProfiles() {
     // 4. Save Everything
     console.log(`\n💾 Saving data for ${tickerStats.size} tickers...`);
 
-    // We process sequentially to avoid huge pipeline payload
-    let count = 0;
-    let pipeline = redis.pipeline();
+    // 4. Save Everything
+    console.log(`\n💾 Saving data for ${tickerStats.size} tickers...`);
 
+    let count = 0;
     for (const [key, stats] of tickerStats.entries()) {
         stats.winRate = stats.totalAnalyses > 0 ? (stats.wins / stats.totalAnalyses) * 100 : 0;
 
-        // Add to global set
-        pipeline.sadd(TRACKED_TICKERS_KEY, key);
+        try {
+            const pipeline = redis.pipeline();
+            // Add to global set
+            pipeline.sadd(TRACKED_TICKERS_KEY, key);
 
-        // Save Profile
-        pipeline.hset(`${TICKER_PROFILE_PREFIX}${key}`, stats);
+            // Save Profile (Remove undefined fields to avoid RedisEmptyError)
+            const cleanStats = { ...stats };
+            if (!cleanStats.contractAddress) delete cleanStats.contractAddress;
 
-        // Save Index (ZSET)
-        const analyses = tickerAnalyses.get(key) || [];
-        if (analyses.length > 0) {
-            // zadd accepts array of {score, member} in recent redis versions but upstash-redis uses (key, {score, member}, ...)
-            // or (key, ...args)
-            // @upstash/redis approach:
+            pipeline.hset(`${TICKER_PROFILE_PREFIX}${key}`, cleanStats);
+            // Save Index (ZSET)
+            const analyses = tickerAnalyses.get(key) || [];
             for (const item of analyses) {
                 pipeline.zadd(`${TICKER_INDEX_PREFIX}${key}`, { score: item.score, member: item.member });
             }
-        }
-
-        count++;
-        // Batch every 50 tickers (each ticker might have many ZADDs so keep it small)
-        if (count % 20 === 0) {
             await pipeline.exec();
-            // Re-instantiate pipeline if needed? 
-            // Upstash pipeline is reusable but accumulates if not cleared? 
-            // Actually pipeline.exec() returns results and clears the buffer in many clients.
-            // If it doesn't clear, we'd be duplicating.
-            // Let's assume standard behavior: exec sends and clears. 
-            // Wait, standard `ioredis` clears. `@upstash/redis` `pipeline()` creates a new pipeline object.
-            // But here `redis.pipeline()` creates a NEW one each time if we call it again?
-            // Ah, I am reusing `const pipeline = redis.pipeline()` from line 107.
-            // I should NOT reuse it if I want to batch.
-            // I need to create a NEW pipeline or trust that `exec` clears it.
-            // Docs say: Upstash: `p.exec()` executes and returns. It doesn't say if it clears.
-            // Safer to just create a new one.
-            pipeline = redis.pipeline(); // Re-create pipeline for next batch
+
+            count++;
+            if (count % 50 === 0) {
+                console.log(`   Processed ${count}/${tickerStats.size} tickers...`);
+            }
+        } catch (e) {
+            console.error(`   Failed to save ticker ${key}:`, e);
         }
     }
-
-    // BUT I defined `pipeline` OUTSIDE the loop.
-    // I should move it inside or assume it's one big batch?
-    // One big batch for 500 tickers * 10 calls = 5000 cmds is fine.
-    // But ZADDs can be many.
-    // Let's just do one big batch? 3000 analyses total implies roughly 6000 cmds. 
-    // Upstash has a limit per request? 
-    // It's safer to not batch too aggressively.
-
-    // I'll rewrite the loop to use micro-batches properly.
-    await pipeline.exec(); // Exec whatever is left
 
     console.log(`\n✅ Backfill complete!`);
     console.log(`   Total analyses processed: ${totalAnalyses}`);
