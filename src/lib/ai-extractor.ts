@@ -62,6 +62,11 @@ export async function extractCallFromText(
         - "Buying $BTC if weekly closes above 100k." -> action: "NULL" (Conditional)
         - "$ETH RSI is zero." -> action: "NULL" (Data only)
         - "I'm watching $MSTR closely." -> action: "NULL" (No active call)
+
+        EXHAUSTION SIGNALS (BEARISH):
+        - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).
+        - DESCRIPTIVE BUYING + SKEPTICISM: If the author describes strong buying (e.g. "scooping", "big bid") but ends with skepticism like "At some point...?!", "Eventually...", or "Can't last forever", interpret this as a BEARISH (SELL) signal or reversal warning.
+        - Example: "They keep scooping the dip... eventually?! $SPX" -> action: "SELL"
         `;
 
         const { object } = await generateObject({

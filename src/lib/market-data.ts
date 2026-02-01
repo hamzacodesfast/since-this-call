@@ -254,10 +254,6 @@ const INDEX_FALLBACKS: Record<string, string> = {
 
 async function getYahooPrice(symbol: string, date?: Date): Promise<number | null> {
     let price = await getYahooPriceInternal(symbol, date);
-    if (price === null && date) {
-        const hoursOld = (Date.now() - date.getTime()) / (1000 * 60 * 60);
-        if (hoursOld < 24) price = await getYahooPriceInternal(symbol);
-    }
     if (price !== null) return price;
 
     const fallback = INDEX_FALLBACKS[symbol.toUpperCase()];
@@ -271,9 +267,12 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
         if (date) {
             const targetTime = Math.floor(date.getTime() / 1000);
             const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
-            let strategy = diffDays < 7 ? { interval: '1m', range: 1800 } : diffDays < 55 ? { interval: '5m', range: 7200 } : { interval: '1h', range: 86400 };
 
-            const url = `${YAHOO_BASE}/${symbol}?period1=${targetTime - strategy.range}&period2=${targetTime + strategy.range}&interval=${strategy.interval}&events=history`;
+            // USE MINUTE DATA (1m) FOR 30 DAYS, 5m FOR 60 DAYS
+            // Increased range to 3600s (1h) or 14400s (4h) to catch after-hours/weekend gaps
+            let strategy = diffDays < 30 ? { interval: '1m', range: 3600 } : diffDays < 60 ? { interval: '5m', range: 14400 } : { interval: '1h', range: 86400 };
+
+            const url = `${YAHOO_BASE}/${symbol}?period1=${targetTime - strategy.range}&period2=${targetTime + strategy.range}&interval=${strategy.interval}&events=history&includePrePost=true`;
             const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' } as any);
             if (res.ok) {
                 const json = await res.json();
