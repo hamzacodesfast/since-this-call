@@ -70,12 +70,16 @@ export async function extractCallFromText(
         - Example: "$TSLA poppin' a bit in after hrs" -> action: "BUY"
         - Example: "$BABA ... Just give me $200. Don't make me whip out the trampoline" -> action: "BUY"
 
-        GURU RHETORIC (BULLISH):
+        GURU RHETORIC & TECHNICAL SIGNALS (BULLISH):
+        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", or mentioning **CHART PATTERNS** like "Cup and handle", "Bull flag", "Flagging", "Cup", or "Base forming" are BULLISH (BUY).
+        - Pointing out **RELATIVE STRENGTH** (e.g. "Everything is dumping but look at $XOM", "$AAPL holding green while QQQ red") is BULLISH (BUY).
         - Rhetorical questions from influential accounts like "We buying here?", "Who's with me?", or "Ready to scoop?" on a major asset before news or a breakout are BULLISH (BUY).
         - SUPPORT SIGNALS: Phrases like "Buyers held", "Held up well", "Support confirmed", or "Phew" after a dip are BULLISH (BUY).
+        - Example: "What's in your cup? $APLD" -> action: "BUY" (Chart pattern)
+        - Example: "\"Everything is dumping right now\" Have you looked at energy? $XOM" -> action: "BUY" (Relative strength)
+        - Example: "Calm before the storm. $LAC" -> action: "BUY" (Technicals bullish)
+        - Example: "$BABA. The worst is over here. Finally." -> action: "BUY"
         - Example: "$AAPL $259. Held up well today despite QQQ down almost 2%." -> action: "BUY"
-        - Example: "$SOFI reports tomorrow. We buying here fam?" -> action: "BUY"
-        - Example: "$SPX 6000. $ES 6000. Phew. Buyers held. Just barely." -> action: "BUY" (Support confirmation)
 
         GAP FILLS & TARGETS:
         - Phrases like "Gap fill towards $[Price]", "Potential for $[Price]", or "Letting it ride to $[Price]" are tradeable signals.
@@ -97,10 +101,11 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
-        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", or "tough trade" are BEARISH (SELL).
+        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time" or "Down bad" are BEARISH (SELL).
         - SEASONALITY: Historical negative performance claims like "Worst month", "Tough month", or "Historically red" for an asset are BEARISH (SELL).
         - SECTOR WEAKNESS: Listing many negative sector returns for an index (e.g., "$SPX performance by sector: Tech -0.58%, Health -1.20%...") is BEARISH (SELL).
         - INVERTED PATTERNS: If the author describes a pattern as "inverted" (e.g. "inverted bull flag"), the sentiment is the OPPOSITE of the base pattern. (Inverted Bull Flag = BEARISH, Inverted Bear Flag = BULLISH).
+        - Example: "I am straight up not having a good time $BTC" -> action: "SELL" (Negative sentiment)
         - Example: "The good news: clean bull flag break on $ETHUSD. The bad news: it’s inverted." -> action: "SELL"
         - Example: "February has historically been a tough trade. Second-worst month for $SPX." -> action: "SELL"
         - Example: "$SNDK just turned red. Blow off top dance." -> action: "SELL"

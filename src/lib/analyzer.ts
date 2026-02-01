@@ -65,9 +65,13 @@ export async function analyzeTweetContent(
     const firstImageUrl = mediaDetails.find((m: any) => m.type === 'photo')?.media_url_https;
     const marketContext = await getMajorIndicesPrices();
 
+    console.log(`[Analyzer] Extracting from text: "${tweet.text?.substring(0, 50)}..."`);
     const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl, typeOverride, marketContext);
 
-    if (!callData) throw new Error('Could not identify financial call');
+    if (!callData) {
+        console.error(`[Analyzer] AI failed to identify call in text: "${tweet.text}"`);
+        throw new Error('Could not identify financial call');
+    }
 
     const symbol = cleanSymbol(callData.ticker);
     const sentiment = callData.action === 'BUY' ? 'BULLISH' : 'BEARISH';
@@ -76,6 +80,11 @@ export async function analyzeTweetContent(
     const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC'];
     if (symbol && FORCE_STOCKS.includes(symbol.toUpperCase())) {
         finalType = 'STOCK';
+    }
+
+    const FORCE_CRYPTO = ['BTC', 'ETH', 'SOL', 'PEPE', 'WIF', 'BONK', 'DOGE', 'XRP'];
+    if (symbol && FORCE_CRYPTO.includes(symbol.toUpperCase())) {
+        finalType = 'CRYPTO';
     }
 
     let callDate = new Date(tweet.created_at);

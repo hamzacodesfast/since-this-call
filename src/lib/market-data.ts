@@ -15,7 +15,8 @@ const CMC_BASE = 'https://pro-api.coinmarketcap.com/v1';
 // Known Stock Tickers to enforce Type: STOCK
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
-    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD', 'OPEN'
+    'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD', 'OPEN',
+    'GME', 'BABA', 'LAC', 'HIMS', 'SOFI', 'MARA', 'RIOT', 'CLSK', 'BITF', 'IREN', 'AMR', 'HCC', 'ARCH', 'BTU', 'CEIX'
 ]);
 
 /**
@@ -26,7 +27,17 @@ export function inferAssetType(symbol: string): 'CRYPTO' | 'STOCK' {
     if (KNOWN_STOCKS.has(clean)) {
         return 'STOCK';
     }
-    return 'CRYPTO';
+
+    // Default to STOCK for 1-4 character symbols unless it's a known crypto major
+    // This prevents common stock tickers from being treated as crypto (e.g. LAC, GME)
+    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE']);
+    if (CRYPTO_MAJORS.has(clean)) {
+        return 'CRYPTO';
+    }
+
+    if (clean.length > 5) return 'CRYPTO'; // Long symbols usually tokens
+
+    return 'STOCK'; // Default to stock for short unknown symbols
 }
 
 // CoinGecko ID mapping for common tokens
