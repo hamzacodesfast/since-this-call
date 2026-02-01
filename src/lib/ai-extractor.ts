@@ -94,7 +94,8 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
-        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", or "-X% from peak" are BEARISH (SELL).
+        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", or "blow off top" are BEARISH (SELL).
+        - Example: "$SNDK just turned red. Blow off top dance." -> action: "SELL"
         - Example: "$APP $482’s today. Wow what a drop. I do call out shorts too!" -> action: "SELL"
         - Example: "$BMNR -85% from ATH’s. Not good…" -> action: "SELL"
          `;
