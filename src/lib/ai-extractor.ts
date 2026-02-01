@@ -65,7 +65,8 @@ export async function extractCallFromText(
 
         BULLISH TARGETS & SLANG:
         - Phrases like "Just give me $[Price Target]", "Road to $[Price Target]", or "Price target $[Price Target]" on a major asset are BULLISH (BUY).
-        - SLANG: Bullish metaphors like "trampoline", "rocket", "moon", or "to the upside" are signals for an active outlook.
+        - SLANG: Bullish metaphors like "poppin'", "bouncing", "trampoline", "rocket", "moon", or "to the upside" are signals for an active outlook.
+        - Example: "$TSLA poppin' a bit in after hrs" -> action: "BUY"
         - Example: "$BABA ... Just give me $200. Don't make me whip out the trampoline" -> action: "BUY"
 
         GURU RHETORIC (BULLISH):
