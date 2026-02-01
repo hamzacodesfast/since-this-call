@@ -44,10 +44,24 @@ export async function extractCallFromText(
         Tweet Date: "${tweetDate}"
         
         DIRECTIVES:
-        1. Action: BUY (Upward movement/holding), SELL (Downward/Avoiding), NULL (Conditional or MEME COIN).
+        1. Action: BUY (Active Long/Spot position), SELL (Active Short position), NULL (No trade, factual reporting, conditional, or meme coin).
         2. Ticker: Return pure symbol (e.g. BTC, ETH, MSTR).
         3. Sentiment Analysis: Handle sarcasm, memes, and slang as signals for MAJOR assets only.
         4. If it is a meme coin like $WIF, $BONK, $PEPE, or any other "fun" token, use NULL unless you are certain it is a major market leader found on major centralized exchanges (though leaning towards NULL is safer if in doubt).
+
+        NEGATIVE CONSTRAINTS (CRITICAL - RETURN action: "NULL"):
+        1. FACT STATING / DATA ONLY: If the tweet only reports data (e.g., "Volume is huge", "RSI is oversold", "Open Interest is rising") without the author explicitly stating they are BUYING or SELLING, you MUST return NULL. DO NOT infer direction from volume or indicators.
+        2. AMBIGUOUS / TWO-SIDED: If the author says "Could go both ways", "Waiting for a break", or "Up or down", return NULL.
+        3. CONDITIONAL / IF-THEN: "Buying if [level] breaks" or "Selling if [event] happens" MUST return NULL. We only track active positions or immediate calls.
+        4. VAGUE BULLISHNESS: "This looks interesting", "Eyes on this", or "Watching this" without a definitive "Long" or "Buy" signal MUST return NULL.
+        5. LACK OF CONTEXT: If the tweet is just a ticker symbol and a chart without any text indicating an active trade, return NULL.
+
+        EXAMPLES OF NULL SIGNALS:
+        - "Silver volume is exploding on the hourly." -> action: "NULL" (Just data)
+        - "Could go up, could go down." -> action: "NULL" (Ambiguous)
+        - "Buying $BTC if weekly closes above 100k." -> action: "NULL" (Conditional)
+        - "$ETH RSI is zero." -> action: "NULL" (Data only)
+        - "I'm watching $MSTR closely." -> action: "NULL" (No active call)
         `;
 
         const { object } = await generateObject({
