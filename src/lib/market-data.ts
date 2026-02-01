@@ -269,8 +269,8 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
             const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
 
             // USE MINUTE DATA (1m) FOR 30 DAYS, 5m FOR 60 DAYS
-            // Increased range to 3600s (1h) or 14400s (4h) to catch after-hours/weekend gaps
-            let strategy = diffDays < 30 ? { interval: '1m', range: 3600 } : diffDays < 60 ? { interval: '5m', range: 14400 } : { interval: '1h', range: 86400 };
+            // Increased range to 43200s (12h) to catch overnight "dead zones" (8 PM - 4 AM)
+            let strategy = diffDays < 30 ? { interval: '1m', range: 43200 } : diffDays < 60 ? { interval: '5m', range: 86400 } : { interval: '1h', range: 172800 };
 
             const url = `${YAHOO_BASE}/${symbol}?period1=${targetTime - strategy.range}&period2=${targetTime + strategy.range}&interval=${strategy.interval}&events=history&includePrePost=true`;
             const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' } as any);
@@ -310,7 +310,8 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
         if (!date && result.meta?.regularMarketPrice) return result.meta.regularMarketPrice;
         if (quotes && quotes.close && quotes.close.length) {
             const valid = quotes.close.filter((p: any) => p !== null);
-            return valid[valid.length - 1];
+            // Return valid[0] (the one closest to our period1 start) for historical calls
+            return valid.length > 0 ? valid[0] : null;
         }
     } catch (e) {
         console.error('[Yahoo] Error:', e);
