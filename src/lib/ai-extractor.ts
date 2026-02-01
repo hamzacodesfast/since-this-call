@@ -76,7 +76,10 @@ export async function extractCallFromText(
         - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).
         - DESCRIPTIVE BUYING + SKEPTICISM: If the author describes strong buying (e.g. "scooping", "big bid") but ends with skepticism like "At some point...?!", "Eventually...", or "Can't last forever", you MUST interpret this as BEARISH (SELL). The skepticism AFTER the description is the true signal.
         - Example: "They keep scooping the dip... eventually?! $SPX" -> action: "SELL"
-        `;
+        RELATIVE OVERVALUATION (BEARISH):
+        - Comparing an asset to its peers as "the most expensive", "overvalued", or noting it's at "ATHs while others are flat/down" is a BEARISH (SELL) signal or reversal warning.
+        - Example: "$GOOG is the only one at ATHs while the rest are off. Most expensive Mag 7." -> action: "SELL"
+         `;
 
         const { object } = await generateObject({
             model: google('gemini-2.0-flash'),
