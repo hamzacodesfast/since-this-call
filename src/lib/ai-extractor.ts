@@ -67,6 +67,10 @@ export async function extractCallFromText(
         - Phrases like "Just give me $[Price Target]", "Road to $[Price Target]", or "Price target $[Price Target]" on a major asset are BULLISH (BUY).
         - SLANG: Bullish metaphors like "trampoline", "rocket", "moon", or "to the upside" are signals for an active outlook.
         - Example: "$BABA ... Just give me $200. Don't make me whip out the trampoline" -> action: "BUY"
+
+        GURU RHETORIC (BULLISH):
+        - Rhetorical questions from influential accounts like "We buying here?", "Who's with me?", or "Ready to scoop?" on a major asset before news or a breakout are BULLISH (BUY).
+        - Example: "$SOFI reports tomorrow. We buying here fam?" -> action: "BUY"
         EXHAUSTION SIGNALS (BEARISH - HIGHEST PRIORITY):
         - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).
         - DESCRIPTIVE BUYING + SKEPTICISM: If the author describes strong buying (e.g. "scooping", "big bid") but ends with skepticism like "At some point...?!", "Eventually...", or "Can't last forever", you MUST interpret this as BEARISH (SELL). The skepticism AFTER the description is the true signal.
