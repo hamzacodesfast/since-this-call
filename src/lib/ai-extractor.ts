@@ -71,7 +71,15 @@ export async function extractCallFromText(
 
         GURU RHETORIC (BULLISH):
         - Rhetorical questions from influential accounts like "We buying here?", "Who's with me?", or "Ready to scoop?" on a major asset before news or a breakout are BULLISH (BUY).
+        - SUPPORT SIGNALS: Phrases like "Buyers held", "Held up well", "Support confirmed", or "Phew" after a dip are BULLISH (BUY).
+        - Example: "$AAPL $259. Held up well today despite QQQ down almost 2%." -> action: "BUY"
         - Example: "$SOFI reports tomorrow. We buying here fam?" -> action: "BUY"
+        - Example: "$SPX 6000. Buyers held. Just barely." -> action: "BUY"
+
+        GAP FILLS & TARGETS (BULLISH):
+        - Phrases like "Gap fill towards $[Price]", "Potential for $[Price]", or "Letting it ride to $[Price]" where price is higher than current/mention are BULLISH (BUY).
+        - HIGHEST PRIORITY: A price target or gap-fill target OVERRIDES generic "take profit" advice if they appear in the same post.
+        - Example: "$META $730. Ring the register, but maybe let a little ride to $751 gap fill." -> action: "BUY" (Target overrides caution)
         EXHAUSTION SIGNALS (BEARISH - HIGHEST PRIORITY):
         - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).
         - DESCRIPTIVE BUYING + SKEPTICISM: If the author describes strong buying (e.g. "scooping", "big bid") but ends with skepticism like "At some point...?!", "Eventually...", or "Can't last forever", you MUST interpret this as BEARISH (SELL). The skepticism AFTER the description is the true signal.
@@ -79,10 +87,15 @@ export async function extractCallFromText(
         RELATIVE OVERVALUATION (BEARISH):
         - Comparing an asset to its peers as "the most expensive", "overvalued", or noting it's at "ATHs while others are flat/down" is a BEARISH (SELL) signal or reversal warning.
         - Example: "$GOOG is the only one at ATHs while the rest are off. Most expensive Mag 7." -> action: "SELL"
-+
-+        PROFIT TAKING (BEARISH - SELL):
-+        - Phrases like "ring the register", "take profits", "booking gains", or "no one ever went broke taking a profit" are BEARISH (SELL) signals.
-+        - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
+
+        PROFIT TAKING (BEARISH - SELL):
+        - Phrases like "ring the register", "take profits", "booking gains", or "no one ever went broke taking a profit" are BEARISH (SELL) signals.
+        - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
+
+        NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
+        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", or "-X% from peak" are BEARISH (SELL).
+        - Example: "$APP $482’s today. Wow what a drop. I do call out shorts too!" -> action: "SELL"
+        - Example: "$BMNR -85% from ATH’s. Not good…" -> action: "SELL"
          `;
 
         const { object } = await generateObject({
