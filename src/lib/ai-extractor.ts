@@ -78,8 +78,8 @@ export async function extractCallFromText(
 
         GAP FILLS & TARGETS (BULLISH):
         - Phrases like "Gap fill towards $[Price]", "Potential for $[Price]", or "Letting it ride to $[Price]" where price is higher than current/mention are BULLISH (BUY).
-        - HIGHEST PRIORITY: A price target or gap-fill target OVERRIDES generic "take profit" advice if they appear in the same post.
-        - Example: "$META $730. Ring the register, but maybe let a little ride to $751 gap fill." -> action: "BUY" (Target overrides caution)
+        - HIGHEST PRIORITY: A specific forward-looking target (like a "gap fill") and words like "Impressed" or "Held up well" ALWAYS override generic "take profit" or "ring the register" advice in the same post. If the author is looking for a higher target, the sentiment is BULLISH.
+        - Example: "$META $730. Ring the register, but maybe let a little ride to $751 gap fill." -> action: "BUY" (Forward target > profit taking)
         EXHAUSTION SIGNALS (BEARISH - HIGHEST PRIORITY):
         - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).
         - DESCRIPTIVE BUYING + SKEPTICISM: If the author describes strong buying (e.g. "scooping", "big bid") but ends with skepticism like "At some point...?!", "Eventually...", or "Can't last forever", you MUST interpret this as BEARISH (SELL). The skepticism AFTER the description is the true signal.
