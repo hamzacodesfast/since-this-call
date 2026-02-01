@@ -9,7 +9,7 @@ import path from 'path';
 import fs from 'fs/promises';
 
 // Load env vars BEFORE importing modules that use them
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
 
 // Import types (safe, erased at runtime)
 import type { StoredAnalysis } from '../src/lib/analysis-store';
@@ -171,7 +171,6 @@ async function bulkAnalyze() {
                 entryPrice: result.market.callPrice,
                 currentPrice: result.market.currentPrice,
                 type: result.analysis.type,
-                contractAddress: result.analysis.contractAddress,
 
                 // Context fields
                 ticker: result.analysis.ticker,
