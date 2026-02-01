@@ -71,18 +71,16 @@ export async function extractCallFromText(
         - Example: "$BABA ... Just give me $200. Don't make me whip out the trampoline" -> action: "BUY"
 
         GURU RHETORIC & TECHNICAL SIGNALS (BULLISH):
-        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire", or mentioning **CHART PATTERNS** like "Cup and handle", "Bull flag", "Flagging", "Cup", or "Base forming" are BULLISH (BUY).
+        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire", or mentioning **CHART PATTERNS** like "Cup and handle", "Bull flag", "Flagging", "Cup", "Base forming", "stuck in a wedge", "falling wedge", or "ascending triangle" are BULLISH (BUY).
+        - **TECH INDICATOR FLIP**: Mentioning an indicator flipping to a positive state (e.g. "Momentum flipped to blue", "MACD cross", "RSI divergence") is BULLISH (BUY).
+        - **BREAKOUT WATCH**: Phrases like "Watching for the breakout", "Don't miss out!", "Ready to pop", or "About to squeeze" are BULLISH (BUY).
         - **INDICATOR-BASED EXIT**: If the author is waiting for a specific indicator or sell signal to appear at a higher price (e.g. "When the red dots come, I will dump", "Waiting for Lux sell signal"), it implies they are BULLISH (BUY) until that signal triggers.
         - **ROTATION & CAPITAL FLOW**: Phrases like "Rotation into $[Symbol]", "Capital flight from [Other Asset] to $[Symbol]", "Institutional inflow", or simply "$[Symbol] vs [Other Asset]. Rotation." are BULLISH (BUY).
         - **BEAR PAIN**: Phrases indicating the suffering of those betting against the asset, such as "Bear Despair", "Bear Tears", "Bear Pain", "Bears getting cooked/fried", or "Bear trap" are BULLISH (BUY).
         - **SARCASTIC MOCKERY**: Mocking "bears" or "fudsters" by quoting a ridiculous low price target from a fictional or silly source (e.g. "But someone told me $BTC is going to $4k 😂", "Wait, isn't it going to zero?") is BULLISH (BUY).
         - **HISTORICAL ANALOGY**: Pointing to a past event where a crash led to a massive pump (e.g. "Last time we crashed 30% we then pumped 100%", "Yen intervention crash followed by moon") implies a bullish outcome is coming.
-        - **GOOD DAY**: Phrases like "Should be a good day for $[Symbol]" or "Looking for a big move tomorrow for $[Symbol]" in a positive technical context are BULLISH (BUY).
-        - Pointing out **RELATIVE STRENGTH** (e.g. "Everything is dumping but look at $XOM", "$AAPL holding green while QQQ red") is BULLISH (BUY).
-        - Rhetorical questions from influential accounts like "We buying here?", "Who's with me?", or "Ready to scoop?" on a major asset before news or a breakout are BULLISH (BUY).
-        - SUPPORT SIGNALS: Phrases like "Buyers held", "Held up well", "Support confirmed", or "Phew" after a dip are BULLISH (BUY).
+        - Example: "$SOFI stuck in a wedge. watching for breakout. Don't miss out!" -> action: "BUY"
         - Example: "$BTC 🟠 When the red dots come, I will dump." -> action: "BUY" (Bullish until exit signal)
-        - Example: "$BTC vs Silver. Rotation." -> action: "BUY" (Capital flowing from silver to BTC)
         - Example: "What's in your cup? $APLD" -> action: "BUY" (Chart pattern)
         - Example: "Calm before the storm. $LAC" -> action: "BUY" (Technicals bullish)
         - Example: "$BABA. The worst is over here. Finally." -> action: "BUY"
