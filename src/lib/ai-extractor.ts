@@ -83,6 +83,19 @@ export async function extractCallFromText(
         - Example: "Fill the gap, then let's talk. $MSFT" (Assuming gap is below) -> action: "SELL"
         - Example: "$META $730. letting it ride to $751 gap fill" -> action: "BUY"
 
+        EXHAUSTION SIGNALS (BEARISH - HIGHEST PRIORITY):
+        - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).
+        - DESCRIPTIVE BUYING + SKEPTICISM: If the author describes strong buying (e.g. "scooping", "big bid") but ends with skepticism like "At some point...?!", "Eventually...", or "Can't last forever", you MUST interpret this as BEARISH (SELL). The skepticism AFTER the description is the true signal.
+        - Example: "They keep scooping the dip... eventually?! $SPX" -> action: "SELL"
+
+        RELATIVE OVERVALUATION (BEARISH):
+        - Comparing an asset to its peers as "the most expensive", "overvalued", or noting it's at "ATHs while others are flat/down" is a BEARISH (SELL) signal or reversal warning.
+        - Example: "$GOOG is the only one at ATHs while the rest are off. Most expensive Mag 7." -> action: "SELL"
+
+        PROFIT TAKING (BEARISH - SELL):
+        - Phrases like "ring the register", "take profits", "booking gains", or "no one ever went broke taking a profit" are BEARISH (SELL) signals.
+        - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
+
         NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
         - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", or "tough trade" are BEARISH (SELL).
         - SEASONALITY: Historical negative performance claims like "Worst month", "Tough month", or "Historically red" for an asset are BEARISH (SELL).
