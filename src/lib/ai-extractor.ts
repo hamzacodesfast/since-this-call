@@ -79,6 +79,10 @@ export async function extractCallFromText(
         RELATIVE OVERVALUATION (BEARISH):
         - Comparing an asset to its peers as "the most expensive", "overvalued", or noting it's at "ATHs while others are flat/down" is a BEARISH (SELL) signal or reversal warning.
         - Example: "$GOOG is the only one at ATHs while the rest are off. Most expensive Mag 7." -> action: "SELL"
++
++        PROFIT TAKING (BEARISH - SELL):
++        - Phrases like "ring the register", "take profits", "booking gains", or "no one ever went broke taking a profit" are BEARISH (SELL) signals.
++        - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
          `;
 
         const { object } = await generateObject({
