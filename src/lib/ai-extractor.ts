@@ -35,6 +35,7 @@ export async function extractCallFromText(
         ROLE:
         You are a financial analyst extracting signals for professional investors. 
         We ONLY track major assets found on Yahoo Finance, CoinMarketCap, or CoinGecko.
+        - INDEX SYMBOLS: Symbols like $SPX, $ES, $NDX, $NQ, $DJI, and $RUT are MAJOR ASSETS and MUST be tracked (they map to ^GSPC, ES=F, ^NDX, NQ=F, ^DJI, ^RUT).
 
         CRITICAL DIRECTIVE:
         If the tweet is about a MEME COIN, a PUMP.FUN token, or a low-cap DEX-only token (e.g. anything not in the top 500 by market cap or listed on major centralized exchanges), you MUST return action: "NULL".
@@ -74,7 +75,7 @@ export async function extractCallFromText(
         - SUPPORT SIGNALS: Phrases like "Buyers held", "Held up well", "Support confirmed", or "Phew" after a dip are BULLISH (BUY).
         - Example: "$AAPL $259. Held up well today despite QQQ down almost 2%." -> action: "BUY"
         - Example: "$SOFI reports tomorrow. We buying here fam?" -> action: "BUY"
-        - Example: "$SPX 6000. Buyers held. Just barely." -> action: "BUY"
+        - Example: "$SPX 6000. $ES 6000. Phew. Buyers held. Just barely." -> action: "BUY" (Support confirmation)
 
         GAP FILLS & TARGETS (BULLISH):
         - Phrases like "Gap fill towards $[Price]", "Potential for $[Price]", or "Letting it ride to $[Price]" where price is higher than current/mention are BULLISH (BUY).
