@@ -71,7 +71,9 @@ export async function extractCallFromText(
         - Example: "$BABA ... Just give me $200. Don't make me whip out the trampoline" -> action: "BUY"
 
         GURU RHETORIC & TECHNICAL SIGNALS (BULLISH):
-        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire", or mentioning **CHART PATTERNS** like "Cup and handle", "Bull flag", "Flagging", "Cup", "Base forming", "stuck in a wedge", "falling wedge", or "ascending triangle" are BULLISH (BUY).
+        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire", "Catch the bottom", "Shakeout", "shakeout", "Dip is for buying", "most hated rally", "You just need [Amount] [Symbol]", "still not selling", "not selling", "not stopping", "Key pivot is approaching", "another key pivot is approaching", "psychopath if you're still in", "only psychopaths are still holding", "Perfect rotation", "Diamond hands", "Diamond Hands", "give me one more spike lower", "Bullish Aster", "Bullish WLFI", "Is this exciting for you guys?", or mentioning **CHART PATTERNS** like "Cup and handle", "Bull flag", "Flagging", "Cup", "Base forming", "stuck in a wedge", "falling wedge", or "ascending triangle" are BULLISH (BUY).
+        - **CONTRARIAN INDICATORS**: Mentions of contrarian signals like "When Peter Schiff is doing victory laps you probably should be buying", "Inverse Cramer", "Blood in the streets", or "Everyone is panic selling" are BULLISH (BUY).
+        - **TECHNICAL TARGETS**: Phrases like "Gap fill at [Higher Price] is inevitable", "Next stop [Higher Price]", "Targeting [Higher Price]", or "[Resistance] obliterated" are BULLISH (BUY).
         - **TECH INDICATOR FLIP**: Mentioning an indicator flipping to a positive state (e.g. "Momentum flipped to blue", "MACD cross", "RSI divergence") is BULLISH (BUY).
         - **BREAKOUT WATCH**: Phrases like "Watching for the breakout", "Don't miss out!", "Ready to pop", or "About to squeeze" are BULLISH (BUY).
         - **INDICATOR-BASED EXIT**: If the author is waiting for a specific indicator or sell signal to appear at a higher price (e.g. "When the red dots come, I will dump", "Waiting for Lux sell signal"), it implies they are BULLISH (BUY) until that signal triggers.
@@ -79,8 +81,15 @@ export async function extractCallFromText(
         - **BEAR PAIN**: Phrases indicating the suffering of those betting against the asset, such as "Bear Despair", "Bear Tears", "Bear Pain", "Bears getting cooked/fried", or "Bear trap" are BULLISH (BUY).
         - **SARCASTIC MOCKERY**: Mocking "bears" or "fudsters" by quoting a ridiculous low price target from a fictional or silly source (e.g. "But someone told me $BTC is going to $4k 😂", "Wait, isn't it going to zero?") is BULLISH (BUY).
         - **HISTORICAL ANALOGY**: Pointing to a past event where a crash led to a massive pump (e.g. "Last time we crashed 30% we then pumped 100%", "Yen intervention crash followed by moon") implies a bullish outcome is coming.
+        - Example: "$MSTR ... When Peter Schiff is doing victory laps you probably should be buying." -> action: "BUY" (Contrarian indicator)
+        - Example: "$SOL Catch the bottom. Trends don't die in a day." -> action: "BUY"
+        - Example: "$AAPL resistance at $245 about to be obliterated." -> action: "BUY" (Technical breakout)
         - Example: "$SOFI stuck in a wedge. watching for breakout. Don't miss out!" -> action: "BUY"
         - Example: "$BTC 🟠 When the red dots come, I will dump." -> action: "BUY" (Bullish until exit signal)
+        - Example: "$ZEC will have the most hated rally." -> action: "BUY"
+        - Example: "You just need 1000 $ZEC in your wallet." -> action: "BUY"
+        - Example: "If you're still in $ZEC you are truly a psychopath." -> action: "BUY" (Hated rally sentiment)
+        - Example: "Finally. The perfect rotation into $ETH." -> action: "BUY"
         - Example: "What's in your cup? $APLD" -> action: "BUY" (Chart pattern)
         - Example: "Calm before the storm. $LAC" -> action: "BUY" (Technicals bullish)
         - Example: "$BABA. The worst is over here. Finally." -> action: "BUY"
@@ -106,37 +115,81 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
-        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time", "Down bad", "being dumped like a shitcoin", "topped out", "slow grind down", "stay out", "avoid at all costs", "retrace", "full pump retrace", "annoying", "doesn't help", "Yikes", "yikes", or "avoid catching falling knives" are BEARISH (SELL).
+        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time", "Down bad", "being dumped like a shitcoin", "topped out", "slow grind down", "stay out", "avoid at all costs", "retrace", "full pump retrace", "annoying", "doesn't help", "Yikes", "yikes", "I don't see how it holds", "suck the life out of you", "rolled over", "Moon boys are very quiet", "moon boys are quiet", "Bear cycle started", "counter trading the trend", "I'm still short", "I am still short", "having the last laugh", "proved me right once again", "structure stays broken", "trending down", "avoid catching falling knives", "Wait for the real drop", "Searching for a bottom", "Hasn't bottomed yet", "bulls last chance", "fun while it lasted", "expect [Symbol] to retest", "Sold it all", "sold everything", "flush down to", "Bearish Aster", "inverted $[Symbol] chart", "dump it on all of our heads", "massively push $[Symbol] at the top and dump it", "market cycles", "lost its bullish trend line", "year of the [Symbol] Bear Market", "Bear Market signals have flashed", "[Symbol] is ~[Percentage]% of the way through its current Bear Market", "Bull Market EMAs have officially crossed over", "Bearish Marubozu", "Bearish wedge", "caution", or "You have no idea how hard people are going to cry when [Symbol] is at [Lower Price]" are BEARISH (SELL).
         - **NEGATIVE PUMP DESIRE**: Phrases like "Never let $[Symbol] pump again", "Stop the pump", or "I hope this dumps" are BEARISH (SELL).
         - **SARCASTIC MOCKERY**: Mocking "bulls" or "moon boys" by quoting a ridiculous high price target from a fictional or silly source (e.g. "According to Twitter $LTC is heading straight to $8,000", "Someone said $BTC to 1M by Friday") is BEARISH (SELL).
         - **HISTORICAL ANALOGY**: Pointing to a past "bear market" chart or fractal as a guide for current price action is BEARISH (SELL).
         - WAITING FOR LOWER: Phrases like "Waiting for [Lower Price] and I am all in", "Hit [Lower Price] then I buy", or "Looking for [Lower Price] to enter" are BEARISH (SELL) for the short-term direction. 
         - SKEPTICAL REBOUNDS: Even if the author denies an extreme crash (e.g. "I don't think we hit $30k"), if the level mentioned is significantly below current price and the tone is cautious, it is BEARISH (SELL).
         - Example: "$CHZ Yikes." -> action: "SELL"
+        - Example: "$BTC rolled over... should have known." -> action: "SELL"
+        - Example: "Moon boys are quiet today... clown market." -> action: "SELL"
+        - Example: "$BTC ... I'm still short." -> action: "SELL"
+        - Example: "$BTC ... can suck the life out of you if you are wrong." -> action: "SELL"
+        - Example: "$BTC ... structure stays broken and trending down." -> action: "SELL"
+        - Example: "$TSLA Well, it was fun while it lasted." -> action: "SELL"
+        - Example: "Sold it all and took the gain from today. $TSLA" -> action: "SELL"
+        - Example: "This is an inverted $BTC chart... looks bullish." -> action: "SELL" (Actual chart is bearish)
+        - Example: "Tether has $XAUT now... If @circle does not do the same, it means $CRCL stock is not a good investment" -> ticker: "CRCL", action: "SELL"
+        - Example: "looks like 2026 is shaping up to be the year of the Bitcoin Bear Market" -> action: "SELL"
+        - Example: "10 out of 12 confirmed signals have indeed flashed... ~80% of the Bear Market signals have flashed" -> action: "SELL"
+        - Example: "Bitcoin is ~25% of the way through its current Bear Market" -> action: "SELL"
+        - Example: "The Bitcoin Bull Market EMAs have officially crossed over" (context: bearish breakdown) -> action: "SELL"
+        - Example: "$BTC ... lost its bullish trend line." -> action: "SELL" (Trend loss)
+        - Example: "$NVDA ... I don't see how it holds here." -> action: "SELL"
         - Example: "Promise me you'll never let $ZEC pump again" -> action: "SELL"
         - Example: "According to Twitter $LTC is heading straight to $8,000" -> action: "SELL" (Sarcastic mockery of moon sentiment)
         - Example: "$ZEN ...annnnd full pump retrace." -> action: "SELL"
-        - Example: "$BTC. Checking back in on this chart from 2 years ago." (Image of bear market crash) -> action: "SELL"
         - Example: "$ZEN ... annoying. BTC dropping at the same time probably doesn't help." -> action: "SELL"
-         `;
+        - Example: "$ETH Bearish Marubozu" -> action: "SELL"
+        - Example: "This started looking more and more like a bearish wedge. Caution. $BTCUSD" -> action: "SELL"
+        - Example: "Bearish Aster" -> action: "SELL"
+        - Example: "give me one more spike lower... $ZEC" -> action: "BUY" (Demand for entry)
+        - Example: "Bullish Aster" -> action: "BUY"
+        - Example: "Bullish WLFI" -> action: "BUY"
+        - Example: "$USO Is this exciting for you guys?" -> action: "BUY" (Context: Breakout)
+        `;
 
-        const { object } = await generateObject({
-            model: google('gemini-2.0-flash'),
-            schema: CallSchema,
-            messages: [{
-                role: 'user',
-                content: [
-                    { type: 'text', text: promptText },
-                    ...(imageUrl ? [{ type: 'image', image: imageUrl }] : [])
-                ]
-            } as any],
-        });
+        const models = ['gemini-2.0-flash-001', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 
-        if (object.action === 'NULL') return null;
+        const generate = async (modelName: string) => {
+            return await generateObject({
+                model: google(modelName),
+                schema: CallSchema,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: promptText },
+                        ...(imageUrl ? [{ type: 'image', image: imageUrl }] : [])
+                    ]
+                } as any],
+            });
+        };
 
-        return object;
+        let lastErr;
+        for (const model of models) {
+            try {
+                const { object } = await generate(model);
+                if (object.action === 'NULL') return null;
+                return object;
+            } catch (err: any) {
+                lastErr = err;
+                const isQuota = err.message?.includes('Quota') || err.message?.includes('429');
+                if (isQuota) {
+                    console.warn(`[AI-Extractor] Quota hit for ${model}, trying next...`);
+                    await new Promise(r => setTimeout(r, 1000));
+                    continue;
+                }
+                throw err;
+            }
+        }
+
+        throw lastErr;
     } catch (error: any) {
-        console.error('[AI-Extractor] Error:', error);
-        throw error;
+        if (error.message?.includes('Quota') || error.message?.includes('429')) {
+            throw new Error('Our AI models are currently at capacity. Please try again in a few minutes.');
+        }
+        console.error('[AI-Extractor] Fatal:', error);
+        throw new Error('Failed to analyze tweet. The AI service is currently unavailable.');
     }
 }
