@@ -100,6 +100,8 @@ export async function extractCallFromText(
         - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", or "tough trade" are BEARISH (SELL).
         - SEASONALITY: Historical negative performance claims like "Worst month", "Tough month", or "Historically red" for an asset are BEARISH (SELL).
         - SECTOR WEAKNESS: Listing many negative sector returns for an index (e.g., "$SPX performance by sector: Tech -0.58%, Health -1.20%...") is BEARISH (SELL).
+        - INVERTED PATTERNS: If the author describes a pattern as "inverted" (e.g. "inverted bull flag"), the sentiment is the OPPOSITE of the base pattern. (Inverted Bull Flag = BEARISH, Inverted Bear Flag = BULLISH).
+        - Example: "The good news: clean bull flag break on $ETHUSD. The bad news: it’s inverted." -> action: "SELL"
         - Example: "February has historically been a tough trade. Second-worst month for $SPX." -> action: "SELL"
         - Example: "$SNDK just turned red. Blow off top dance." -> action: "SELL"
         - Example: "$APP $482’s today. Wow what a drop. I do call out shorts too!" -> action: "SELL"
