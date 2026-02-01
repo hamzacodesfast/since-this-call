@@ -82,7 +82,7 @@ export async function analyzeTweetContent(
         finalType = 'STOCK';
     }
 
-    const FORCE_CRYPTO = ['BTC', 'ETH', 'SOL', 'PEPE', 'WIF', 'BONK', 'DOGE', 'XRP'];
+    const FORCE_CRYPTO = ['BTC', 'ETH', 'SOL', 'PEPE', 'WIF', 'BONK', 'DOGE', 'XRP', 'CHZ', 'ZEN', 'ZEC'];
     if (symbol && FORCE_CRYPTO.includes(symbol.toUpperCase())) {
         finalType = 'CRYPTO';
     }

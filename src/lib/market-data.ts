@@ -30,7 +30,7 @@ export function inferAssetType(symbol: string): 'CRYPTO' | 'STOCK' {
 
     // Default to STOCK for 1-4 character symbols unless it's a known crypto major
     // This prevents common stock tickers from being treated as crypto (e.g. LAC, GME)
-    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE']);
+    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE', 'CHZ', 'ZEN', 'ZEC']);
     if (CRYPTO_MAJORS.has(clean)) {
         return 'CRYPTO';
     }
@@ -93,6 +93,9 @@ const COINGECKO_IDS: Record<string, string> = {
     'AIXBT': 'aixbt',
     'GRIFFAIN': 'griffain',
     'MOLT': 'moltbook',
+    'CHZ': 'chiliz',
+    'ZEN': 'horizen',
+    'ZEC': 'zcash',
 };
 
 // Launch dates and initial prices for major assets
@@ -163,20 +166,33 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
             'DOGE': 'DOGE-USD',
             'XRP': 'XRP-USD',
             'HYPE': 'HYPE32196-USD',
+            'CHZ': 'CHZ-USD',
+            'ZEN': 'ZEN-USD',
         };
 
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
+        console.log(`[Price] Trying Yahoo: ${yahooSymbol}`);
         const yahooPrice = await getYahooPrice(yahooSymbol, date);
-        if (yahooPrice !== null) return yahooPrice;
+        if (yahooPrice !== null) {
+            console.log(`[Price] Yahoo success for ${yahooSymbol}: ${yahooPrice}`);
+            return yahooPrice;
+        }
 
         const cmcPrice = await getCoinMarketCapPrice(symbol, date);
-        if (cmcPrice !== null) return cmcPrice;
+        if (cmcPrice !== null) {
+            console.log(`[Price] CMC success for ${symbol}: ${cmcPrice}`);
+            return cmcPrice;
+        }
 
         const coinGeckoId = COINGECKO_IDS[symbol.toUpperCase()];
         if (coinGeckoId) {
             const cgPrice = await getCoinGeckoPrice(coinGeckoId, date);
-            if (cgPrice !== null) return cgPrice;
+            if (cgPrice !== null) {
+                console.log(`[Price] CG success for ${coinGeckoId}: ${cgPrice}`);
+                return cgPrice;
+            }
         }
+        console.log(`[Price] All providers failed for ${symbol}`);
     } else {
         return getYahooPrice(symbol, date);
     }

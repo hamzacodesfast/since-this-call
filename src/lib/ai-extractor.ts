@@ -72,13 +72,17 @@ export async function extractCallFromText(
 
         GURU RHETORIC & TECHNICAL SIGNALS (BULLISH):
         - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire", or mentioning **CHART PATTERNS** like "Cup and handle", "Bull flag", "Flagging", "Cup", or "Base forming" are BULLISH (BUY).
+        - **INDICATOR-BASED EXIT**: If the author is waiting for a specific indicator or sell signal to appear at a higher price (e.g. "When the red dots come, I will dump", "Waiting for Lux sell signal"), it implies they are BULLISH (BUY) until that signal triggers.
+        - **ROTATION & CAPITAL FLOW**: Phrases like "Rotation into $[Symbol]", "Capital flight from [Other Asset] to $[Symbol]", "Institutional inflow", or simply "$[Symbol] vs [Other Asset]. Rotation." are BULLISH (BUY).
+        - **BEAR PAIN**: Phrases indicating the suffering of those betting against the asset, such as "Bear Despair", "Bear Tears", "Bear Pain", "Bears getting cooked/fried", or "Bear trap" are BULLISH (BUY).
+        - **SARCASTIC MOCKERY**: Mocking "bears" or "fudsters" by quoting a ridiculous low price target from a fictional or silly source (e.g. "But someone told me $BTC is going to $4k 😂", "Wait, isn't it going to zero?") is BULLISH (BUY).
         - **HISTORICAL ANALOGY**: Pointing to a past event where a crash led to a massive pump (e.g. "Last time we crashed 30% we then pumped 100%", "Yen intervention crash followed by moon") implies a bullish outcome is coming.
         - **GOOD DAY**: Phrases like "Should be a good day for $[Symbol]" or "Looking for a big move tomorrow for $[Symbol]" in a positive technical context are BULLISH (BUY).
         - Pointing out **RELATIVE STRENGTH** (e.g. "Everything is dumping but look at $XOM", "$AAPL holding green while QQQ red") is BULLISH (BUY).
         - Rhetorical questions from influential accounts like "We buying here?", "Who's with me?", or "Ready to scoop?" on a major asset before news or a breakout are BULLISH (BUY).
         - SUPPORT SIGNALS: Phrases like "Buyers held", "Held up well", "Support confirmed", or "Phew" after a dip are BULLISH (BUY).
-        - Example: "Seagate--on fire--again!!" -> symbol: "STX", action: "BUY"
-        - Example: "This is what happened with $BTC during the last \"Yen Intervention.\" A 29% weekly crash followed by a 100% pump." -> action: "BUY" (Historical analogy for a pump)
+        - Example: "$BTC 🟠 When the red dots come, I will dump." -> action: "BUY" (Bullish until exit signal)
+        - Example: "$BTC vs Silver. Rotation." -> action: "BUY" (Capital flowing from silver to BTC)
         - Example: "What's in your cup? $APLD" -> action: "BUY" (Chart pattern)
         - Example: "Calm before the storm. $LAC" -> action: "BUY" (Technicals bullish)
         - Example: "$BABA. The worst is over here. Finally." -> action: "BUY"
@@ -104,18 +108,18 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
-        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time", "Down bad", "being dumped like a shitcoin", "topped out", "slow grind down", "stay out", "avoid at all costs", or "avoid catching falling knives" are BEARISH (SELL).
+        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time", "Down bad", "being dumped like a shitcoin", "topped out", "slow grind down", "stay out", "avoid at all costs", "retrace", "full pump retrace", "annoying", "doesn't help", "Yikes", "yikes", or "avoid catching falling knives" are BEARISH (SELL).
+        - **NEGATIVE PUMP DESIRE**: Phrases like "Never let $[Symbol] pump again", "Stop the pump", or "I hope this dumps" are BEARISH (SELL).
+        - **SARCASTIC MOCKERY**: Mocking "bulls" or "moon boys" by quoting a ridiculous high price target from a fictional or silly source (e.g. "According to Twitter $LTC is heading straight to $8,000", "Someone said $BTC to 1M by Friday") is BEARISH (SELL).
+        - **HISTORICAL ANALOGY**: Pointing to a past "bear market" chart or fractal as a guide for current price action is BEARISH (SELL).
         - WAITING FOR LOWER: Phrases like "Waiting for [Lower Price] and I am all in", "Hit [Lower Price] then I buy", or "Looking for [Lower Price] to enter" are BEARISH (SELL) for the short-term direction. 
         - SKEPTICAL REBOUNDS: Even if the author denies an extreme crash (e.g. "I don't think we hit $30k"), if the level mentioned is significantly below current price and the tone is cautious, it is BEARISH (SELL).
-        - SEASONALITY: Historical negative performance claims like "Worst month", "Tough month", or "Historically red" for an asset are BEARISH (SELL).
-        - Example: "Stellantis avoid at all costs..." -> symbol: "STLA", action: "SELL"
-        - Example: "Do you think $BTC could drop to $30,000 in 2026? I personally think we won't go this low." -> action: "SELL" (Cautious tone implies potential for significant drop, even if not to $30k)
-        - Example: "I love $ETH. But it's hard to see it's being dumped like a shitcoin... hit 1500-2000 and I am all in." -> action: "SELL" (Expects a drop to that level)
-        - Example: "The good news: clean bull flag break on $ETHUSD. The bad news: it’s inverted." -> action: "SELL"
-        - Example: "February has historically been a tough trade. Second-worst month for $SPX." -> action: "SELL"
-        - Example: "$SNDK just turned red. Blow off top dance." -> action: "SELL"
-        - Example: "$APP $482’s today. Wow what a drop. I do call out shorts too!" -> action: "SELL"
-        - Example: "$BMNR -85% from ATH’s. Not good…" -> action: "SELL"
+        - Example: "$CHZ Yikes." -> action: "SELL"
+        - Example: "Promise me you'll never let $ZEC pump again" -> action: "SELL"
+        - Example: "According to Twitter $LTC is heading straight to $8,000" -> action: "SELL" (Sarcastic mockery of moon sentiment)
+        - Example: "$ZEN ...annnnd full pump retrace." -> action: "SELL"
+        - Example: "$BTC. Checking back in on this chart from 2 years ago." (Image of bear market crash) -> action: "SELL"
+        - Example: "$ZEN ... annoying. BTC dropping at the same time probably doesn't help." -> action: "SELL"
          `;
 
         const { object } = await generateObject({
