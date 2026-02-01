@@ -310,7 +310,7 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
         const quotes = result.indicators.quote[0];
         if (!date && result.meta?.regularMarketPrice) return result.meta.regularMarketPrice;
         if (quotes && quotes.close && quotes.close.length) {
-            const valid = quotes.close.filter((p) => p !== null);
+            const valid = quotes.close.filter((p: any) => p !== null);
             return valid[valid.length - 1];
         }
     } catch (e) {
