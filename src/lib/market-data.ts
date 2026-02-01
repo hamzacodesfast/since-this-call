@@ -16,7 +16,7 @@ const CMC_BASE = 'https://pro-api.coinmarketcap.com/v1';
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
     'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD', 'OPEN',
-    'GME', 'BABA', 'LAC', 'HIMS', 'SOFI', 'MARA', 'RIOT', 'CLSK', 'BITF', 'IREN', 'AMR', 'HCC', 'ARCH', 'BTU', 'CEIX'
+    'GME', 'BABA', 'LAC', 'HIMS', 'SOFI', 'MARA', 'RIOT', 'CLSK', 'BITF', 'IREN', 'AMR', 'HCC', 'ARCH', 'BTU', 'CEIX', 'STLA', 'STX'
 ]);
 
 /**
