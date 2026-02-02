@@ -59,8 +59,9 @@ async function computeMetrics(): Promise<PlatformMetrics> {
     }
     const profiles = await profilePipeline.exec();
 
-    profiles.forEach((profile: any) => {
-        if (profile && profile.totalAnalyses) {
+    profiles.forEach((result: any) => {
+        const profile = Array.isArray(result) ? result[1] : result;
+        if (profile && profile.totalAnalyses !== undefined) {
             totalAnalyses += parseInt(profile.totalAnalyses) || 0;
             totalWins += parseInt(profile.wins) || 0;
             totalLosses += parseInt(profile.losses) || 0;
