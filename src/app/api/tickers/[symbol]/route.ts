@@ -25,9 +25,19 @@ export async function GET(
         // Our storage uses TYPE:SYMBOL keys.
         // Let's try CRYPTO first, if null try STOCK.
 
-        let profile = await getTickerProfile(symbol, 'CRYPTO');
-        if (!profile) {
-            profile = await getTickerProfile(symbol, 'STOCK');
+        // Fetch both potential profiles
+        const [cryptoProfile, stockProfile] = await Promise.all([
+            getTickerProfile(symbol, 'CRYPTO'),
+            getTickerProfile(symbol, 'STOCK')
+        ]);
+
+        let profile = null;
+
+        // Smart selection: Pick the one with more data
+        if (cryptoProfile && stockProfile) {
+            profile = cryptoProfile.totalAnalyses >= stockProfile.totalAnalyses ? cryptoProfile : stockProfile;
+        } else {
+            profile = cryptoProfile || stockProfile;
         }
 
         if (!profile) {

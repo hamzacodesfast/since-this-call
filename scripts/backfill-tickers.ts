@@ -85,7 +85,8 @@ async function backfillTickerProfiles() {
 
             const stats = tickerStats.get(tickerKey);
             stats.totalAnalyses++;
-            stats.lastAnalyzed = Math.max(stats.lastAnalyzed, analysis.timestamp || 0);
+            const ts = analysis.timestamp ? parseInt(analysis.timestamp) : 0;
+            stats.lastAnalyzed = Math.max(stats.lastAnalyzed, !isNaN(ts) ? ts : 0);
 
             const perf = analysis.performance || 0;
             if (Math.abs(perf) < 0.01) {
@@ -147,6 +148,11 @@ async function backfillTickerProfiles() {
     // 5. Clear metrics cache
     await redis.del('leaderboard_metrics_cache');
     await redis.del('platform_metrics_cache');
+
+    // DEBUG: Print specific stats for verification
+    if (tickerStats.has('CRYPTO:BTC')) {
+        console.log('🔍 DEBUG BTC STATS:', tickerStats.get('CRYPTO:BTC'));
+    }
 
     console.log(`\n✅ Backfill complete!`);
     console.log(`   Total analyses indexed: ${totalAnalyses}`);

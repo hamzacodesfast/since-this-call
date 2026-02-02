@@ -67,89 +67,51 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         }
     });
 
-    // 2. Sample 500 Most Recent Analyses for Top Tickers & Distributions
-    // This provides a rolling window of "Trends"
-    const GLOBAL_ANALYSES_ZSET = 'global:analyses:timestamp';
-    const recentRefs = await redis.zrange(GLOBAL_ANALYSES_ZSET, 0, 499, { rev: true }) as string[];
+    // 2. Get Ticker Stats directly from Redis (Pre-computed by backfill-tickers.ts)
+    const trackedTickers = await redis.smembers('tracked_tickers') as string[];
 
-    // Group refs by user to minimize Redis calls
-    const userMap: Record<string, Set<string>> = {};
-    recentRefs.forEach(ref => {
-        const [user, id] = ref.split(':');
-        if (!userMap[user]) userMap[user] = new Set();
-        userMap[user].add(id);
-    });
-
-    // Fetch histories for all users in the sample
-    const historyPipeline = redis.pipeline();
-    const usersInSample = Object.keys(userMap);
-    for (const user of usersInSample) {
-        historyPipeline.lrange(`user:history:${user}`, 0, -1);
+    // Fetch all ticker profiles
+    const tickerPipeline = redis.pipeline();
+    for (const key of trackedTickers) {
+        tickerPipeline.hgetall(`ticker:profile:${key}`);
     }
-    const historyResults = await historyPipeline.exec();
+    const tickerProfiles = await tickerPipeline.exec() as any[];
 
-    // Flatten and filter the 500 targeted analyses
-    const windowAnalyses: any[] = [];
-    usersInSample.forEach((user, idx) => {
-        const historyData = historyResults[idx] as any[];
-        const targetIds = userMap[user];
-        if (historyData) {
-            historyData.forEach(item => {
-                const p = typeof item === 'string' ? JSON.parse(item) : item;
-                if (targetIds.has(String(p.id))) {
-                    windowAnalyses.push(p);
-                }
-            });
-        }
-    });
-
-    // 3. Aggregate Stats from the 500-tweet window
-    const tickerMap: Record<string, TickerStats> = {};
+    // 3. Aggregate Stats from Ticker Profiles
     let bullishCalls = 0;
     let bearishCalls = 0;
     let cryptoCalls = 0;
     let stockCalls = 0;
 
-    // Resetting aggregation logic
-    bullishCalls = 0;
-    bearishCalls = 0;
+    const tickerList: TickerStats[] = [];
 
-    windowAnalyses.forEach(analysis => {
-        const symbol = (analysis.symbol || 'UNKNOWN').toUpperCase();
+    tickerProfiles.forEach((stats: any, index: number) => {
+        if (!stats) return;
 
-        const tickerKey = `${analysis.type || 'CRYPTO'}:${symbol}`;
+        const callCount = parseInt(stats.totalAnalyses) || 0;
+        const wins = parseInt(stats.wins) || 0;
+        const losses = parseInt(stats.losses) || 0;
+        const bullish = parseInt(stats.bullish) || 0;
+        const bearish = parseInt(stats.bearish) || 0;
 
-        if (!tickerMap[tickerKey]) {
-            tickerMap[tickerKey] = {
-                symbol: symbol,
-                callCount: 0,
-                bullish: 0,
-                bearish: 0,
-                wins: 0,
-                losses: 0
-            };
-        }
+        bullishCalls += bullish;
+        bearishCalls += bearish;
 
-        const stats = tickerMap[tickerKey];
-        stats.callCount++;
+        if (stats.type === 'STOCK') stockCalls += callCount;
+        else cryptoCalls += callCount; // Default to CRYPTO
 
-        if (analysis.sentiment === 'BULLISH') {
-            stats.bullish++;
-            bullishCalls++;
-        } else {
-            stats.bearish++;
-            bearishCalls++;
-        }
-
-        if (analysis.isWin) stats.wins++;
-        else stats.losses++;
-
-        if (analysis.type === 'CRYPTO') cryptoCalls++;
-        else if (analysis.type === 'STOCK') stockCalls++;
+        tickerList.push({
+            symbol: stats.symbol || trackedTickers[index].split(':')[1],
+            callCount,
+            bullish,
+            bearish,
+            wins,
+            losses
+        });
     });
 
-    // Sort and return top 100 tickers to allow for meaningful search
-    const topTickers = Object.values(tickerMap)
+    // Sort and Top 100
+    const topTickers = tickerList
         .sort((a, b) => b.callCount - a.callCount)
         .slice(0, 100);
 

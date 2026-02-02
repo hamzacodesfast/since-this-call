@@ -49,7 +49,7 @@ export default function TickerDetailPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(`/api/tickers/${symbol}`);
+            const res = await fetch(`/api/tickers/${symbol}`, { cache: 'no-store' });
             if (!res.ok) throw new Error('Ticker not found');
 
             const data = await res.json();
