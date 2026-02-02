@@ -43,10 +43,16 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 
 ### Linguistic Hardening
 - **Slang Overrides**: "Cooked", "Avoiding", "Surviving", "Pain", "Top is in" = **SELL/BEARISH**.
+- **Mocking/Skepticism**: "Tried to warn you", "Financial illiteracy", "Dumpster Fire", "Ponzi", "Not a store of value" = **SELL/BEARISH**.
+- **Regret/FOMO**: "Regret Selling" (Bearish), "Stupid FOMO" (Bearish), "Speculating to Accumulate" (Bullish).
 - **Mathematical Validation**: Perform literal price comparisons (Target Price < Current Price = SELL).
 - **Proxy Tickers**:
     - **@saylor / @strategy**: Automatically resolve their "Buys" to **BTC** (rather than MSTR).
     - **USDT.D**: Bearish USDT dominance = Bullish Crypto signal.
+
+### Pricing Accuracy (The "Dead Zone" Fix)
+- **Problem**: Tweets from 8 PM - 4 AM EST traditionally returned "future" market data.
+- **Solution**: The `PriceUpdater` now uses a **12-hour high-precision search window** for historical tweets, falling back to the *closest past close* rather than future open.
 
 ---
 

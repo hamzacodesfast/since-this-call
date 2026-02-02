@@ -103,14 +103,14 @@ export default function LeaderboardPage() {
                 </div>
 
                 {loading ? (
-                    <div className="grid md:grid-cols-2 gap-8 animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-pulse">
                         <div className="h-[600px] bg-muted/50 rounded-xl" />
                         <div className="h-[600px] bg-muted/50 rounded-xl" />
                     </div>
                 ) : (
                     <>
                         {/* Charts Visualization */}
-                        <div className="grid md:grid-cols-2 gap-8 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                             <Card className="border-green-500/20 bg-background/40">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="flex items-center gap-2 text-green-500 text-sm">
@@ -150,7 +150,7 @@ export default function LeaderboardPage() {
                             </Card>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {/* Top 10 */}
                             <Card className="border-green-500/20 bg-background/40">
                                 <CardHeader className="pb-4">

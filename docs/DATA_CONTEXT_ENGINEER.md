@@ -13,9 +13,11 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### 1. Linguistic Disambiguation (The "Slang" Layer)
 *   **Cultural Fluency**: You must translate FinTwit idioms into binary signals. 
-    *   *Example:* "Cooked," "Surviving," "Pain," "Avoiding" = **SELL**.
-    *   *Example:* "We are so back," "Corn is king," "Send it" = **BUY**.
+    *   *Example:* "Cooked," "Surviving," "Pain," "Avoiding," "Dumpster Fire" = **SELL**.
+    *   *Example:* "We are so back," "Corn is king," "Send it," "Accumulating" = **BUY**.
 *   **Inverse Sentiment Parsing**: Recognizing when "I'm ruined" or "Bags are heavy" actually implies a **BULLISH** stance (long position suffering drawdown) vs. a bearish prediction.
+*   **Skepticism & Mockery**: Identifying "I tried to warn you" or "Financial illiteracy" as **BEARISH** signals, even if the user references a generally bullish sentiment (they are mocking it).
+*   **Regret Parsing**: "I might regret selling" is a **BEARISH** action (Sold), despite the emotional "regret" (which usually implies bullishness). Action > Emotion.
 
 ### 2. Numerical Directionality (The "Math" Layer)
 *   **Price Awareness**: You must inject `MARKET_CONTEXT` into the extraction layer.

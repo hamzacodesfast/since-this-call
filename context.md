@@ -22,11 +22,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 1,900 |
-| Unique Gurus | 553 |
-| Tracked Tickers | 299 |
-| Platform Win Rate| 41% |
-| Verified Edge Cases| 101 |
+| Total Analyses | 1,219 (Post-Purge) |
+| Unique Gurus | 563 |
+| Tracked Tickers | 189 |
+| Platform Win Rate| 36% |
+| Verified Edge Cases| 120+ |
 
 ---
 
@@ -61,6 +61,12 @@
     - Local dev environment now fully synced with production snapshot (1,500+ analyses).
 7.  **UX Enhancement (Jan 30)**
     - **Renaming**: "Most Tracked Tickers" -> "Trending Tickers" to better reflect the dynamic nature of the list.
+8.  **AI Logic Hardening (Feb 2)**
+    - **Patterns Added**: "Regret Selling", "Mocking/Sarcasm" (e.g. "dumpster fire", "financial illiteracy"), "New Lows", "Excessive FOMO".
+    - **Impact**: Reduced false positives on bearish "warning" tweets.
+9.  **Critical Pricing Engine Fix (Feb 2)**
+    - **Mechanism**: Implemented 12-hour high-precision search window + "Closest Past Close" logic.
+    - **Result**: Solved "Neutral" errors for overnight/weekend tweets (8 PM - 4 AM). Verified on $PLTR.
 
 ## 📂 Key Files
 

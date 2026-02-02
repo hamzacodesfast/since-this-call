@@ -58,8 +58,8 @@ export default function ProfilesPage() {
             </div>
 
             <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
                         <Link href="/">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -72,7 +72,7 @@ export default function ProfilesPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                             placeholder="Search username..."
-                            className="pl-9 bg-background/50 backdrop-blur"
+                            className="pl-9 bg-background/50 backdrop-blur w-full"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />

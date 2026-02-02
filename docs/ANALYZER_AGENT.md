@@ -77,6 +77,9 @@ Once the script completes, you **MUST** flush the metrics cache for the dashboar
 
 ## ⚠️ Troubleshooting
 
-- **"Could not identify financial call"**: The AI determined the tweet wasn't a clear BUY/SELL signal.
-- **"Market data not found"**: The ticker is not available on Yahoo Finance, CoinMarketCap, or CoinGecko. We do not track unlisted tokens or meme coins.
-- **429 Errors**: Too many requests. The script handles retries, but if it persists, increase the `wait(2000)` delay in `bulk-analyze.ts`.
+## ⚠️ Troubleshooting
+
+- **"Could not identify financial call"**: The AI determined the tweet wasn't a clear BUY/SELL signal (or was "News", "Live Show", "Question").
+- **"Market data not found"**: The ticker (e.g., small-cap meme coin) is not available on Yahoo, CMC, or CoinGecko. We *only* track authoritative assets. (Action: Use `scripts/remove-failed-batch.ts` to clean up).
+- **"Historical data not found"**: Tweet is too old or asset didn't exist then.
+- **429 Errors**: Too many requests. Use the `wait(2000)` delay default.

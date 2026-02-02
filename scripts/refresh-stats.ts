@@ -18,11 +18,25 @@ async function main() {
         process.exit(1);
     }
 
+    console.log('🔄 Triggering Profile Sync (Recalculate Stats)...');
+    try {
+        execSync('npx tsx scripts/force-sync-profiles.ts', { stdio: 'inherit' });
+    } catch (e) {
+        console.error('❌ Failed to run force-sync-profiles:', e);
+    }
+
     console.log('🔄 Triggering Ticker Backfill to sync stats...');
     try {
         execSync('npx tsx scripts/backfill-tickers.ts', { stdio: 'inherit' });
     } catch (e) {
         console.error('❌ Failed to run backfill-tickers:', e);
+    }
+
+    console.log('🔄 Triggering Platform Metrics Refresh...');
+    try {
+        execSync('npx tsx scripts/refresh-metrics.ts', { stdio: 'inherit' });
+    } catch (e) {
+        console.error('❌ Failed to run refresh-metrics:', e);
     }
 
     process.exit(0);

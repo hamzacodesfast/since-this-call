@@ -80,23 +80,25 @@ export default function StatsPage() {
             </div>
 
             <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
-                <div className="flex items-center gap-4 mb-8">
-                    <Link href="/">
-                        <Button variant="ghost" size="sm">
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back
-                        </Button>
-                    </Link>
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <BarChart3 className="w-8 h-8" />
-                        Platform Stats
-                    </h1>
-                    <div className="ml-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                        <Link href="/">
+                            <Button variant="ghost" size="sm">
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Back
+                            </Button>
+                        </Link>
+                        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                            <BarChart3 className="w-8 h-8" />
+                            Platform Stats
+                        </h1>
+                    </div>
+                    <div className="w-full sm:w-auto">
                         <ScreenshotButton
                             targetId="platform-stats-container"
                             buttonText="Share Platform Alpha"
                             shareText={`Verified by @sincethiscall 🧾\n\nPlatform Performance:\n${winRate}% Win Rate across ${stats?.totalAnalyses} calls! 🚀`}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                             size="sm"
                         />
                     </div>

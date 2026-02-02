@@ -161,17 +161,18 @@ export default function Home() {
                                 </Button>
                             </div>
                         </form>
-                        <div className="flex justify-between items-center px-2">
+                        <div className="flex justify-center sm:justify-between items-center px-1 pt-2">
                             <button
+                                type="button"
                                 onClick={() => {
                                     setAssetType(assetType === 'CRYPTO' ? 'STOCK' : 'CRYPTO');
                                     setData(null);
                                     setError(null);
                                 }}
-                                className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+                                className="group flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 hover:bg-secondary text-sm font-medium text-foreground transition-all active:scale-95"
                             >
-                                <ArrowRight className="w-3 h-3 rotate-180" />
-                                Switch to {assetType === 'CRYPTO' ? 'Stocks' : 'Crypto'}
+                                <ArrowRight className="w-4 h-4 text-primary group-hover:-translate-x-1 transition-transform rotate-180" />
+                                <span>Switch to {assetType === 'CRYPTO' ? 'Stocks' : 'Crypto'}</span>
                             </button>
                         </div>
                     </div>
