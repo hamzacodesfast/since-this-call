@@ -25,10 +25,12 @@ async function reanalyze() {
     const redis = getRedisClient();
 
     const tweetId = process.argv[2];
-    const caOverride = process.argv[3];
+    const symbolOverride = process.argv.find(a => a.startsWith('--symbol='))?.split('=')[1];
+    const actionOverride = process.argv.find(a => a.startsWith('--action='))?.split('=')[1] as 'BUY' | 'SELL' | undefined;
+    const caOverride = process.argv[3]?.startsWith('--') ? undefined : process.argv[3];
 
     if (!tweetId) {
-        console.error('❌ Usage: npx tsx scripts/reanalyze.ts <TWEET_ID> [CA_OVERRIDE]');
+        console.error('❌ Usage: npx tsx scripts/reanalyze.ts <TWEET_ID> [CA_OVERRIDE] [--symbol=SYMBOL] [--action=BUY/SELL]');
         process.exit(1);
     }
 
@@ -68,7 +70,10 @@ async function reanalyze() {
     // 2. Re-analyze the tweet
     console.log('\n🔄 Re-analyzing tweet...');
     try {
-        const newResult = await analyzeTweet(tweetId, caOverride);
+        const sentimentOverride = actionOverride === 'BUY' ? 'BULLISH' :
+            actionOverride === 'SELL' ? 'BEARISH' : undefined;
+
+        const newResult = await analyzeTweet(tweetId, caOverride as any, symbolOverride, sentimentOverride);
 
         console.log(`\n🤖 AI Extraction:`);
         console.log(`   Action: ${newResult.analysis.action}`);
@@ -91,7 +96,6 @@ async function reanalyze() {
             symbol: newResult.analysis.symbol,
             type: newResult.analysis.type,
             sentiment: newResult.analysis.sentiment,
-            contractAddress: newResult.analysis.contractAddress,
 
             entryPrice: newResult.market.callPrice,
             currentPrice: newResult.market.currentPrice,
@@ -168,6 +172,12 @@ async function reanalyze() {
         process.exit(0);
 
     } catch (e: any) {
+        if (e.message && e.message.includes('Could not identify financial call')) {
+            console.warn('\n⚠️ AI rejected this tweet (Not a financial call).');
+            console.warn('❌ Auto-removal is DISABLED to prevent data loss. Please remove manually if needed.');
+            process.exit(1);
+        }
+
         console.error('❌ Re-analysis failed:', e.message);
         console.error(e);
         process.exit(1);

@@ -29,6 +29,22 @@ export async function extractCallFromText(
 ): Promise<CallData | null> {
 
     try {
+        // 0. Pre-filter Noise (Deterministic)
+        const upperText = tweetText.toUpperCase();
+        const NOISE_PHRASES = [
+            'LIVE SHOW', 'LIVE NOW', 'JOIN US', 'STREAMING NOW', 'TWITTER SPACE', 'BREAKING NEWS',
+            'TRADE OF THE WEEK', 'WEEKLY RECAP'
+        ];
+
+        // Only blocking if there isn't a clear "I AM BUYING" signal to be safe? 
+        // No, aggressive filtering is better for noise reduction as per user request.
+        // But we want to avoid blocking real trades. 
+        // Let's block "LIVE SHOW" definitely.
+        if (NOISE_PHRASES.some(phrase => upperText.includes(phrase))) {
+            console.log('[AI-Extractor] Blocked by Noise Filter:', tweetText.substring(0, 50));
+            return null;
+        }
+
         const btcPrice = marketContext?.['BTC'] || 90000;
 
         const promptText = `
@@ -40,24 +56,36 @@ export async function extractCallFromText(
         CRITICAL DIRECTIVE:
         If the tweet is about a MEME COIN, a PUMP.FUN token, or a low-cap DEX-only token (e.g. anything not in the top 500 by market cap or listed on major centralized exchanges), you MUST return action: "NULL".
         We do NOT track "moonshots", "shilling", or any unlisted "gems". 
+        
+        WORD TICKERS ($HYPE, $DEGEN, etc):
+        Some tickers look like common words (e.g. $HYPE, $DEGEN, $MOG, $BRETT).
+        You MUST treat these as valid assets IF and ONLY IF:
+        1. They are prefixed with a '$' (e.g. $HYPE).
+        2. The context is strictly financial (price action, chart, "outperformance", "strength", "long", "short").
+        - Example: "$HYPE outperforming everything." -> ticker: "HYPE", action: "BUY"
+        - Example: "This is pure hype." -> action: "NULL" (Common word usage)
 
         Tweet Content: "${tweetText}"
         Tweet Date: "${tweetDate}"
         
         DIRECTIVES:
         1. Action: BUY (Active Long/Spot position), SELL (Active Short position), NULL (No trade, factual reporting, conditional, or meme coin).
-        2. Ticker: Return pure symbol (e.g. BTC, ETH, MSTR).
+        2. Ticker: Return pure symbol (e.g. BTC, HYPE, MSTR).
         3. Sentiment Analysis: Handle sarcasm, memes, and slang as signals for MAJOR assets only.
         4. If it is a meme coin like $WIF, $BONK, $PEPE, or any other "fun" token, use NULL unless you are certain it is a major market leader found on major centralized exchanges (though leaning towards NULL is safer if in doubt).
 
         NEGATIVE CONSTRAINTS (CRITICAL - RETURN action: "NULL"):
-        1. FACT STATING / DATA ONLY: If the tweet only reports data (e.g., "Volume is huge", "RSI is oversold", "Open Interest is rising") without the author explicitly stating they are BUYING or SELLING, you MUST return NULL. DO NOT infer direction from volume or indicators.
-        2. AMBIGUOUS / TWO-SIDED: If the author says "Could go both ways", "Waiting for a break", or "Up or down", return NULL.
-        3. CONDITIONAL / IF-THEN: "Buying if [level] breaks" or "Selling if [event] happens" MUST return NULL. We only track active positions or immediate calls.
-        4. VAGUE BULLISHNESS: "This looks interesting", "Eyes on this", or "Watching this" without a definitive "Long" or "Buy" signal MUST return NULL.
-        5. LACK OF CONTEXT: If the tweet is just a ticker symbol and a chart without any text indicating an active trade, return NULL.
+        1. LIVE SHOWS / NEWS: If the tweet contains "LIVE SHOW", "LIVE NOW", "JOIN US", "STREAMING", "Twitter Space", or "Breaking News", you MUST return NULL unless there is an EXPLICIT "I am buying [Ticker]" statement. Discussions about macro events (e.g. "Yen Intervention") are NEWS, not calls.
+        2. FACT STATING / DATA ONLY: If the tweet only reports data (e.g., "Volume is huge", "RSI is oversold", "Open Interest is rising") without the author explicitly stating they are BUYING or SELLING, you MUST return NULL. DO NOT infer direction from volume or indicators.
+        3. AMBIGUOUS / TWO-SIDED: If the author says "Could go both ways", "Waiting for a break", or "Up or down", return NULL.
+        4. CONDITIONAL / IF-THEN: "Buying if [level] breaks" or "Selling if [event] happens" MUST return NULL. We only track active positions or immediate calls.
+        5. VAGUE BULLISHNESS: "This looks interesting", "Eyes on this", or "Watching this" without a definitive "Long" or "Buy" signal MUST return NULL.
+        6. LACK OF CONTEXT: If the tweet is just a ticker symbol and a chart without any text indicating an active trade, return NULL.
 
         EXAMPLES OF NULL SIGNALS:
+        - "JOIN US LIVE! Discussing $BTC." -> action: "NULL" (Live Show)
+        - "LIVE SHOW: 1) $META soars 2) $BTC crash" -> action: "NULL" (Show Agenda / Topics)
+        - "Breaking: $ETH ETF approved." -> action: "NULL" (News Fact)
         - "Silver volume is exploding on the hourly." -> action: "NULL" (Just data)
         - "Could go up, could go down." -> action: "NULL" (Ambiguous)
         - "Buying $BTC if weekly closes above 100k." -> action: "NULL" (Conditional)
@@ -114,43 +142,49 @@ export async function extractCallFromText(
         - Phrases like "ring the register", "take profits", "booking gains", or "no one ever went broke taking a profit" are BEARISH (SELL) signals.
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
-        NEGATIVE MOMENTUM & SHORT CALLS (BEARISH):
-        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time", "Down bad", "being dumped like a shitcoin", "topped out", "slow grind down", "stay out", "avoid at all costs", "retrace", "full pump retrace", "annoying", "doesn't help", "Yikes", "yikes", "I don't see how it holds", "suck the life out of you", "rolled over", "Moon boys are very quiet", "moon boys are quiet", "Bear cycle started", "counter trading the trend", "I'm still short", "I am still short", "having the last laugh", "proved me right once again", "structure stays broken", "trending down", "avoid catching falling knives", "Wait for the real drop", "Searching for a bottom", "Hasn't bottomed yet", "bulls last chance", "fun while it lasted", "expect [Symbol] to retest", "Sold it all", "sold everything", "flush down to", "Bearish Aster", "inverted $[Symbol] chart", "dump it on all of our heads", "massively push $[Symbol] at the top and dump it", "market cycles", "lost its bullish trend line", "year of the [Symbol] Bear Market", "Bear Market signals have flashed", "[Symbol] is ~[Percentage]% of the way through its current Bear Market", "Bull Market EMAs have officially crossed over", "Bearish Marubozu", "Bearish wedge", "caution", or "You have no idea how hard people are going to cry when [Symbol] is at [Lower Price]" are BEARISH (SELL).
-        - **NEGATIVE PUMP DESIRE**: Phrases like "Never let $[Symbol] pump again", "Stop the pump", or "I hope this dumps" are BEARISH (SELL).
-        - **SARCASTIC MOCKERY**: Mocking "bulls" or "moon boys" by quoting a ridiculous high price target from a fictional or silly source (e.g. "According to Twitter $LTC is heading straight to $8,000", "Someone said $BTC to 1M by Friday") is BEARISH (SELL).
-        - **HISTORICAL ANALOGY**: Pointing to a past "bear market" chart or fractal as a guide for current price action is BEARISH (SELL).
-        - WAITING FOR LOWER: Phrases like "Waiting for [Lower Price] and I am all in", "Hit [Lower Price] then I buy", or "Looking for [Lower Price] to enter" are BEARISH (SELL) for the short-term direction. 
-        - SKEPTICAL REBOUNDS: Even if the author denies an extreme crash (e.g. "I don't think we hit $30k"), if the level mentioned is significantly below current price and the tone is cautious, it is BEARISH (SELL).
-        - Example: "$CHZ Yikes." -> action: "SELL"
-        - Example: "$BTC rolled over... should have known." -> action: "SELL"
-        - Example: "Moon boys are quiet today... clown market." -> action: "SELL"
-        - Example: "$BTC ... I'm still short." -> action: "SELL"
-        - Example: "$BTC ... can suck the life out of you if you are wrong." -> action: "SELL"
-        - Example: "$BTC ... structure stays broken and trending down." -> action: "SELL"
-        - Example: "$TSLA Well, it was fun while it lasted." -> action: "SELL"
-        - Example: "Sold it all and took the gain from today. $TSLA" -> action: "SELL"
-        - Example: "This is an inverted $BTC chart... looks bullish." -> action: "SELL" (Actual chart is bearish)
-        - Example: "Tether has $XAUT now... If @circle does not do the same, it means $CRCL stock is not a good investment" -> ticker: "CRCL", action: "SELL"
-        - Example: "looks like 2026 is shaping up to be the year of the Bitcoin Bear Market" -> action: "SELL"
-        - Example: "10 out of 12 confirmed signals have indeed flashed... ~80% of the Bear Market signals have flashed" -> action: "SELL"
-        - Example: "Bitcoin is ~25% of the way through its current Bear Market" -> action: "SELL"
-        - Example: "The Bitcoin Bull Market EMAs have officially crossed over" (context: bearish breakdown) -> action: "SELL"
-        - Example: "$BTC ... lost its bullish trend line." -> action: "SELL" (Trend loss)
-        - Example: "$NVDA ... I don't see how it holds here." -> action: "SELL"
-        - Example: "Promise me you'll never let $ZEC pump again" -> action: "SELL"
-        - Example: "According to Twitter $LTC is heading straight to $8,000" -> action: "SELL" (Sarcastic mockery of moon sentiment)
-        - Example: "$ZEN ...annnnd full pump retrace." -> action: "SELL"
-        - Example: "$ZEN ... annoying. BTC dropping at the same time probably doesn't help." -> action: "SELL"
-        - Example: "$ETH Bearish Marubozu" -> action: "SELL"
-        - Example: "This started looking more and more like a bearish wedge. Caution. $BTCUSD" -> action: "SELL"
-        - Example: "Bearish Aster" -> action: "SELL"
-        - Example: "give me one more spike lower... $ZEC" -> action: "BUY" (Demand for entry)
-        - Example: "Bullish Aster" -> action: "BUY"
-        - Example: "Bullish WLFI" -> action: "BUY"
-        - Example: "$USO Is this exciting for you guys?" -> action: "BUY" (Context: Breakout)
+        - **NEGATIVE MOMENTUM & SHORT CALLS (BEARISH)**:
+        - **SWEEPING LOWS (BEARISH)**: Phrases like "sweep some lows", "sweep the lows", or "liquidity sweep below" imply the price must move down to hit those levels and are BEARISH (SELL).
+        - **BREAKDOWN WARNINGS (BEARISH)**: Phrases like "line in the sand", "lose this level and it opens the door for much deeper", "if we lose [Level] it's lights out", or "must hold [Level] or else" are BEARISH (SELL) when the author is highlighting the downside risk.
+        - **LOWER ENTRY TARGETS (BEARISH)**: If an author wants to "accumulate" or "buy the dip" at a price significantly lower (e.g. 20-30% below) current levels, it is BEARISH (SELL) for the short-term direction.
+        - **OI ABSORPTION (BEARISH)**: "Price barely moved + Open Interest skyrocketing" or "Price didn't move much and OI increased rapidly" suggests aggressive short accumulation or an impending breakdown and is BEARISH (SELL).
+        - **ZOOM OUT DISTRESS (BEARISH)**: Phrases like "Just zoomed out and [Negative Action/distress]" or "The monthly/weekly chart is a nightmare" are BEARISH (SELL).
+        - Phrases like "Not good...", "What a drop", "Calling out shorts", "Technical breakdown", "-X% from peak", "just turned red", "blow off top", "tough trade", "Not having a good time", "Down bad", "being dumped like a shitcoin", "topped out", "slow grind down", "stay out", "avoid at all costs", "retrace", "full pump retrace", "annoying", "doesn't help", "Yikes", "yikes", "I don't see how it holds", "suck the life out of you", "rolled over", "Moon boys are very quiet", "moon boys are quiet", "Bear cycle started", "counter trading the trend", "I'm still short", "I am still short", "leaning bearish", "bearish bias", "bearish tilt", "staying short", "having the last laugh", "proved me right once again", "structure stays broken", "trending down", "avoid catching falling knives", "Wait for the real drop", "Searching for a bottom", "Hasn't bottomed yet", "expect [Symbol] to retest", "Sold it all", "sold everything", "flush down to", "Bearish Aster", "inverted $[Symbol] chart", "dump it on all of our heads", "massively push $[Symbol] at the top and dump it", "market cycles", "lost its bullish trend line", "year of the [Symbol] Bear Market", "Bear Market signals have flashed", "[Symbol] is ~[Percentage]% of the way through its current Bear Market", "Bull Market EMAs have officially crossed over", "Bearish Marubozu", "Bearish wedge", "caution", or "You have no idea how hard people are going to cry when [Symbol] is at [Lower Price]" are BEARISH (SELL).
+        - **FUTURE BOTTOMS (BEARISH)**: If the author predicts the price will "bottom in [Future Month/Quarter]" (e.g. "BTC to bottom in Oct"), it implies more downside is expected before then. This is BEARISH (SELL).
+        - **SARCASTIC MOCKERY (BEARISH)**: Mocking "bulls" or "moon boys" for holding through dumps (e.g. "If you can't handle -70% dumps you don't deserve 5% pumps", "Poor bulls", "Hope the moon boys are enjoying the air down here") is BEARISH (SELL).
+        
+        - **GURU RHETORIC & TECHNICAL SIGNALS (BULLISH)**:
+        - **OI DIVERGENCE (BULLISH)**: "Price down + Open interest up" or "OI moving up while price moving down" is a squeeze signal and is BULLISH (BUY).
+        - **DOUBLE NEGATIVES**: Phrases like "does NOT NOT mean go long" mean "definitely go long" or "it is time to go long" and are BULLISH (BUY).
+        - **TECHNICAL TARGETS MET**: Stating that a bearish pattern (like Head and Shoulders) has "met its target" often signals the end of the move and is BULLISH (BUY) if combined with a reversal bias.
+        - Mentioning **BMNR** (Bitmanir) as a major asset related to Bitcoin miners/staked yield is allowed.
+        - Projections of increased NAV per share or staked yield value (e.g. "yield will be worth $0.49 per share") are BULLISH (BUY).
+        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire" ... 
+        - Example: "$BTC ... Should follow soon to sweep some lows across the board." -> action: "SELL"
+        - Example: "If we lose $84k on the Daily close... opens the door for a much deeper move." -> action: "SELL"
+        - Example: "accumulating ETH on dips, ideally all the way down into the $1900–$2000 zone" -> action: "SELL" (Short-term downside target)
+        - Example: "$BTC Just zoomed out and [Negative event]." -> action: "SELL"
+        - Example: "$BTC OI skyrocketing when price has barely moved." -> action: "SELL"
+        - Example: "$BTC price moving down. Open interest moving up. Ends only one way." -> action: "BUY"
+        - Example: "$AAPL H&S target met. Does NOT NOT mean go long." -> action: "BUY"
+        - Example: "BTC to bottom in Oct then straight up." -> action: "SELL" (Implied downside first)
+        - Example: "$BMNR ... staked yield will be worth $215 million ($0.49 per share)." -> action: "BUY"
+        - Example: "If you can't handle -70% dumps you don't deserve 5% pumps $CRV" -> action: "SELL"
+        - Example: "Looking for longs around 87k" (Current price 95k) -> action: "SELL" (Targeting lower)
+        - Example: "Why I am leaning bearish" -> action: "SELL"
+        - **GURU CONVICTION**: Phrases indicating extreme personal investment or conviction such as "I'm betting it all", "Betting the farm", "NW invested", "100% of my NW", "I will go bankrupt if...", "You are not bullish enough", "No one is more bullish", "Submit my ticket to the [Amount] club", "I am buying every dip", "You already know I am [buying/long]", "Don't say I didn't warn you", "generational opportunity", "generational wealth", or "free money" are BULLISH (BUY).
+        - **ASSET ANALOGIES**: Comparing an asset to a legendary success story (e.g. "The next Palantir", "$[Symbol] is the next $[Major Symbol]", "The $[Symbol] of $[Asset Class]") is BULLISH (BUY).
+        - Example: "If a black swan hits $IREN I go bankrupt. Betting it all." -> action: "BUY"
+        - Example: "$IREN is the next Palantir. Buy every dip." -> action: "BUY"
+        - Example: "You are not bullish enough $IREN" -> action: "BUY"
+        - Example: "No one is more bullish on $IREN than me." -> action: "BUY"
+        - Example: "Is this exciting for you guys?" -> action: "BUY" (Context: Breakout)
         `;
 
-        const models = ['gemini-2.0-flash-001', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+        const models = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
+        let lastErr;
+
+        // Simple delay helper
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
         const generate = async (modelName: string) => {
             return await generateObject({
@@ -166,30 +200,45 @@ export async function extractCallFromText(
             });
         };
 
-        let lastErr;
         for (const model of models) {
-            try {
-                const { object } = await generate(model);
-                if (object.action === 'NULL') return null;
-                return object;
-            } catch (err: any) {
-                lastErr = err;
-                const isQuota = err.message?.includes('Quota') || err.message?.includes('429');
-                if (isQuota) {
-                    console.warn(`[AI-Extractor] Quota hit for ${model}, trying next...`);
-                    await new Promise(r => setTimeout(r, 1000));
-                    continue;
+            // Try up to 2 times per model
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    const { object } = await generate(model);
+                    if (object.action === 'NULL') {
+                        console.log(`[AI-Extractor] ${model} returned NULL (Call Action is NULL)`);
+                        return null;
+                    }
+                    return object;
+                } catch (err: any) {
+                    lastErr = err;
+                    const isQuota = err.message?.includes('Quota') || err.message?.includes('429') || err.message?.includes('403') || err.message?.includes('RESOURCE_EXHAUSTED');
+
+                    if (isQuota) {
+                        const waitTime = (attempt + 1) * 2000; // 2s, 4s...
+                        console.warn(`[AI-Extractor] Quota hit for ${model} (Attempt ${attempt + 1}), waiting ${waitTime}ms...`);
+                        await delay(waitTime);
+                        continue; // Retry same model
+                    }
+
+                    // If not quota (e.g. strict safety filter), move to next model immediately
+                    console.warn(`[AI-Extractor] Model ${model} failed: ${err.message}. Trying next...`);
+                    break;
                 }
-                throw err;
             }
         }
 
-        throw lastErr;
+        // If all fail, throw specific error
+        if (lastErr && (lastErr.message?.includes('Quota') || lastErr.message?.includes('429'))) {
+            throw new Error('Our AI models are currently at capacity. Please try again in a few minutes.');
+        }
+
+        throw lastErr || new Error('Failed to analyze tweet.');
     } catch (error: any) {
+        console.error('[AI-Extractor] Fatal:', error);
         if (error.message?.includes('Quota') || error.message?.includes('429')) {
             throw new Error('Our AI models are currently at capacity. Please try again in a few minutes.');
         }
-        console.error('[AI-Extractor] Fatal:', error);
         throw new Error('Failed to analyze tweet. The AI service is currently unavailable.');
     }
 }

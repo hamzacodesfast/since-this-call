@@ -16,7 +16,7 @@ const CMC_BASE = 'https://pro-api.coinmarketcap.com/v1';
 const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
     'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD', 'OPEN',
-    'GME', 'BABA', 'LAC', 'HIMS', 'SOFI', 'MARA', 'RIOT', 'CLSK', 'BITF', 'IREN', 'AMR', 'HCC', 'ARCH', 'BTU', 'CEIX', 'STLA', 'STX'
+    'GME', 'BABA', 'LAC', 'HIMS', 'SOFI', 'MARA', 'RIOT', 'CLSK', 'BITF', 'IREN', 'AMR', 'HCC', 'ARCH', 'BTU', 'CEIX', 'STLA', 'STX', 'CRCL', 'BMNR'
 ]);
 
 /**
@@ -30,7 +30,7 @@ export function inferAssetType(symbol: string): 'CRYPTO' | 'STOCK' {
 
     // Default to STOCK for 1-4 character symbols unless it's a known crypto major
     // This prevents common stock tickers from being treated as crypto (e.g. LAC, GME)
-    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE', 'CHZ', 'ZEN', 'ZEC']);
+    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE', 'CHZ', 'ZEN', 'ZEC', 'TAO', 'WLFI']);
     if (CRYPTO_MAJORS.has(clean)) {
         return 'CRYPTO';
     }
@@ -96,6 +96,10 @@ const COINGECKO_IDS: Record<string, string> = {
     'CHZ': 'chiliz',
     'ZEN': 'horizen',
     'ZEC': 'zcash',
+    'TAO': 'bittensor',
+    'ASTER': 'astar',
+    'ASTR': 'astar',
+    'WLFI': 'world-liberty-financial',
 };
 
 // Launch dates and initial prices for major assets
@@ -143,6 +147,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
     // Normalization logic for stocks...
     const STOCK_OVERRIDES: Record<string, string> = {
         'GOLD': 'GLD',
+        'SILVER': 'SI=F',
         'BIZIM': 'BIZIM.IS',
     };
     if (STOCK_OVERRIDES[symbol]) {
@@ -158,6 +163,8 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         }
     }
 
+    const YAHOO_SKIP_CRYPTO = new Set(['TAO']);
+
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
             'BTC': 'BTC-USD',
@@ -168,14 +175,18 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
             'HYPE': 'HYPE32196-USD',
             'CHZ': 'CHZ-USD',
             'ZEN': 'ZEN-USD',
+            'ASTR': 'ASTR-USD',
+            'ASTER': 'ASTR-USD',
         };
 
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
-        console.log(`[Price] Trying Yahoo: ${yahooSymbol}`);
-        const yahooPrice = await getYahooPrice(yahooSymbol, date);
-        if (yahooPrice !== null) {
-            console.log(`[Price] Yahoo success for ${yahooSymbol}: ${yahooPrice}`);
-            return yahooPrice;
+        if (!YAHOO_SKIP_CRYPTO.has(symbol)) {
+            console.log(`[Price] Trying Yahoo: ${yahooSymbol}`);
+            const yahooPrice = await getYahooPrice(yahooSymbol, date);
+            if (yahooPrice !== null && yahooPrice > 0.000001) { // Basic sanity check for high value assets
+                console.log(`[Price] Yahoo success for ${yahooSymbol}: ${yahooPrice}`);
+                return yahooPrice;
+            }
         }
 
         const cmcPrice = await getCoinMarketCapPrice(symbol, date);
