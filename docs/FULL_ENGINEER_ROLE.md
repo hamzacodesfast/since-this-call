@@ -1,5 +1,5 @@
 # 🛠️ Since This Call: Full Engineer Role Guide
-**Updated:** January 30, 2026
+**Updated:** February 2, 2026
 
 You are the lead engineer for **Since This Call (STC)**, the definitive social prediction tracker for crypto and stock markets. Your responsibility covers data integrity, AI accuracy, and operational stability.
 
@@ -12,7 +12,7 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 ## 🏗️ Technical Stack
 - **Framework**: Next.js 14 (App Router) / TypeScript / Tailwind CSS / shadcn/ui.
 - **AI Engine**: Gemini 2.0 Flash (via Vercel AI SDK).
-- **Database**: Upstash Redis (Production) / Docker Redis:Alpine (Local).
+- **Database**: Upstash Redis (Production) / Docker `redis:alpine` (Local).
 - **Market Data**: Waterfall (Yahoo Finance → CoinMarketCap → CoinGecko).
 - **Visuals**: Recharts (Stats) / Remotion (Video) / html-to-image (Receipts).
 
@@ -24,13 +24,16 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 - **Code First**: Push logic/fix to `main` before running database wide-refreshes.
 - **Scripts First**: `refresh-metrics.ts` and `refresh-stats.ts` are pre-configured to target **Main (Production)**. Use the `--local` flag only for isolated testing.
 - **Marketing on Main**: Never prepare tweets, leaderboards, or growth reports using local data. Always pull from the production database to ensure public accuracy.
+- **Build Verification**: Run `npm run build` locally before every major push to ensure zero TypeScript or routing regressions.
 
 ### 2. Database Integrity (The "Anti-Crash" Protocol)
 - **STRICT TYPES**: Redis labels are sacred.
     - `user:profile:{user}` = **Hash**. Never `SET` a string on it (Site will crash).
     - `user:history:{user}` = **List**.
     - `all_users` = **Set**.
-- **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`.
+    - `tracked_tickers` = **Set**.
+- **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`. 
+- **Verification**: Post-sync, verify integrity with `docker exec redis-local redis-cli dbsize`.
 
 ---
 
@@ -49,6 +52,9 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 - **Proxy Tickers**:
     - **@saylor / @strategy**: Automatically resolve their "Buys" to **BTC** (rather than MSTR).
     - **USDT.D**: Bearish USDT dominance = Bullish Crypto signal.
+
+### Regression Prevention
+- **Prompt Sensitivity**: The AI prompt is highly tuned with 200+ examples. **Never** delete examples from the prompt without testing against known tricky tweets using `npx tsx scripts/reanalyze.ts`.
 
 ### Pricing Accuracy (The "Dead Zone" Fix)
 - **Problem**: Tweets from 8 PM - 4 AM EST traditionally returned "future" market data.
@@ -75,7 +81,7 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 ---
 
 ## 🎯 Current Engineering Roadmap
-1.  **Pro Tier**: Subscription logic for advanced alerts.
-2.  **Mobile Polish**: Finalizing touch-targets for the dual-mode search form.
+1.  **Pro Tier**: Subscription logic for advanced alerts (Implementation logic pending).
+2.  **Mobile Polish**: Enhancing touch-targets for the dual-mode search form (UI/UX phase).
 
 **Good luck, Engineer. The tape doesn't lie. 📊**
