@@ -143,6 +143,8 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         - **NEGATIVE MOMENTUM & SHORT CALLS (BEARISH)**:
+        - **MOCKING / WARNING (BEARISH)**: Phrases like "tried to warn you", "financial illiteracy", "devoted to the army" (sarcastic context), or "have fun staying poor" are BEARISH (SELL).
+        - **NEGATIVE CHARACTERIZATION (BEARISH)**: Labeling assets as "dumpster fires", "trash", "garbage", or "toxic" are BEARISH (SELL).
         - **FUNDAMENTAL SKEPTICISM (BEARISH)**: Phrases like "not a store of value", "ponzi", "intrinsic value is zero", "overvalued math", or "greater fool theory" are BEARISH (SELL).
         - **REGRET SELLING (BEARISH)**: Phrases like "regret selling", "sold too early", or "I know I might regret this" (context of selling) are BEARISH (SELL) because the action taken was selling.
         - **NEW LOWS (BEARISH)**: Phrases like "make new lows", "break the lows", or "lower lows incoming" are BEARISH (SELL).
@@ -220,6 +222,8 @@ export async function extractCallFromText(
         - Example: "$AAPL H&S target met. Does NOT NOT mean go long." -> action: "BUY"
         - Example: "BTC to bottom in Oct then straight up." -> action: "SELL" (Implied downside first)
         - Example: "$BMNR ... staked yield will be worth $215 million ($0.49 per share)." -> action: "BUY"
+        - Example: "I tried to warn you. Financially illiteracy is a terrible thing." -> action: "SELL"
+        - Example: "There are some absolute dumpster fires in there." -> action: "SELL"
         - Example: "$DOG order book shows heavy accumulation on Kraken." -> action: "BUY"
         - Example: "$NBIS is trading at cash + IP is free." -> action: "BUY"
         - Example: "Bitcoin is not a store of value." -> action: "SELL"
