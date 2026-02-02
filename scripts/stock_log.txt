@@ -1,0 +1,77 @@
+[dotenv@17.2.3] injecting env (7) from .env.production -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.2.3] injecting env (3) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+🔍 Fetching history for @stockmktnewz...
+found 5 tweets.
+
+--------------------------------------------------
+🔄 Processing 2017579546552217720 (NVDA)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for BTC-USD: 75460.68
+[Price] Yahoo success for ETH-USD: 2213.351
+[Price] Yahoo success for SOL-USD: 99.1143
+[Analyzer] Extracting from text: "Nvidia $NVDA CEO Jensen Huang just told reporters:..."
+   ✅ New Result: BUY NVDA
+   📝 Updated history entry at index 0
+
+--------------------------------------------------
+🔄 Processing 2016981643949478045 (HOOD)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for BTC-USD: 75460.68
+[Price] Yahoo success for ETH-USD: 2213.351
+[Price] Yahoo success for SOL-USD: 99.1143
+[Analyzer] Extracting from text: "JUST IN:
+
+The United States 🇺🇸 Federal governmen..."
+[AI-Extractor] gemini-2.0-flash returned NULL (Call Action is NULL)
+
+--------------------------------------------------
+🔄 Processing 2017001307794518516 (TSLA)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for BTC-USD: 75460.68
+[Price] Yahoo success for ETH-USD: 2213.351
+[Price] Yahoo success for SOL-USD: 99.1143
+[Analyzer] Extracting from text: "BREAKING
+
+Elon Musk owned SpaceX is reportedly con..."
+[AI-Extractor] gemini-2.0-flash returned NULL (Call Action is NULL)
+
+--------------------------------------------------
+🔄 Processing 2016629376104751177 (TSLA)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for BTC-USD: 75460.68
+[Price] Yahoo success for SOL-USD: 99.1143
+[Price] Yahoo success for ETH-USD: 2213.351
+[Analyzer] Extracting from text: "Tesla $TSLA brought in $94.8 Billion of Revenue in..."
+[AI-Extractor] gemini-2.0-flash returned NULL (Call Action is NULL)
+
+--------------------------------------------------
+🔄 Processing 2015508751541813694 (BTC)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for BTC-USD: 75460.68
+[Price] Yahoo success for SOL-USD: 99.1143
+[Price] Yahoo success for ETH-USD: 2213.351
+[Analyzer] Extracting from text: "Crypto is moving lower right now … Bitcoin $BTC lo..."
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 86344.515625
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 75460.68
+   ✅ New Result: BUY BTC
+   📝 Updated history entry at index 4
+
+📊 Recalculating profile for @stockmktnewz...
+[AnalysisStore] Synced profile for stockmktnewz: 5 calls (1W/2L)
+
+✅ Profile Reanalysis Complete.
+Success: 2
+Failed: 3

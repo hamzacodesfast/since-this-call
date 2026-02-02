@@ -100,6 +100,7 @@ const COINGECKO_IDS: Record<string, string> = {
     'ASTER': 'astar',
     'ASTR': 'astar',
     'WLFI': 'world-liberty-financial',
+    'ROSE': 'oasis-network',
 };
 
 // Launch dates and initial prices for major assets

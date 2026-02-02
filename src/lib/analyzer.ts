@@ -73,10 +73,15 @@ export async function analyzeTweetContent(
         throw new Error('Could not identify financial call');
     }
 
-    const symbol = cleanSymbol(callData.ticker);
+    let symbol = cleanSymbol(callData.ticker);
     const sentiment = callData.action === 'BUY' ? 'BULLISH' : 'BEARISH';
 
     let finalType = typeOverride || callData.type;
+    // Handle Ticker Aliases
+    if (symbol.toUpperCase() === 'CRYPTO') {
+        symbol = 'BTC';
+    }
+
     const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC', 'CRCL', 'SILVER', 'GOLD', 'USO'];
     if (symbol && FORCE_STOCKS.includes(symbol.toUpperCase())) {
         finalType = 'STOCK';

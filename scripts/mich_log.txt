@@ -1,0 +1,96 @@
+[dotenv@17.2.3] injecting env (7) from .env.production -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (3) from .env.local -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+🔍 Fetching history for @cryptomichnl...
+found 5 tweets.
+
+--------------------------------------------------
+🔄 Processing 2017574332453818502 (BTC)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for SOL-USD: 98.92706
+[Price] Yahoo success for BTC-USD: 75557.54
+[Price] Yahoo success for ETH-USD: 2213.126
+[Analyzer] Extracting from text: "The most important factor about this chart is that..."
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 82819.25
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 75557.54
+   ✅ New Result: BUY BTC
+   📝 Updated history entry at index 0
+
+--------------------------------------------------
+🔄 Processing 2017187282114035782 (BTC)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for ETH-USD: 2213.126
+[Price] Yahoo success for SOL-USD: 98.92706
+[Price] Yahoo success for BTC-USD: 75557.54
+[Analyzer] Extracting from text: "This is a phenomenal chart. 
+
+The current Z-Score ..."
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 82437.2890625
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 75557.54
+   ✅ New Result: BUY BTC
+   📝 Updated history entry at index 1
+
+--------------------------------------------------
+🔄 Processing 2015458138539925628 (BTC)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for SOL-USD: 98.92706
+[Price] Yahoo success for ETH-USD: 2213.126
+[Price] Yahoo success for BTC-USD: 75557.54
+[Analyzer] Extracting from text: "For the first time in the history, $BTC might prin..."
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 87816.53125
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 75557.54
+   ✅ New Result: BUY BTC
+   📝 Updated history entry at index 2
+
+--------------------------------------------------
+🔄 Processing 2014258231699542299 (BTC)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for BTC-USD: 75557.54
+[Price] Yahoo success for ETH-USD: 2213.126
+[Price] Yahoo success for SOL-USD: 98.92706
+[Analyzer] Extracting from text: "#Bitcoin holds the support level, though we'll sti..."
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 89729.375
+[Price] Trying Yahoo: BTC-USD
+[Price] Yahoo success for BTC-USD: 75557.54
+   ✅ New Result: SELL BTC
+   📝 Updated history entry at index 3
+
+--------------------------------------------------
+🔄 Processing 2012858509075833238 (ETH)...
+[Price] Trying Yahoo: BTC-USD
+[Price] Trying Yahoo: ETH-USD
+[Price] Trying Yahoo: SOL-USD
+[Price] Yahoo success for SOL-USD: 98.92706
+[Price] Yahoo success for ETH-USD: 2213.126
+[Price] Yahoo success for BTC-USD: 75557.54
+[Analyzer] Extracting from text: "$ETH starts to move upwards against #Bitcoin.
+
+Str..."
+[Price] Trying Yahoo: ETH-USD
+[Price] Yahoo success for ETH-USD: 3321.134521484375
+[Price] Trying Yahoo: ETH-USD
+[Price] Yahoo success for ETH-USD: 2213.126
+   ✅ New Result: BUY ETH
+   📝 Updated history entry at index 4
+
+📊 Recalculating profile for @cryptomichnl...
+[AnalysisStore] Synced profile for cryptomichnl: 5 calls (1W/4L)
+
+✅ Profile Reanalysis Complete.
+Success: 5
+Failed: 0

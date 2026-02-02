@@ -474,20 +474,17 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
         const existingIndex = history.findIndex((h: StoredAnalysis) => h.id === analysis.id);
 
         if (existingIndex !== -1) {
-            // Update existing entry
+            // Remove existing to replace (bubbles to top)
             const oldAnalysis = history[existingIndex];
-            history[existingIndex] = analysis;
+
+            history.splice(existingIndex, 1);
+            history.unshift(analysis);
 
             // Update Ticker Stats (Differential)
             await updateTickerStats(analysis, false, oldAnalysis);
         } else {
-            // Add new entry (prepend)
             history.unshift(analysis);
-
-            // Track the ticker for optimized price refresh
             await trackTicker(analysis);
-
-            // Update Ticker Stats
             await updateTickerStats(analysis, true);
         }
 

@@ -143,6 +143,21 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         - **NEGATIVE MOMENTUM & SHORT CALLS (BEARISH)**:
+        - **SCAM PROCLAMATIONS (BEARISH)**: Phrases declaring a project a "rug", "scam", "vaporware", or saying "the rug is complete" are BEARISH (SELL).
+        - **DOOMSDAY PREDICTIONS (BEARISH)**: Phrases like "fizzle to 0", "go to zero", "won't be another bull market", "dead project", or "not coming back" are BEARISH (SELL).
+        - **CYCLE SKEPTICISM (BEARISH)**: Phrases implying the current cycle is a trap, e.g. "same script", "people insist on overthinking it", "bull trap", or dismissing "this time is different" in a negative context are BEARISH (SELL).
+        - **SHORT HOLDING (BEARISH)**: Explicitly stating "haven't covered any short", "still holding shorts", or "adding to shorts" is BEARISH (SELL).
+        - **PATTERN BREAKDOWNS (BEARISH)**: Mentions of "rising wedge", "bear flag", or "head and shoulders" with phrases like "break down will happen", "expecting a break lower", "structure broke" are BEARISH (SELL).
+        - **FAILED CYCLES/ZONES (BEARISH)**: Phrases like "failed Weekly Cycle", "failed to reclaim", "rejected at resistance", "worst range", "needs to go", or "prefer a break and reclaim" (implying current state is bad) are BEARISH (SELL).
+        - **LOCAL TOP (BEARISH)**: Phrases like "local top is in", "top is in", "likely the top", or "topped out" are BEARISH (SELL).
+        - **BEARISH PROJECTIONS (BEARISH)**: Phrases like "looks like it wants to go to [Lower Price]", "heading to [Lower Price]", or "wants to visit [Lower Price]" are BEARISH (SELL) when the target is lower than current price.
+        - **LOADING SIGNALS (BEARISH)**: Phrases like "[Lower Price] loading", "[Lower Price] is a magnet", or "next stop [Lower Price]" are BEARISH (SELL) when the price is currently higher.
+        - **TIME-BASED DOWNSIDE (BEARISH)**: Predicting a lower price over a specific timeframe (e.g. "60k loading. Timeline: ~2 months", "[Lower Price] by [Month]") is BEARISH (SELL).
+        - **TARGET LISTS (BEARISH)**: If the author lists price levels with emojis like ⏳ (future target) or 🎯 (target) that are significantly BELOW current price (e.g. "88 ✅ 98 ✅ 78 ⏳"), it is BEARISH (SELL).
+        - **BIAS INHERITANCE (BEARISH)**: Phrases like "bias hasn't changed" or "bias never changed" in a cautious or negative context are BEARISH (SELL) if the previous context was bearish.
+        - **GOLDILOCKS PULLBACKS (BEARISH)**: Phrases like "Just right", "Not too deep, not too shallow", or "The perfect pullback" followed by a lower target are BEARISH (SELL).
+        - **TECHNICAL PHASES (BEARISH)**: Mentions of "Stage 4" (Weinstein Stage 4) or "major distribution phase" are BEARISH (SELL).
+        - **NEGATIVE PUNS / HASHTAGS (BEARISH)**: Sarcastic puns related to the company name or product (e.g. "#ThatsOneBadEgg" for Vital Farms/VITL, "#DeadStock" for a retail brand) are BEARISH (SELL).
         - **SWEEPING LOWS (BEARISH)**: Phrases like "sweep some lows", "sweep the lows", or "liquidity sweep below" imply the price must move down to hit those levels and are BEARISH (SELL).
         - **BREAKDOWN WARNINGS (BEARISH)**: Phrases like "line in the sand", "lose this level and it opens the door for much deeper", "if we lose [Level] it's lights out", or "must hold [Level] or else" are BEARISH (SELL) when the author is highlighting the downside risk.
         - **LOWER ENTRY TARGETS (BEARISH)**: If an author wants to "accumulate" or "buy the dip" at a price significantly lower (e.g. 20-30% below) current levels, it is BEARISH (SELL) for the short-term direction.
@@ -153,17 +168,41 @@ export async function extractCallFromText(
         - **SARCASTIC MOCKERY (BEARISH)**: Mocking "bulls" or "moon boys" for holding through dumps (e.g. "If you can't handle -70% dumps you don't deserve 5% pumps", "Poor bulls", "Hope the moon boys are enjoying the air down here") is BEARISH (SELL).
         
         - **GURU RHETORIC & TECHNICAL SIGNALS (BULLISH)**:
+        - **ANALOG COMPARISONS (BULLISH)**: Phrases comparing the current chart to a historical bottom or bullish analog (e.g. "tracking the [Year] bottom analog", "looks like [Symbol] in [Year]") are BULLISH (BUY).
+        - **FUTURE HYPE (BULLISH)**: Phrases like "Just wait", "future reference", "this is all we want", "again", "leaving this here" (with chart or positive context) are BULLISH (BUY).
+        - **IMMEDIATE TARGETS (BULLISH)**: Specific near-term targets higher than current price (e.g. "[Symbol] to [Price] by tomorrow") are BULLISH (BUY).
+        - **THEMATIC PLAYS (BULLISH)**: Identifying an asset as a "play" (e.g. "pick & shovels play", "AI play", "beta play") implies it is a good investment and is BULLISH (BUY).
+        - **COMMUNITY STRENGTH (BULLISH)**: Phrases like "Army shows up everyday", "community is strong", "holders are diamonds" are BULLISH (BUY).
+        - **COMEBACK NARRATIVE (BULLISH)**: Phrases like "comeback will be for the books", "recovery mode", "phoenix rising" are BULLISH (BUY).
+        - **EARNINGS REACTION (BULLISH)**: "Earnings season off to a GREAT START", "A+ quarter", or praising a report despite a price drop (implying discount/opportunity) is BULLISH (BUY).
+        - **HOLDING ZONES (BULLISH)**: "Holding that zone well", "defending the level", "respecting support" is BULLISH (BUY).
+        - **HOLDING SUPPORT (BULLISH)**: Phrases confirming a level is holding (e.g. "[Symbol] holds the support", "support held", "bounced off support") are BULLISH (BUY), even if the author mentions waiting for confirmation or "risk-on" triggers.
+        - **CONTRARIAN BULLISH (BULLISH)**: Phrases like "written off by most", "no one cares about $[Symbol] under [Price]", "everyone is bearish but I am looking long", or "the crowd is wrong" are BULLISH (BUY).
+        - **ASSET COMPARISONS (BULLISH)**: Comparing a currently hated or quiet asset to a historically successful one (e.g. "No one cared about Gold under 2k, now its all they talk about. Same for $[Symbol]") is BULLISH (BUY).
+        - **RELATIVE STRENGTH (BULLISH)**: Phrases like "Only $[Symbol] is green", "holding green while everything is red", "the only green today", or "$[Symbol] showing massive strength here" are BULLISH (BUY).
         - **OI DIVERGENCE (BULLISH)**: "Price down + Open interest up" or "OI moving up while price moving down" is a squeeze signal and is BULLISH (BUY).
         - **DOUBLE NEGATIVES**: Phrases like "does NOT NOT mean go long" mean "definitely go long" or "it is time to go long" and are BULLISH (BUY).
         - **TECHNICAL TARGETS MET**: Stating that a bearish pattern (like Head and Shoulders) has "met its target" often signals the end of the move and is BULLISH (BUY) if combined with a reversal bias.
         - Mentioning **BMNR** (Bitmanir) as a major asset related to Bitcoin miners/staked yield is allowed.
         - Projections of increased NAV per share or staked yield value (e.g. "yield will be worth $0.49 per share") are BULLISH (BUY).
-        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire" ... 
-        - Example: "$BTC ... Should follow soon to sweep some lows across the board." -> action: "SELL"
-        - Example: "If we lose $84k on the Daily close... opens the door for a much deeper move." -> action: "SELL"
-        - Example: "accumulating ETH on dips, ideally all the way down into the $1900–$2000 zone" -> action: "SELL" (Short-term downside target)
-        - Example: "$BTC Just zoomed out and [Negative event]." -> action: "SELL"
-        - Example: "$BTC OI skyrocketing when price has barely moved." -> action: "SELL"
+        - Phrases like "Calm before the storm", "The worst is over", "Bottom is in", "Ready for takeoff/breakout", "Looks like a bottom", "Consolidation before expansion", "on fire", "mooning", "to the moon", "send it", "printing", "easy money", "free money", "load up", "accumulate", "don't miss out", "last chance to buy", "breaking out", "new ATH soon", "LFG", "bullish", "buy the dip", "btfd", "longing this", "adding to my position", "holding strong", "undervalued", "gem", "alpha", "10x potential", "100x potential", "going to zero (sarcastically)", "rekt (sarcastically)", "stay poor (to non-holders)", "pumping", "rocket", "buying every dip", "looks incredible", "best chart", "send it to Valhalla", "price discovery", "blue chip", "super cycle", "bull cycle", "not enough [Symbol]", "I need more [Symbol]", "bought more", "just bought", "entering here", "solid entry", "entry confirmed", "technical breakout", "golden cross", "bull flag", "cup and handle", "support held", "bounced off support", "flipping resistance to support", "clean breakout", "parabolic", "generational wealth", "retirement play", or "You would be a fool to not have some [Symbol] at these prices" are BULLISH (BUY).
+        - Example: "Local top is in for Bitcoin" -> action: "SELL"
+        - Example: "The rug is complete." -> action: "SELL"
+        - Example: "there won't be another bull market for crypto... fizzle to 0" -> action: "SELL"
+        - Example: "Still haven't covered any $SLV." -> action: "SELL" (Holding short)
+        - Example: "Every cycle, same script, and every cycle people still swear 'this time is different.'" -> action: "SELL" (Cycle skepticism)
+        - Example: "$DOG Army Shows Up EVERYDAY!!!" -> action: "BUY"
+        - Example: "$ROSE comeback will be for in the books...." -> action: "BUY"
+        - Example: "$PATH holding that zone well" -> action: "BUY"
+        - Example: "$BTC.D is in a rising wedge pattern. Break down will happen soon." -> action: "SELL" (Bearish on Dominance)
+        - Example: "Bitcoin tracking the 2022 $MSTR bottom analog" -> action: "BUY"
+        - Example: "$VELO = pick & shovels play." -> action: "BUY"
+        - Example: "As expected, another failed Weekly Cycle for the $USD." -> action: "SELL" (Bearish DXY implies risk-on, but strictly sell DXY)
+        - Example: "Earnings season is off to a GREAT START 😅 $NFLX just reported an A+ quarter." -> action: "BUY"
+        - Example: "Crypto is moving lower right now … Bitcoin looks like it wants to go to $85K" -> action: "SELL"
+        - Example: "#Bitcoin holds the support level, though we'll still need to wait." -> action: "BUY"
+        - Example: "$ETH written off by most because they can't look past the 5 minute chart. Gold under 2k vibes." -> action: "BUY"
+        - Example: "Only $ROSE green today" -> action: "BUY" (Relative strength endorsement)
         - Example: "$BTC price moving down. Open interest moving up. Ends only one way." -> action: "BUY"
         - Example: "$AAPL H&S target met. Does NOT NOT mean go long." -> action: "BUY"
         - Example: "BTC to bottom in Oct then straight up." -> action: "SELL" (Implied downside first)
@@ -171,6 +210,15 @@ export async function extractCallFromText(
         - Example: "If you can't handle -70% dumps you don't deserve 5% pumps $CRV" -> action: "SELL"
         - Example: "Looking for longs around 87k" (Current price 95k) -> action: "SELL" (Targeting lower)
         - Example: "Why I am leaning bearish" -> action: "SELL"
+        - Example: "60K loading. Timeline: ~2 months. $BTC" -> action: "SELL"
+        - Example: "$BTC ... 88 ✅ 98 ✅ 78 ⏳" -> action: "SELL" (Targeting lower)
+        - Example: "$BTC ... Not too deep, not too shallow. Just right." -> action: "SELL" (Bullish pullback/downside)
+        - Example: "$VITL ... stage 4. #ThatsOneBadEgg" -> action: "SELL"
+        - Example: "$BTC ... Should follow soon to sweep some lows across the board." -> action: "SELL"
+        - Example: "If we lose $84k on the Daily close... opens the door for a much deeper move." -> action: "SELL"
+        - Example: "accumulating ETH on dips, ideally all the way down into the $1900–$2000 zone" -> action: "SELL" (Short-term downside target)
+        - Example: "$BTC Just zoomed out and [Negative event]." -> action: "SELL"
+        - Example: "$BTC OI skyrocketing when price has barely moved." -> action: "SELL"
         - **GURU CONVICTION**: Phrases indicating extreme personal investment or conviction such as "I'm betting it all", "Betting the farm", "NW invested", "100% of my NW", "I will go bankrupt if...", "You are not bullish enough", "No one is more bullish", "Submit my ticket to the [Amount] club", "I am buying every dip", "You already know I am [buying/long]", "Don't say I didn't warn you", "generational opportunity", "generational wealth", or "free money" are BULLISH (BUY).
         - **ASSET ANALOGIES**: Comparing an asset to a legendary success story (e.g. "The next Palantir", "$[Symbol] is the next $[Major Symbol]", "The $[Symbol] of $[Asset Class]") is BULLISH (BUY).
         - Example: "If a black swan hits $IREN I go bankrupt. Betting it all." -> action: "BUY"
