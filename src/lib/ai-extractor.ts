@@ -143,6 +143,8 @@ export async function extractCallFromText(
         - Example: "$META $730... if you ring the register and take profits, I do not blame ya." -> action: "SELL"
 
         - **NEGATIVE MOMENTUM & SHORT CALLS (BEARISH)**:
+        - **REGULATORY/LEGAL RISK (BEARISH)**: Mentions of "investigation", "SEC", "lawsuit", "prison", or "fraud" are BEARISH (SELL).
+        - **MANAGEMENT CRITICISM (BEARISH)**: Phrases criticizing management's capital allocation (e.g. "terrible at deploying capital", "dilution scam", "insiders selling") are BEARISH (SELL).
         - **TOP WATCH (BEARISH)**: Phrases like "on watch for THE top", "looking for a top", or "top soon" are BEARISH (SELL).
         - **TECHNICAL UNDERCUT (BEARISH)**: Phrases like "undercut its [Moving Average]", "lost support", or "closed below" causing "damage" or "breakdown" are BEARISH (SELL), even if a "potential reversal" is mentioned conditionally.
         - **FLUSH / CLEANSE (BEARISH)**: Phrases describing a drop as a "cleanse", "flush", "washout", or "purge" (implying lower prices needed to clear leverage) are BEARISH (SELL) for the immediate move.
@@ -171,7 +173,7 @@ export async function extractCallFromText(
         - **SARCASTIC MOCKERY (BEARISH)**: Mocking "bulls" or "moon boys" for holding through dumps (e.g. "If you can't handle -70% dumps you don't deserve 5% pumps", "Poor bulls", "Hope the moon boys are enjoying the air down here") is BEARISH (SELL).
         
         - **GURU RHETORIC & TECHNICAL SIGNALS (BULLISH)**:
-        - **VALUE BUYS (BULLISH)**: Phrases like "cheaper today than at any point", "trading at a discount", "generational buying opportunity", or "valuation is absurdly low" are BULLISH (BUY).
+        - **VALUE BUYS (BULLISH)**: Phrases like "seems cheap for a whole", "cheaper today than at any point", "trading at a discount", "generational buying opportunity", or "valuation is absurdly low" are BULLISH (BUY).
         - **ANALOG COMPARISONS (BULLISH)**: Phrases comparing the current chart to a historical bottom or bullish analog (e.g. "tracking the [Year] bottom analog", "looks like [Symbol] in [Year]") are BULLISH (BUY).
         - **FUTURE HYPE (BULLISH)**: Phrases like "Just wait", "future reference", "this is all we want", "again", "leaving this here" (with chart or positive context) are BULLISH (BUY).
         - **IMMEDIATE TARGETS (BULLISH)**: Specific near-term targets higher than current price (e.g. "[Symbol] to [Price] by tomorrow") are BULLISH (BUY).
@@ -211,6 +213,9 @@ export async function extractCallFromText(
         - Example: "$AAPL H&S target met. Does NOT NOT mean go long." -> action: "BUY"
         - Example: "BTC to bottom in Oct then straight up." -> action: "SELL" (Implied downside first)
         - Example: "$BMNR ... staked yield will be worth $215 million ($0.49 per share)." -> action: "BUY"
+        - Example: "$0.1 million seems cheap for a whole bitcoin" -> action: "BUY"
+        - Example: "SEC should open an investigation immediately" -> action: "SELL"
+        - Example: "terrible Saylor ... at deploying capital" -> action: "SELL"
         - Example: "$SNDK is cheaper today than at any point in the past year." -> action: "BUY"
         - Example: "Silver - on watch for THE top soon" -> action: "SELL"
         - Example: "3 fig eth might be the cleanse" -> action: "SELL" (Targeting <1000)
