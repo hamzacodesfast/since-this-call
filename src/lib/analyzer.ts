@@ -76,7 +76,10 @@ export async function analyzeTweetContent(
     let symbol = cleanSymbol(callData.ticker);
     const sentiment = callData.action === 'BUY' ? 'BULLISH' : 'BEARISH';
 
-    let finalType = typeOverride || callData.type;
+    // TRUST THE AI: Previously we prioritized typeOverride (User UI selection), 
+    // but users often forget to toggle the switch (e.g. analyzing TSLA while UI says Crypto).
+    // The AI is smarter at knowing that TSLA is a STOCK.
+    let finalType = callData.type;
     // Handle Ticker Aliases
     if (symbol.toUpperCase() === 'CRYPTO') {
         symbol = 'BTC';
