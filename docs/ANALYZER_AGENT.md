@@ -35,12 +35,46 @@ Create a JSON file (e.g., `tweets_to_analyze.json`) with a list of Tweet IDs or 
 }
 ```
 
-## 🚀 Execution
+## 🚀 Execution workflows
+
+### A. Bulk Analysis (Standard)
 
 Run the bulk analysis script pointing to your input file:
 
 ```bash
 npx tsx scripts/bulk-analyze.ts tweets_to_analyze.json
+```
+
+### B. Raw Batch Processing (e.g. `raw_tweets_batch4.txt`)
+
+If you have a raw text file with one URL per line, simplify it to a JSON array first.
+
+1.  **Convert to JSON**:
+    You can use a temporary script or a one-liner if you're comfortable. A simple node script `scripts/generate-tweets-data.ts` might help, or use this node one-liner:
+    ```bash
+    node -e 'fs.writeFileSync("tweets.json", JSON.stringify(fs.readFileSync("raw_tweets.txt", "utf-8").trim().split("\n").map(l => l.match(/http.*status\/(\d+)/)[0])))'
+    ```
+2.  **Run Analysis**:
+    ```bash
+    npx tsx scripts/bulk-analyze.ts tweets.json
+    ```
+
+### C. Single Tweet Fixes / Re-analysis
+
+If a specific tweet was analyzed incorrectly (wrong ticker, wrong sentiment, or failed price fetch), use `scripts/reanalyze.ts`. This script finds the tweet in the user's history and updates it in place.
+
+```bash
+# Basic re-run (tries AI again)
+npx tsx scripts/reanalyze.ts <TWEET_ID>
+
+# Force a specific symbol (useful for ambiguous tickers)
+npx tsx scripts/reanalyze.ts <TWEET_ID> --symbol=BTC
+
+# Force a specific action (BUY/SELL)
+npx tsx scripts/reanalyze.ts <TWEET_ID> --action=BUY
+
+# Force a Contract Address (CA) for obscure tokens
+npx tsx scripts/reanalyze.ts <TWEET_ID> 0x123...
 ```
 
 ### What happens during execution:
@@ -58,8 +92,11 @@ Once the script completes, you **MUST** flush the metrics cache for the dashboar
 1.  **Refresh Global Metrics**:
     The metrics (Total Analyzed, etc.) are cached for 15 minutes. To force an update:
     ```bash
-    # Run the flush script (or delete the 'platform_metrics' key in Redis)
+    # Wipe the cache key
     npx tsx scripts/clear-metrics-cache.ts
+    
+    # Or trigger a fetch (which re-populates if empty/expired)
+    npx tsx scripts/refresh-metrics.ts --local
     ```
 
 2.  **Running on Production**:
@@ -77,9 +114,9 @@ Once the script completes, you **MUST** flush the metrics cache for the dashboar
 
 ## ⚠️ Troubleshooting
 
-## ⚠️ Troubleshooting
-
 - **"Could not identify financial call"**: The AI determined the tweet wasn't a clear BUY/SELL signal (or was "News", "Live Show", "Question").
-- **"Market data not found"**: The ticker (e.g., small-cap meme coin) is not available on Yahoo, CMC, or CoinGecko. We *only* track authoritative assets. (Action: Use `scripts/remove-failed-batch.ts` to clean up).
+    - *Fix*: If you are sure it is a call, use `scripts/reanalyze.ts <ID> --action=BUY` to force it.
+- **"Market data not found"**: The ticker (e.g., small-cap meme coin) is not available on Yahoo, CMC, or CoinGecko. We *only* track authoritative assets. 
+    - *Fix*: Use `scripts/remove-failed-batch.ts` to clean up invalid entries if they got stuck.
 - **"Historical data not found"**: Tweet is too old or asset didn't exist then.
 - **429 Errors**: Too many requests. Use the `wait(2000)` delay default.
