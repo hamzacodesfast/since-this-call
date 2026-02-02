@@ -67,53 +67,110 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         }
     });
 
-    // 2. Get Ticker Stats directly from Redis (Pre-computed by backfill-tickers.ts)
-    const trackedTickers = await redis.smembers('tracked_tickers') as string[];
+    // 2. Calculate Trending Tickers (Last 500 Analyses by Timestamp)
+    const recentRefs = await redis.zrange('global:analyses:timestamp', 0, 499, { rev: true }) as string[];
 
-    // Fetch all ticker profiles
+    // We need to resolve these refs (username:id) to actual analyses to get the symbol
+    // Optimization: Group by username to minimize calls
+    const userMap = new Map<string, Set<string>>();
+    recentRefs.forEach(ref => {
+        const [username, id] = ref.split(':');
+        if (!userMap.has(username)) userMap.set(username, new Set());
+        userMap.get(username)!.add(id);
+    });
+
+    const trendingStats = new Map<string, TickerStats>();
+
+    // Fetch histories for involved users
+    const pipeline = redis.pipeline();
+    const usernames = Array.from(userMap.keys());
+    usernames.forEach(user => pipeline.lrange(`user:history:${user}`, 0, -1));
+    const histories = await pipeline.exec() as any[];
+
+    histories.forEach((result, i) => {
+        const username = usernames[i];
+        const targetIds = userMap.get(username)!;
+
+        // result is the list of history items (strings)
+        // Upstash/IORedis behavior: result might be [err, data] or just data. 
+        // Assuming standard behavior (array of strings) or handling basic error structure.
+        const historyList = Array.isArray(result) ? result : (result?.[1] as any[] || []);
+
+        if (!Array.isArray(historyList)) return;
+
+        historyList.forEach((itemStr: string) => {
+            try {
+                const analysis = typeof itemStr === 'string' ? JSON.parse(itemStr) : itemStr;
+                if (targetIds.has(analysis.id)) {
+                    // This is one of our recent tweets. Aggregate it.
+                    const symbol = analysis.symbol.toUpperCase();
+                    if (!trendingStats.has(symbol)) {
+                        trendingStats.set(symbol, {
+                            symbol,
+                            callCount: 0,
+                            bullish: 0,
+                            bearish: 0,
+                            wins: 0,
+                            losses: 0
+                        });
+                    }
+
+                    const stat = trendingStats.get(symbol)!;
+                    stat.callCount++;
+                    if (analysis.sentiment === 'BULLISH') stat.bullish++;
+                    if (analysis.sentiment === 'BEARISH') stat.bearish++;
+                    if (analysis.isWin) stat.wins++;
+                    else if (Math.abs(analysis.performance || 0) > 0.01) stat.losses++;
+                    // Note: 'neutral' isn't explicitly tracked in TickerStats interface properly for losses? 
+                    // logic varies, but for "wins/losses" pure count: 
+                    // isWin is usually strictly profit. 
+                    // existing logic: wins = parseInt(stats.wins), losses = ...
+                }
+            } catch (e) { /* ignore parse error */ }
+        });
+    });
+
+    // Convert map to array and sort
+    const topTickers = Array.from(trendingStats.values())
+        .sort((a, b) => b.callCount - a.callCount)
+        .slice(0, 100);
+
+    // 3. Fallback for Global Counts (bullishCalls, etc) - Keep using All-Time stats or aggregate?
+    // The previous code calculated these from `tickerProfiles` (all time).
+    // Accessing `ticker:profile:*` is still useful for *Platform Wide* totals (e.g. "Total Crypto Calls").
+    // So we should KEEP fetching all ticker profiles for the global counters, 
+    // BUT use the `trendingStats` for the `topTickers` return value.
+
+    // Fetch all ticker profiles for GLOBAL SUMS
+    const trackedTickers = await redis.smembers('tracked_tickers') as string[];
     const tickerPipeline = redis.pipeline();
     for (const key of trackedTickers) {
         tickerPipeline.hgetall(`ticker:profile:${key}`);
     }
     const tickerProfiles = await tickerPipeline.exec() as any[];
 
-    // 3. Aggregate Stats from Ticker Profiles
     let bullishCalls = 0;
     let bearishCalls = 0;
     let cryptoCalls = 0;
     let stockCalls = 0;
 
-    const tickerList: TickerStats[] = [];
+    tickerProfiles.forEach((stats: any) => {
+        // Handle result wrapper if necessary
+        // In some clients exec returns [error, result]. 
+        // If stats is array? No, usually object if no error. 
+        // Let's assume stats is the object or we need to extract it.
+        // If using @upstash/redis, it returns the value directly.
+        // Safety check:
+        const data = Array.isArray(stats) ? stats[1] : stats;
+        if (!data) return;
 
-    tickerProfiles.forEach((stats: any, index: number) => {
-        if (!stats) return;
-
-        const callCount = parseInt(stats.totalAnalyses) || 0;
-        const wins = parseInt(stats.wins) || 0;
-        const losses = parseInt(stats.losses) || 0;
-        const bullish = parseInt(stats.bullish) || 0;
-        const bearish = parseInt(stats.bearish) || 0;
-
-        bullishCalls += bullish;
-        bearishCalls += bearish;
-
-        if (stats.type === 'STOCK') stockCalls += callCount;
-        else cryptoCalls += callCount; // Default to CRYPTO
-
-        tickerList.push({
-            symbol: stats.symbol || trackedTickers[index].split(':')[1],
-            callCount,
-            bullish,
-            bearish,
-            wins,
-            losses
-        });
+        const callCount = parseInt(data.totalAnalyses) || 0;
+        bullishCalls += parseInt(data.bullish) || 0;
+        bearishCalls += parseInt(data.bearish) || 0;
+        if (data.type === 'STOCK') stockCalls += callCount;
+        else cryptoCalls += callCount;
     });
 
-    // Sort and Top 100
-    const topTickers = tickerList
-        .sort((a, b) => b.callCount - a.callCount)
-        .slice(0, 100);
 
     const winRate = (totalWins + totalLosses) > 0
         ? Math.round((totalWins / (totalWins + totalLosses)) * 100)
