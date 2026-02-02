@@ -74,20 +74,31 @@ export async function analyzeTweetContent(
     }
 
     let symbol = cleanSymbol(callData.ticker);
-    const sentiment = callData.action === 'BUY' ? 'BULLISH' : 'BEARISH';
+    let action = callData.action as 'BUY' | 'SELL';
+    let sentiment: 'BULLISH' | 'BEARISH' = action === 'BUY' ? 'BULLISH' : 'BEARISH';
 
     // TRUST THE AI: Previously we prioritized typeOverride (User UI selection), 
     // but users often forget to toggle the switch (e.g. analyzing TSLA while UI says Crypto).
     // The AI is smarter at knowing that TSLA is a STOCK.
     let finalType = callData.type;
-    // Handle Ticker Aliases
-    if (symbol.toUpperCase() === 'CRYPTO') {
-        symbol = 'BTC';
-    }
 
     const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC', 'CRCL', 'SILVER', 'GOLD', 'USO'];
     if (symbol && FORCE_STOCKS.includes(symbol.toUpperCase())) {
         finalType = 'STOCK';
+    }
+
+    // Dominance Parsing (Blueprint Section 3)
+    // Bearish USDT.D is a BULLISH signal for the crypto market.
+    const rawTicker = callData.ticker.toUpperCase();
+    if (rawTicker === 'USDT.D' || symbol === 'USDT.D') {
+        console.log(`[Analyzer] Dominance Parsing: Processing USDT.D sentiment inverse`);
+        // If sentiment is BEARISH on USDT.D, it's BULLISH for the market (BTC)
+        if (sentiment === 'BEARISH') {
+            symbol = 'BTC';
+            finalType = 'CRYPTO';
+            sentiment = 'BULLISH';
+            action = 'BUY';
+        }
     }
 
     const FORCE_CRYPTO = ['BTC', 'ETH', 'SOL', 'PEPE', 'WIF', 'BONK', 'DOGE', 'XRP', 'CHZ', 'ZEN', 'ZEC', 'TAO', 'ASTER', 'ASTR', 'WLFI'];
@@ -114,7 +125,7 @@ export async function analyzeTweetContent(
             sentiment,
             date: callData.date,
             ticker: callData.ticker,
-            action: callData.action as 'BUY' | 'SELL',
+            action: action,
             confidence_score: callData.confidence_score,
             timeframe: callData.timeframe,
             is_sarcasm: callData.is_sarcasm,

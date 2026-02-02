@@ -15,6 +15,7 @@ const nextConfig = {
   // Ensure we can use Edge functions
   experimental: {
     // serverActions: true, // Enabled by default in Next.js 14
+    serverComponentsExternalPackages: ['ioredis'],
   },
   logging: {
     fetches: {
