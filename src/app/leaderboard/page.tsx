@@ -40,7 +40,7 @@ export default function LeaderboardPage() {
         fetchProfiles();
     }, []);
 
-    // Filter to min 7 calls and sort
+    // Filter to min 10 calls and sort
     const qualified = profiles.filter(p => p.totalAnalyses >= 10);
     const top10 = [...qualified].sort((a, b) => b.winRate - a.winRate || b.totalAnalyses - a.totalAnalyses).slice(0, 10);
     const worst10 = [...qualified].sort((a, b) => a.winRate - b.winRate || b.totalAnalyses - a.totalAnalyses).slice(0, 10);
@@ -159,7 +159,7 @@ export default function LeaderboardPage() {
                                         Top 10 Gurus
                                         <TrendingUp className="w-4 h-4 ml-auto" />
                                     </CardTitle>
-                                    <p className="text-xs text-muted-foreground">Minimum 7 calls required</p>
+                                    <p className="text-xs text-muted-foreground">Minimum 10 calls required</p>
                                 </CardHeader>
                                 <CardContent className="space-y-3" id="top-gurus-card">
                                     {top10.map((p, i) => (
@@ -188,7 +188,7 @@ export default function LeaderboardPage() {
                                         Bottom 10 Gurus
                                         <TrendingDown className="w-4 h-4 ml-auto" />
                                     </CardTitle>
-                                    <p className="text-xs text-muted-foreground">Minimum 7 calls required | Fade signal?</p>
+                                    <p className="text-xs text-muted-foreground">Minimum 10 calls required | Fade signal?</p>
                                 </CardHeader>
                                 <CardContent className="space-y-3" id="worst-gurus-card">
                                     {worst10.map((p, i) => (
