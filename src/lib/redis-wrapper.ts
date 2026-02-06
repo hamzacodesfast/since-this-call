@@ -149,7 +149,11 @@ function createPipelineProxy(ioredisPipe: any) {
                     return target.zadd(key, member.score, member.member);
                 };
             }
-            return target[prop];
+            const value = target[prop];
+            if (typeof value === 'function') {
+                return value.bind(target);
+            }
+            return value;
         }
     });
 }

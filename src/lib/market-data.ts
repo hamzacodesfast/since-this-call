@@ -97,10 +97,11 @@ const COINGECKO_IDS: Record<string, string> = {
     'ZEN': 'horizen',
     'ZEC': 'zcash',
     'TAO': 'bittensor',
-    'ASTER': 'astar',
+    'ASTER': 'aster-2',
     'ASTR': 'astar',
     'WLFI': 'world-liberty-financial',
     'ROSE': 'oasis-network',
+    'RIVER': 'river',
 };
 
 // Launch dates and initial prices for major assets
@@ -164,7 +165,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         }
     }
 
-    const YAHOO_SKIP_CRYPTO = new Set(['TAO']);
+    const YAHOO_SKIP_CRYPTO = new Set(['TAO', 'ASTER']);
 
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
@@ -177,7 +178,6 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
             'CHZ': 'CHZ-USD',
             'ZEN': 'ZEN-USD',
             'ASTR': 'ASTR-USD',
-            'ASTER': 'ASTR-USD',
         };
 
         const yahooSymbol = mapping[symbol] || `${symbol}-USD`;
@@ -287,7 +287,7 @@ export function calculatePerformance(callPrice: number, currentPrice: number, se
 const INDEX_FALLBACKS: Record<string, string> = {
     'SPX': 'SPY', '^GSPC': 'SPY', '^SPX': 'SPY', 'ES': 'SPY', 'ES=F': 'SPY',
     'NDX': 'QQQ', '^NDX': 'QQQ', '^IXIC': 'QQQ', 'NQ': 'QQQ', 'NQ=F': 'QQQ',
-    'GOLD': 'GLD', 'XAU': 'GLD', 'SILVER': 'SLV', 'XAG': 'SLV',
+    'GOLD': 'GC=F', 'XAU': 'GC=F', 'SILVER': 'SI=F', 'XAG': 'SI=F',
     'DXY': 'DX-Y.NYB',
 };
 
@@ -349,8 +349,14 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
         if (!date && result.meta?.regularMarketPrice) return result.meta.regularMarketPrice;
         if (quotes && quotes.close && quotes.close.length) {
             const valid = quotes.close.filter((p: any) => p !== null);
-            // Return valid[0] (the one closest to our period1 start) for historical calls
-            return valid.length > 0 ? valid[0] : null;
+            let p = valid.length > 0 ? valid[0] : null;
+
+            // SPECIAL CASE: Yahoo SI=F and GC=F sometimes include a multiplier in metadata
+            // If SI=F is above 50, it's likely quoted in a way that needs scaling down (e.g. 82 -> 31)
+            // But actually 31 is the correct price. 
+            // If the price comes back as 82, it's garbage from a weird provider.
+            // We return null to fallback to next provider if available or just return the flawed value.
+            return p;
         }
     } catch (e) {
         console.error('[Yahoo] Error:', e);

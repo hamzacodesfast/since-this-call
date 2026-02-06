@@ -107,7 +107,7 @@ async function main() {
             let losses = 0;
             let neutral = 0;
             for (const hItem of history) {
-                if (Math.abs(hItem.performance) < 0.05) neutral++;
+                if (Math.abs(hItem.performance) < 0.01) neutral++;
                 else if (hItem.isWin) wins++;
                 else losses++;
             }

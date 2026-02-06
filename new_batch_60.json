@@ -1,0 +1,204 @@
+{
+    "calls": [
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019237687006548053",
+            "symbol": "VIX"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019188640145174925",
+            "symbol": "ZEC"
+        },
+        {
+            "url": "https://x.com/Cointelegraph/status/2019184395169550509",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/misconfig_exe/status/2019284954245656950",
+            "symbol": "XMR"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019210100435767750",
+            "symbol": "JPM"
+        },
+        {
+            "url": "https://x.com/CW8900/status/2019290873461350611",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/R1chardMaur1ce/status/2019246624770597108",
+            "symbol": "AMD"
+        },
+        {
+            "url": "https://x.com/crypto_condom/status/2019264198866280491",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/CookerFlips/status/2019290274527342764",
+            "symbol": "HYPE"
+        },
+        {
+            "url": "https://x.com/CW8900/status/2019291301230047530",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/Roman_Trading/status/2019259443234660748",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/degentradingLSD/status/2019252799775916064",
+            "symbol": "GLXY"
+        },
+        {
+            "url": "https://x.com/_CryptoSurf/status/2019108875706724601",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/SolportTom/status/2019280889415405827",
+            "symbol": "SOL"
+        },
+        {
+            "url": "https://x.com/LightYa8ami/status/2019248415683801090",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019290989152850105",
+            "symbol": "SILVER"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019289609159790829",
+            "symbol": "SILVER"
+        },
+        {
+            "url": "https://x.com/MMCrypto/status/2019289003653230943",
+            "symbol": "SOL"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019276473475961134",
+            "symbol": "TOTAL"
+        },
+        {
+            "url": "https://x.com/TheSkayeth/status/2019269357206180255",
+            "symbol": "ONDS"
+        },
+        {
+            "url": "https://x.com/FinanceLancelot/status/2019146596202717184",
+            "symbol": "XOM"
+        },
+        {
+            "url": "https://x.com/Barchart/status/2019193135629545877",
+            "symbol": "BRK.A"
+        },
+        {
+            "url": "https://x.com/TheSkayeth/status/2019244076391108760",
+            "symbol": "NBIS"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019266679566700649",
+            "symbol": "UPS"
+        },
+        {
+            "url": "https://x.com/1ChartMaster/status/2019130272835571747",
+            "symbol": "CVX"
+        },
+        {
+            "url": "https://x.com/DipWheeler/status/2019282323980881928",
+            "symbol": "FARTCOIN"
+        },
+        {
+            "url": "https://x.com/mrpunkdoteth/status/2019284348827054537",
+            "symbol": "FROG"
+        },
+        {
+            "url": "https://x.com/herbertong/status/2019179504607064471",
+            "symbol": "TSLA"
+        },
+        {
+            "url": "https://x.com/Tslachan/status/2019202690136613287",
+            "symbol": "TSLA"
+        },
+        {
+            "url": "https://x.com/TrendSpider/status/2019244589857820989",
+            "symbol": "SPX"
+        },
+        {
+            "url": "https://x.com/cantonmeow/status/2019106438073971037",
+            "symbol": "CIFR"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019286428115694076",
+            "symbol": "QQQ"
+        },
+        {
+            "url": "https://x.com/gravemint/status/2019160564212343122",
+            "symbol": "DEADS"
+        },
+        {
+            "url": "https://x.com/TheSkayeth/status/2019271851898466703",
+            "symbol": "OPEN"
+        },
+        {
+            "url": "https://x.com/ArdiNSC/status/2019284286969639424",
+            "symbol": "ZEC"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019157865500688862",
+            "symbol": "HIMS"
+        },
+        {
+            "url": "https://x.com/Cointelegraph/status/2019222128323637397",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/lookonchain/status/2019281955255353650",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/R1chardMaur1ce/status/2019207301853217134",
+            "symbol": "PATH"
+        },
+        {
+            "url": "https://x.com/degentradingLSD/status/2019283582166982798",
+            "symbol": "XAG"
+        },
+        {
+            "url": "https://x.com/alphatrends/status/2019260062628528454",
+            "symbol": "ONDS"
+        },
+        {
+            "url": "https://x.com/mmmikema/status/2019210044097888291",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/mmmikema/status/2019167977451716672",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/Barchart/status/2019161159979659703",
+            "symbol": "QQQ"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019274158514008268",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019192274803155157",
+            "symbol": "ZEC"
+        },
+        {
+            "url": "https://x.com/Stocktwits/status/2019095386703429880",
+            "symbol": "OKLO"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019183855488348526",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/ShardiB2/status/2019257079123288467",
+            "symbol": "SILVER"
+        },
+        {
+            "url": "https://x.com/cryptolyxe/status/2019258412429942914",
+            "symbol": "SOL"
+        }
+    ]
+}

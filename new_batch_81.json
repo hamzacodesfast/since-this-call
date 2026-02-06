@@ -1,0 +1,404 @@
+{
+    "calls": [
+        {
+            "url": "https://x.com/htltimor/status/2019467483984339334",
+            "symbol": "XRP"
+        },
+        {
+            "url": "https://x.com/gnoble79/status/2019543656412357005",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/LeonidasNFT/status/2019543555946238072",
+            "symbol": "DOG"
+        },
+        {
+            "url": "https://x.com/BonkDaCarnivore/status/2019529307039641716",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/munster_gene/status/2019521000304464110",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/scottmelker/status/2019543121932218534",
+            "symbol": "UNI"
+        },
+        {
+            "url": "https://x.com/pennycheck/status/2019526279444521125",
+            "symbol": "ACHR"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019517836348256748",
+            "symbol": "ASTER"
+        },
+        {
+            "url": "https://x.com/TheCryptoLemon/status/2019407515621158970",
+            "symbol": "ZEC"
+        },
+        {
+            "url": "https://x.com/GuntoGotEm/status/2019541503291585004",
+            "symbol": "DOG"
+        },
+        {
+            "url": "https://x.com/sanjfomojis/status/2019522261234155565",
+            "symbol": "PEPE"
+        },
+        {
+            "url": "https://x.com/CoinbaseDuck/status/2019532698386346147",
+            "symbol": "COIN"
+        },
+        {
+            "url": "https://x.com/AltcoinSherpa/status/2019510212806471789",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/Salle7De/status/2019513180888936537",
+            "symbol": "DOG"
+        },
+        {
+            "url": "https://x.com/MizerXBT/status/2019472117721342436",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/TrendSpider/status/2019517347107835963",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/earnings_guy/status/2019516711737626649",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/PhilSmith_1/status/2019527839754907734",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019529474459726099",
+            "symbol": "PLTR"
+        },
+        {
+            "url": "https://x.com/crypto_with_seb/status/2019516411744301123",
+            "symbol": "OTHERSBTC"
+        },
+        {
+            "url": "https://x.com/S0Lmay0r/status/2019515160646373810",
+            "symbol": "HYPE"
+        },
+        {
+            "url": "https://x.com/Henrik_on_HL/status/2019541037090521174",
+            "symbol": "HYPE"
+        },
+        {
+            "url": "https://x.com/LSDinmycoffee/status/2019531697352573146",
+            "symbol": "NIKKEI"
+        },
+        {
+            "url": "https://x.com/GarciaCap/status/2019536710200357162",
+            "symbol": "TLT"
+        },
+        {
+            "url": "https://x.com/UncleRewards/status/2019516148228976770",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/PhilSmith_1/status/2019528334804135977",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/Nebraskangooner/status/2019541291839942878",
+            "symbol": "XMR"
+        },
+        {
+            "url": "https://x.com/StockMKTNewz/status/2019439129595944979",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/jbgreen4/status/2019492308903707007",
+            "symbol": "BILLY"
+        },
+        {
+            "url": "https://x.com/earnings_guy/status/2019519166663766376",
+            "symbol": "IREN"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019530645756866973",
+            "symbol": "IREN"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019516918823285008",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/bigwarzeth/status/2019537546464882869",
+            "symbol": "FWOG"
+        },
+        {
+            "url": "https://x.com/LuigiRFRM/status/2019479808036512104",
+            "symbol": "COPPERINU"
+        },
+        {
+            "url": "https://x.com/MagUraCrypto/status/2019540991141908981",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/AltcoinSensei/status/2019512167700263114",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/ShardiB2/status/2019514648161317305",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/yanroto88/status/2019377778349715791",
+            "symbol": "DOG"
+        },
+        {
+            "url": "https://x.com/AProgress46/status/2019516233830306131",
+            "symbol": "LTC"
+        },
+        {
+            "url": "https://x.com/0xWhale/status/2019518303816020316",
+            "symbol": "XMR"
+        },
+        {
+            "url": "https://x.com/CyclesFan/status/2019477643616240054",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/BMNRTracker/status/2019533787055489099",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/ShardiB2/status/2019529705997910468",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/TheSonOfWalkley/status/2019506248572387735",
+            "symbol": "TSLA"
+        },
+        {
+            "url": "https://x.com/bdinvestingg/status/2019521245780251065",
+            "symbol": "IREN"
+        },
+        {
+            "url": "https://x.com/ecommerceshares/status/2019535511707103264",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/CryptoParadyme/status/2019532415182729713",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/KillaXBT/status/2019522319509831836",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/cryptorover/status/2019344244880593346",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/Multibit_Bridge/status/2019530749817549256",
+            "symbol": "ORDI"
+        },
+        {
+            "url": "https://x.com/coinbureau/status/2019346509767270759",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/mvcinvesting/status/2019517654009082009",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/amitisinvesting/status/2019158408155525490",
+            "symbol": "GOOGL"
+        },
+        {
+            "url": "https://x.com/TrendSpider/status/2019523168407519325",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/Alejandro_XBT/status/2019534549295022563",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/wangbnbwhale/status/2019492015415644596",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/XRPathologist/status/2019503683814453537",
+            "symbol": "LTC"
+        },
+        {
+            "url": "https://x.com/ZforZcash/status/2019497036287209480",
+            "symbol": "ZEC"
+        },
+        {
+            "url": "https://x.com/ByzGeneral/status/2019539171120148867",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/dxrnell/status/2019532936870260847",
+            "symbol": "SOL"
+        },
+        {
+            "url": "https://x.com/pdicarlotrader/status/2019516570662486075",
+            "symbol": "BTCUSD"
+        },
+        {
+            "url": "https://x.com/LaNubeWilliams/status/2019509779094249485",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/wallstengine/status/2019533855666106627",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/Mr_Derivatives/status/2019517189020381533",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/degenutz/status/2019528525066432692",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/moonshot/status/2019468408967024687",
+            "symbol": "WHITEWHALE"
+        },
+        {
+            "url": "https://x.com/Agrippa_Inv/status/2019521618985513202",
+            "symbol": "IREN"
+        },
+        {
+            "url": "https://x.com/Barchart/status/2019537040023695506",
+            "symbol": "QQQ"
+        },
+        {
+            "url": "https://x.com/MizerXBT/status/2019508596799860918",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/PolymarketMoney/status/2019498568265203984",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/FinanceLancelot/status/2019526402186641831",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/IncomeSharks/status/2019511662215405936",
+            "symbol": "LMT"
+        },
+        {
+            "url": "https://x.com/LeStonkJames/status/2019521680880857161",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/trader1sz/status/2019336683695878573",
+            "symbol": "ETHUSD"
+        },
+        {
+            "url": "https://x.com/TedPillows/status/2019534297133433023",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/CattardSlim/status/2019533973299556459",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/hoomansv/status/2019534368864153967",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/AnselLindner/status/2019430813474124285",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/JPATrades/status/2019518262468301237",
+            "symbol": "AMZN"
+        },
+        {
+            "url": "https://x.com/Cointelegraph/status/2019516609220542684",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/Salle7De/status/2019455616947835159",
+            "symbol": "DOG"
+        },
+        {
+            "url": "https://x.com/Cointelegraph/status/2019524126172438642",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/his_eminence_j/status/2017749615458583004",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/epictrades1/status/2019528138712314226",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/TedPillows/status/2019532910353871348",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/heart_/status/2019515594970681568",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/IncomeSharks/status/2019509878876958776",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/CryptoBoss1984/status/2019516417264218457",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/MASTERBTCLTC/status/2019531756311830761",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/IREN_Ltd/status/2019527899016016386",
+            "symbol": "IREN"
+        },
+        {
+            "url": "https://x.com/inversebrah/status/2019515656295845996",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/ThinkingUSD/status/2019536872670916972",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/HolySmokas/status/2019537022067831077",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/Cointelegraph/status/2019531411405844941",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/CryptoAIY/status/2019084749394854314",
+            "symbol": "BERT"
+        },
+        {
+            "url": "https://x.com/Jake__Wujastyk/status/2019527506924314759",
+            "symbol": "MSTR"
+        },
+        {
+            "url": "https://x.com/ArdiNSC/status/2019521409433891003",
+            "symbol": "BTC"
+        },
+        {
+            "url": "https://x.com/Nebraskangooner/status/2019536201007415306",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/BrutalBtc/status/2019516266856477053",
+            "symbol": "ETH"
+        },
+        {
+            "url": "https://x.com/DaOuGt_/status/2019533349883375811",
+            "symbol": "DOG"
+        }
+    ]
+}

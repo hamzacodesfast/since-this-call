@@ -2,6 +2,13 @@
 
 This document outlines how to use the **Bulk Analysis Engine** to process lists of scanned tweets and generate financial receipts.
 
+## 🏁 Current Status (as of Feb 5, 2026)
+- **Latest Batch**: Batch 56 complete.
+- **Total Calls**: **2,987** (Goal: 3,000+).
+- **Unique Gurus**: 935.
+- **Win Rate**: Stable at 32%.
+- **Automation**: Post-analysis sync and metrics refresh are now fully integrated into the bulk script.
+
 ## 🛠 Prerequisites
 
 1.  **Local Redis**: Ensure the local Redis container and proxy are running.
@@ -12,10 +19,11 @@ This document outlines how to use the **Bulk Analysis Engine** to process lists 
     npx tsx scripts/test-local-redis.ts
     ```
 2.  **Environment**: Ensure `.env.local` contains valid API keys for Gemini (AI Extraction) and market data providers.
+3.  **Production Access**: Ensure `.env.production` is present for direct production analysis/refresh.
 
 ## 📥 Input Format
 
-Create a JSON file (e.g., `tweets_to_analyze.json`) with a list of Tweet IDs or URLs.
+Create a JSON file (e.g., `new_batch.json`) with a list of Tweet IDs or URLs.
 
 **Option A: Simple Array of Strings**
 ```json
@@ -35,88 +43,52 @@ Create a JSON file (e.g., `tweets_to_analyze.json`) with a list of Tweet IDs or 
 }
 ```
 
-## 🚀 Execution workflows
+## 🚀 Execution Workflow
 
-### A. Bulk Analysis (Standard)
+### A. Bulk Analysis (Preferred)
 
-Run the bulk analysis script pointing to your input file:
+Run the bulk analysis script. This script is **self-healing** and performs post-analysis syncs automatically.
 
 ```bash
-npx tsx scripts/bulk-analyze.ts tweets_to_analyze.json
+npx tsx scripts/bulk-analyze.ts new_batch.json
 ```
 
-### B. Raw Batch Processing (e.g. `raw_tweets_batch4.txt`)
+**What it does automatically:**
+1.  **Duplicate Check**: Skips tweets already in the history.
+2.  **AI Extraction**: Uses Gemini-2.0-flash to identify calls.
+3.  **Storage**: Saves to Production (or Local depending on ENV).
+4.  **Production Refresh**: Triggers `refresh-metrics.ts` on the production server.
+5.  **Auto-Sync**: Pulls the latest production data to your local Redis via `sync-to-local.ts`.
+6.  **Local Refresh**: Rebuilds local metrics so you can verify changes immediately at `localhost:3000`.
 
-If you have a raw text file with one URL per line, simplify it to a JSON array first.
+### B. Single Tweet Fixes / Re-analysis
 
-1.  **Convert to JSON**:
-    You can use a temporary script or a one-liner if you're comfortable. A simple node script `scripts/generate-tweets-data.ts` might help, or use this node one-liner:
-    ```bash
-    node -e 'fs.writeFileSync("tweets.json", JSON.stringify(fs.readFileSync("raw_tweets.txt", "utf-8").trim().split("\n").map(l => l.match(/http.*status\/(\d+)/)[0])))'
-    ```
-2.  **Run Analysis**:
-    ```bash
-    npx tsx scripts/bulk-analyze.ts tweets.json
-    ```
-
-### C. Single Tweet Fixes / Re-analysis
-
-If a specific tweet was analyzed incorrectly (wrong ticker, wrong sentiment, or failed price fetch), use `scripts/reanalyze.ts`. This script finds the tweet in the user's history and updates it in place.
+Use `scripts/reanalyze.ts` for fine-tuning specific inaccurate results.
 
 ```bash
-# Basic re-run (tries AI again)
-npx tsx scripts/reanalyze.ts <TWEET_ID>
-
 # Force a specific symbol (useful for ambiguous tickers)
 npx tsx scripts/reanalyze.ts <TWEET_ID> --symbol=BTC
 
 # Force a specific action (BUY/SELL)
 npx tsx scripts/reanalyze.ts <TWEET_ID> --action=BUY
-
-# Force a Contract Address (CA) for obscure tokens
-npx tsx scripts/reanalyze.ts <TWEET_ID> 0x123...
 ```
 
-### What happens during execution:
-1.  **Duplicate Check**: Automatically extracts Tweet ID and Username from input. Skips analyses if the specific tweet ID already exists in that user's history (Production or Local).
-2.  **AI Extraction**: Uses Gemini to identify the ticker, sentiment (Bullish/Bearish), and asset type.
-3.  **Price Fetching**: Lookups historical price (at tweet time) and current price.
-4.  **Performance Calculation**: Calculates % change based on sentiment.
-5.  **Storage**: Saves the result to the user's history, global index, and updates their profile stats (win/loss/neutral).
-6.  **Rate Limiting**: Waits 2 seconds between tweets to avoid provider throttling.
+## 📊 Maintenance Scripts
 
-## 📊 Verification & Maintenance
+| Script | Purpose |
+| :--- | :--- |
+| `scripts/refresh-metrics.ts` | Rebuilds the global stats (calls count, win rate). |
+| `scripts/sync-to-local.ts` | Clones production Redis data to local Redis. |
+| `scripts/clear-metrics-cache.ts` | Wipes the 15-minute dashboard cache. |
 
-Once the script completes, you **MUST** flush the metrics cache for the dashboard to update immediately.
+## 🎯 Upcoming Goals for the Next Agent
 
-1.  **Refresh Global Metrics**:
-    The metrics (Total Analyzed, etc.) are cached for 15 minutes. To force an update:
-    ```bash
-    # Wipe the cache key
-    npx tsx scripts/clear-metrics-cache.ts
-    
-    # Or trigger a fetch (which re-populates if empty/expired)
-    npx tsx scripts/refresh-metrics.ts --local
-    ```
+1.  **The 3,000 Call Milestone**: We are 13 calls away. The next small batch should focus on high-quality historical calls to cross this line.
+2.  **Guru Diversification**: Aim for gurus with < 5 calls to expand the "Gurus" count towards 1,000.
+3.  **Ticker Cleanup**: Identify and re-analyze tweets with "Manual Fix Required" flags in the logs.
 
-2.  **Running on Production**:
-    To target the live Production database, pass the Production Redis credentials as environment variables:
+## ⚠️ Common Pitfalls
 
-    ```bash
-    UPSTASH_REDIS_REST_KV_REST_API_URL="<PROD_URL>" \
-    UPSTASH_REDIS_REST_KV_REST_API_TOKEN="<PROD_TOKEN>" \
-    npx tsx scripts/bulk-analyze.ts tweets_to_analyze.json
-    ```
-
-3.  **Check the Leaderboard**:
-    Verify if the new calls have moved the needle for any Gurus:
-    [Leaderboard](/leaderboard)
-
-## ⚠️ Troubleshooting
-
-- **"Could not identify financial call"**: The AI determined the tweet wasn't a clear BUY/SELL signal (or was "News", "Live Show", "Question").
-    - *Fix*: If you are sure it is a call, use `scripts/reanalyze.ts <ID> --action=BUY` to force it.
-- **"Market data not found"**: The ticker (e.g., small-cap meme coin) is not available on Yahoo, CMC, or CoinGecko. We *only* track authoritative assets. 
-    - *Fix*: Use `scripts/remove-failed-batch.ts` to clean up invalid entries if they got stuck.
-- **"Historical data not found"**: Tweet is too old or asset didn't exist then.
-- **429 Errors**: Too many requests. Use the `wait(2000)` delay default.
+- **Yahoo/CMC Rate Limits**: If prices return null, wait 5 minutes and re-run.
+- **Ambiguous Tickers**: AI sometimes mistakes `$ME` for the word "me" or `$BOBO` for nonsense. Use `--symbol` override.
+- **Private Tweets**: If a user goes private, the analyzer will fail with "Tweet not found". Skip these.

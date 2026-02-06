@@ -41,7 +41,7 @@ export default function LeaderboardPage() {
     }, []);
 
     // Filter to min 7 calls and sort
-    const qualified = profiles.filter(p => p.totalAnalyses >= 7);
+    const qualified = profiles.filter(p => p.totalAnalyses >= 10);
     const top10 = [...qualified].sort((a, b) => b.winRate - a.winRate || b.totalAnalyses - a.totalAnalyses).slice(0, 10);
     const worst10 = [...qualified].sort((a, b) => a.winRate - b.winRate || b.totalAnalyses - a.totalAnalyses).slice(0, 10);
 

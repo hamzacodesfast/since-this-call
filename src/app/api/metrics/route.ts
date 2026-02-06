@@ -68,8 +68,8 @@ async function computeMetrics(): Promise<PlatformMetrics> {
         }
     });
 
-    // 2. Calculate Trending Tickers (Last 500 Analyses by Timestamp)
-    const recentRefs = await redis.zrange('global:analyses:timestamp', 0, 499, { rev: true }) as string[];
+    // 2. Calculate Trending Tickers (Last 1000 Analyses by Timestamp)
+    const recentRefs = await redis.zrange('global:analyses:timestamp', 0, 999, { rev: true }) as string[];
 
     // We need to resolve these refs (username:id) to actual analyses to get the symbol
     // Optimization: Group by username to minimize calls

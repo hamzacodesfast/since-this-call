@@ -455,84 +455,104 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
         const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
         const analysisRef = `${lowerUser}:${analysis.id}`;
 
-        // Track user in global set
-        await redis.sadd(ALL_USERS_KEY, lowerUser);
-
-        // Record in global timestamp index (ZSET)
-        // This allows us to query the most recent N analyses across all users
+        // 1. Global Indexes (Always Update)
         await dualWrite(async (r) => {
+            await r.sadd(ALL_USERS_KEY, lowerUser);
             await r.zadd(GLOBAL_ANALYSES_ZSET, { score: analysis.timestamp, member: analysisRef });
         });
 
-        // Get current history
+        // 2. Fetch Resources needed
+        // We fetch existing profile FIRST to do incremental updates
+        const existingProfile = await redis.hgetall(profileKey) as any;
+
+        // Fetch history to manage the list (add/remove/cap)
         const historyData = await redis.lrange(historyKey, 0, -1);
         let history = historyData.map((item: any) =>
             typeof item === 'string' ? JSON.parse(item) : item
         );
 
-        // Check if tweet already exists
+        // 3. Determine if New or Update
         const existingIndex = history.findIndex((h: StoredAnalysis) => h.id === analysis.id);
+        const isNew = existingIndex === -1;
+        let oldAnalysis: StoredAnalysis | undefined;
 
-        if (existingIndex !== -1) {
-            // Remove existing to replace (bubbles to top)
-            const oldAnalysis = history[existingIndex];
-
+        if (!isNew) {
+            oldAnalysis = history[existingIndex];
+            // Remove old for list consistency (bubble to top)
             history.splice(existingIndex, 1);
-            history.unshift(analysis);
-
-            // Update Ticker Stats (Differential)
-            await updateTickerStats(analysis, false, oldAnalysis);
-        } else {
-            history.unshift(analysis);
-            await trackTicker(analysis);
-            await updateTickerStats(analysis, true);
         }
 
-        // Limit history size (keep top 100 most recent unique calls)
+        // Add New to List
+        history.unshift(analysis);
         if (history.length > 100) {
             history = history.slice(0, 100);
         }
 
-        // Recalculate Stats from History
-        let wins = 0;
-        let losses = 0;
-        let neutral = 0;
-        const total = history.length;
-
-        for (const item of history) {
-            if (Math.abs(item.performance) < 0.01) {
-                neutral++;
-            } else if (item.isWin) {
-                wins++;
-            } else {
-                losses++;
-            }
+        // 4. Update Ticker Stats (Side Effect)
+        if (!isNew && oldAnalysis) {
+            await updateTickerStats(analysis, false, oldAnalysis);
+        } else {
+            await trackTicker(analysis);
+            await updateTickerStats(analysis, true);
         }
 
-        const winRate = total > 0 ? (wins / total) * 100 : 0;
+        // 5. Calculate New Profile Stats (INCREMENTAL)
+        let stats = {
+            totalAnalyses: parseInt(existingProfile?.totalAnalyses || '0'),
+            wins: parseInt(existingProfile?.wins || '0'),
+            losses: parseInt(existingProfile?.losses || '0'),
+            neutral: parseInt(existingProfile?.neutral || '0'),
+            winRate: parseFloat(existingProfile?.winRate || '0'),
+        };
 
-        // Get existing profile to preserve verification
-        const existingProfile = await redis.hgetall(profileKey);
+        // Initialize if empty/NaN (safety)
+        if (isNaN(stats.totalAnalyses)) stats.totalAnalyses = 0;
+        if (isNaN(stats.wins)) stats.wins = 0;
+        if (isNaN(stats.losses)) stats.losses = 0;
+        if (isNaN(stats.neutral)) stats.neutral = 0;
 
-        // Persist via Dual-Write
+        // Apply Differential
+        if (!isNew && oldAnalysis) {
+            // Remove Old Stats
+            if (Math.abs(oldAnalysis.performance) < 0.01) stats.neutral--;
+            else if (oldAnalysis.isWin) stats.wins--;
+            else stats.losses--;
+
+            stats.totalAnalyses--; // Temporarily decrement to re-add correctly (cleaner logic)
+        }
+
+        // Add New Stats
+        if (Math.abs(analysis.performance) < 0.01) stats.neutral++;
+        else if (analysis.isWin) stats.wins++;
+        else stats.losses++;
+
+        stats.totalAnalyses++;
+
+        // Recalc Win Rate (Cumulative)
+        // Note: We use the cumulative totals, so this remains accurate > 100 items.
+        // Win Rate = Wins / Total (excluding Neutral? Or Total? Standard is Total usually, or Total Decided)
+        // Our existing logic was Wins / Total (length).
+        // Let's stick to Wins / Total.
+        stats.winRate = stats.totalAnalyses > 0 ? (stats.wins / stats.totalAnalyses) * 100 : 0;
+
+        // 6. Persistence
         await dualWrite(async (r) => {
-            // Update Hash
+            // Update Stats in Hash
             await r.hset(profileKey, {
                 username: analysis.username,
-                avatar: analysis.avatar || '',
-                totalAnalyses: total,
-                wins,
-                losses,
-                neutral,
-                winRate,
+                avatar: analysis.avatar || existingProfile?.avatar || '',
+                totalAnalyses: stats.totalAnalyses,
+                wins: stats.wins,
+                losses: stats.losses,
+                neutral: stats.neutral,
+                winRate: stats.winRate,
                 lastAnalyzed: Date.now(),
-                isVerified: (existingProfile as any)?.isVerified === 'true' || (existingProfile as any)?.isVerified === true,
+                isVerified: existingProfile?.isVerified === 'true' || existingProfile?.isVerified === true,
             });
 
-            // Replace History List
+            // Update History List (Capped at 100)
             await r.del(historyKey);
             if (history.length > 0) {
-                // Pipeline the history pushes
                 const p = r.pipeline();
                 for (let i = history.length - 1; i >= 0; i--) {
                     p.lpush(historyKey, JSON.stringify(history[i]));
