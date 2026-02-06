@@ -43,7 +43,17 @@ export default function TickersPage() {
 
             // Derive trending from metrics.topTickers to match Stats page
             if (metricsData.topTickers) {
-                const profileMap = new Map(allProfiles.map(p => [p.symbol, p]));
+                // Build profileMap: prioritize CRYPTO over STOCK, and higher totalAnalyses
+                const profileMap = new Map<string, TickerProfile>();
+                allProfiles.forEach(p => {
+                    const existing = profileMap.get(p.symbol);
+                    if (!existing ||
+                        (p.type === 'CRYPTO' && existing.type !== 'CRYPTO') ||
+                        (p.type === existing.type && p.totalAnalyses > existing.totalAnalyses)) {
+                        profileMap.set(p.symbol, p);
+                    }
+                });
+
                 const trending = metricsData.topTickers
                     .map((t: any) => profileMap.get(t.symbol))
                     .filter((p: TickerProfile | undefined) => p !== undefined)
