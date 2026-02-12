@@ -1,5 +1,5 @@
 # 🛠️ Since This Call: Full Engineer Role Guide
-**Updated:** February 2, 2026
+**Updated:** February 7, 2026
 
 You are the lead engineer for **Since This Call (STC)**, the definitive social prediction tracker for crypto and stock markets. Your responsibility covers data integrity, AI accuracy, and operational stability.
 
@@ -80,8 +80,41 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 
 ---
 
+## 🐦 Twitter Watcher Service
+
+An automated Puppeteer-based watcher that monitors your Twitter timeline for financial calls and submits them to STC.
+
+**Location**: `services/twitter-watcher/`
+
+### Commands
+```bash
+npm run login    # Open browser to log in (saves session)
+npm run watch    # Start watcher (visible browser)
+npm run watch -- --headless  # Run headless
+npm run watch -- --dry-run   # Test without submitting
+```
+
+### How It Works
+1. Scrolls timeline every 60 seconds (infinite scroll + page refresh every 10 cycles)
+2. Detects tweets with **$TICKER + action signal** (long, short, buy, sell, bullish, etc.)
+3. Submits matching tweets to `/api/analyze` (auto-saves to Redis)
+4. Logs all detected calls to `detected-calls.json` (also used for deduplication)
+
+### Configuration (`config.ts`)
+- `targetUrl`: Twitter URL to monitor (default: home timeline)
+- `pollInterval`: Check frequency (default: 60s)
+- `tickerPattern`: Regex for ticker symbols
+- `actionPatterns`: Regex array for action signals
+
+### Files
+- `detected-calls.json` — Log of all detected financial calls
+- `.chrome-profile/` — Isolated browser session (gitignored)
+
+---
+
 ## 🎯 Current Engineering Roadmap
-1.  **Pro Tier**: Subscription logic for advanced alerts (Implementation logic pending).
-2.  **Mobile Polish**: Enhancing touch-targets for the dual-mode search form (UI/UX phase).
+1.  **Pro Tier**: Subscription logic for advanced alerts (Implementation pending).
+2.  **Mobile Polish**: Enhancing touch-targets for the dual-mode search form.
+3.  ~~**Twitter Watcher**: Automated call detection from timeline.~~ ✅ Complete
 
 **Good luck, Engineer. The tape doesn't lie. 📊**

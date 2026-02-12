@@ -19,7 +19,7 @@ import type { StoredAnalysis } from '../src/lib/analysis-store';
 async function reanalyze() {
     // Dynamic imports to ensure env vars are loaded first
     const { analyzeTweet } = await import('../src/lib/analyzer');
-    const { recalculateUserProfile, trackTicker, untrackTicker, updateTickerStats } = await import('../src/lib/analysis-store');
+    const { recalculateUserProfile, trackTicker, untrackTicker, updateTickerStats, dualWrite } = await import('../src/lib/analysis-store');
     const { getRedisClient } = await import('../src/lib/redis-client');
 
     const redis = getRedisClient();
@@ -122,12 +122,16 @@ async function reanalyze() {
         // Replace old analysis
         const updatedHistory = history.map(item => item.id === tweetId ? newAnalysis : item);
 
-        // Write back
-        await redis.del(historyKey);
-        for (let i = updatedHistory.length - 1; i >= 0; i--) {
-            await redis.lpush(historyKey, JSON.stringify(updatedHistory[i]));
-        }
-        console.log(`   - Updated user:history:${targetUser}`);
+        // Write back using dualWrite
+        await dualWrite(async (r) => {
+            await r.del(historyKey);
+            const pipe = r.pipeline();
+            for (let i = updatedHistory.length - 1; i >= 0; i--) {
+                pipe.lpush(historyKey, JSON.stringify(updatedHistory[i]));
+            }
+            await pipe.exec();
+        });
+        console.log(`   - Updated user:history:${targetUser} (Dual-Write)`);
 
         // 4. Update Recent Analyses (if present)
         const recentData = await redis.lrange('recent_analyses', 0, -1);
@@ -138,11 +142,15 @@ async function reanalyze() {
         const recentIndex = recentAnalyses.findIndex(a => a.id === tweetId);
         if (recentIndex !== -1) {
             recentAnalyses[recentIndex] = newAnalysis;
-            await redis.del('recent_analyses');
-            for (let i = recentAnalyses.length - 1; i >= 0; i--) {
-                await redis.lpush('recent_analyses', JSON.stringify(recentAnalyses[i]));
-            }
-            console.log(`   - Updated recent_analyses`);
+            await dualWrite(async (r) => {
+                await r.del('recent_analyses');
+                const pipe = r.pipeline();
+                for (let i = recentAnalyses.length - 1; i >= 0; i--) {
+                    pipe.lpush('recent_analyses', JSON.stringify(recentAnalyses[i]));
+                }
+                await pipe.exec();
+            });
+            console.log(`   - Updated recent_analyses (Dual-Write)`);
         }
 
         // 5. Recalculate User Profile

@@ -56,26 +56,35 @@ async function sync() {
             await userPipeline.exec();
         }
 
-        // Batch profile and history sync
-        for (const user of allUsers) {
-            const batchPipeline = dest.pipeline();
+        // Batch profile and history sync (PARALLELIZED)
+        const CHUNK_SIZE = 50;
+        let syncedUsers = 0;
 
-            // Sync Profile
-            const profile = await source.hgetall(`user:profile:${user}`);
-            if (profile) {
-                batchPipeline.hset(`user:profile:${user}`, profile);
-            }
+        for (let i = 0; i < allUsers.length; i += CHUNK_SIZE) {
+            const chunk = allUsers.slice(i, i + CHUNK_SIZE);
 
-            // Sync History
-            const history = await source.lrange(`user:history:${user}`, 0, -1);
-            if (history.length > 0) {
-                for (const item of history.reverse()) {
-                    batchPipeline.lpush(`user:history:${user}`, typeof item === 'object' ? JSON.stringify(item) : item);
+            await Promise.all(chunk.map(async (user) => {
+                const batchPipeline = dest.pipeline();
+
+                // Sync Profile
+                const profile = await source.hgetall(`user:profile:${user}`);
+                if (profile) {
+                    batchPipeline.hset(`user:profile:${user}`, profile);
                 }
-            }
 
-            await batchPipeline.exec();
-            // console.log(`   ✅ Synced @${user}`);
+                // Sync History
+                const history = await source.lrange(`user:history:${user}`, 0, -1);
+                if (history.length > 0) {
+                    for (const item of history.reverse()) {
+                        batchPipeline.lpush(`user:history:${user}`, typeof item === 'object' ? JSON.stringify(item) : item);
+                    }
+                }
+
+                await batchPipeline.exec();
+            }));
+
+            syncedUsers += chunk.length;
+            console.log(`   [Sync] Processed ${syncedUsers}/${allUsers.length} users...`);
         }
         console.log(`   ✅ Synced ${allUsers.length} profiles.`);
 

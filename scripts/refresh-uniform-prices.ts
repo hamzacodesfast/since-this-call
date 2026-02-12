@@ -71,66 +71,76 @@ async function main() {
 
     // 4. Update User Histories & Profiles
     let totalUpdatedCalls = 0;
-    for (const username of usernames) {
-        const lowerUser = username.toLowerCase();
-        const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
+    let userCount = 0;
+    const CHUNK_SIZE = 50;
 
-        const historyData = await redis.lrange(historyKey, 0, -1);
-        const history: StoredAnalysis[] = historyData.map((item: any) =>
-            typeof item === 'string' ? JSON.parse(item) : item
-        );
+    for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
+        const chunk = usernames.slice(i, i + CHUNK_SIZE);
 
-        let hasHistoryChanges = false;
-        for (const item of history) {
-            // Reconstruct ticker key (new logic: no contractAddress check)
-            const tickerKey = `${item.type || 'CRYPTO'}:${item.symbol.toUpperCase()}`;
+        await Promise.all(chunk.map(async (username) => {
+            const lowerUser = username.toLowerCase();
+            const historyKey = `${USER_HISTORY_PREFIX}${lowerUser}`;
 
-            const newPrice = priceMap[tickerKey];
-            if (newPrice && item.entryPrice) {
-                const newPerformance = calculatePerformance(item.entryPrice, newPrice, item.sentiment || 'BULLISH');
-                const isWin = newPerformance > 0;
+            const historyData = await redis.lrange(historyKey, 0, -1);
+            const history: StoredAnalysis[] = historyData.map((item: any) =>
+                typeof item === 'string' ? JSON.parse(item) : item
+            );
 
-                // Update if price or performance changed
-                if (item.currentPrice !== newPrice || Math.abs(item.performance - newPerformance) > 0.001) {
-                    item.currentPrice = newPrice;
-                    item.performance = newPerformance;
-                    item.isWin = isWin;
-                    hasHistoryChanges = true;
-                    totalUpdatedCalls++;
+            let hasHistoryChanges = false;
+            for (const item of history) {
+                // Reconstruct ticker key (new logic: no contractAddress check)
+                const tickerKey = `${item.type || 'CRYPTO'}:${item.symbol.toUpperCase()}`;
+
+                const newPrice = priceMap[tickerKey];
+                if (newPrice && item.entryPrice) {
+                    const newPerformance = calculatePerformance(item.entryPrice, newPrice, item.sentiment || 'BULLISH');
+                    const isWin = newPerformance > 0;
+
+                    // Update if price or performance changed
+                    if (item.currentPrice !== newPrice || Math.abs(item.performance - newPerformance) > 0.001) {
+                        item.currentPrice = newPrice;
+                        item.performance = newPerformance;
+                        item.isWin = isWin;
+                        hasHistoryChanges = true;
+                        totalUpdatedCalls++;
+                    }
                 }
             }
-        }
 
-        if (hasHistoryChanges) {
-            // Recalculate Stats for Profile
-            let wins = 0;
-            let losses = 0;
-            let neutral = 0;
-            for (const hItem of history) {
-                if (Math.abs(hItem.performance) < 0.01) neutral++;
-                else if (hItem.isWin) wins++;
-                else losses++;
+            if (hasHistoryChanges) {
+                // Recalculate Stats for Profile
+                let wins = 0;
+                let losses = 0;
+                let neutral = 0;
+                for (const hItem of history) {
+                    if (Math.abs(hItem.performance) < 0.01) neutral++;
+                    else if (hItem.isWin) wins++;
+                    else losses++;
+                }
+                const winRate = history.length > 0 ? (wins / history.length) * 100 : 0;
+
+                const profileKey = `${USER_PROFILE_PREFIX}${lowerUser}`;
+                await redis.hset(profileKey, {
+                    wins,
+                    losses,
+                    neutral,
+                    winRate,
+                    totalAnalyses: history.length,
+                    lastAnalyzed: Date.now()
+                });
+
+                // Save History
+                await redis.del(historyKey);
+                const pipeline = redis.pipeline();
+                for (let j = history.length - 1; j >= 0; j--) {
+                    pipeline.lpush(historyKey, JSON.stringify(history[j]));
+                }
+                await pipeline.exec();
             }
-            const winRate = history.length > 0 ? (wins / history.length) * 100 : 0;
+        }));
 
-            const profileKey = `${USER_PROFILE_PREFIX}${lowerUser}`;
-            await redis.hset(profileKey, {
-                wins,
-                losses,
-                neutral,
-                winRate,
-                totalAnalyses: history.length,
-                lastAnalyzed: Date.now()
-            });
-
-            // Save History
-            await redis.del(historyKey);
-            const pipeline = redis.pipeline();
-            for (let i = history.length - 1; i >= 0; i--) {
-                pipeline.lpush(historyKey, JSON.stringify(history[i]));
-            }
-            await pipeline.exec();
-        }
+        userCount += chunk.length;
+        console.log(`[UniformRefresh] Processed ${userCount}/${usernames.length} users...`);
     }
 
     // 5. Update Recent Analyses List

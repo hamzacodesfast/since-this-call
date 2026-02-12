@@ -86,8 +86,14 @@ async function bulkAnalyze() {
                 tweetInfo.action === 'SELL' ? 'BEARISH' : undefined;
             const result = await analyzeTweet(tweetId, undefined, (tweetInfo as any).symbol, sentimentOverride);
 
-            if (!result || !result.analysis.action) {
-                console.log('❌ Failed: Could not identify financial call');
+            if (!result) {
+                console.log('ℹ️  Skipped: No financial call (Noise/News/Chatter).');
+                skippedCount++;
+                continue;
+            }
+
+            if (!result.analysis.action) {
+                console.log('❌ Failed: Invalid analysis result (No Action)');
                 failedCount++;
                 continue;
             }

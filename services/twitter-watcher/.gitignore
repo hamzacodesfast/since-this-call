@@ -1,0 +1,6 @@
+# Watcher session data
+.chrome-profile/
+seen-tweets.json
+
+# Dependencies
+node_modules/

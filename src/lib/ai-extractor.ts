@@ -105,10 +105,12 @@ export async function extractCallFromText(
         - **CONTRARIAN INDICATORS**: Mentions of contrarian signals like "When Peter Schiff is doing victory laps you probably should be buying", "Inverse Cramer", "Blood in the streets", or "Everyone is panic selling" are BULLISH (BUY).
         
         NUMERICAL DIRECTIONALITY (CRITICAL OVERRIDE):
-        - You must compare any provided price target with current market context.
-        - If a user sets a target LOWER than the current price for a long-leaning asset, it is a BEARISH (SELL) signal.
+        - You must compare any provided price target or support level with current market context.
+        - If a user sets a target or identifies "support" LOWER than the current price (especially if significantly lower), it is a BEARISH (SELL) signal. Identify this as a prediction of a major crash to that level.
         - Example: BTC is $100k. User says: "Targeting $80k for BTC." -> action: "SELL" (Bearish).
+        - Example: BTC is $100k. User says: "Initial support around $10K." -> action: "SELL" (Extreme Bearish).
         - Example: BTC is $90k. User says: "Road to $100k." -> action: "BUY" (Bullish).
+        - Example: ETH is $2000. User says: "Support at $1200." -> action: "SELL" (Bearish).
 
         EXHAUSTION SIGNALS (BEARISH - HIGHEST PRIORITY):
         - Phrases like "buyers will run out", "exhaustion", "running out of steam", or "no more bid" on a rallying asset are BEARISH (SELL).

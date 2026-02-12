@@ -2,11 +2,11 @@
 
 This document outlines how to use the **Bulk Analysis Engine** to process lists of scanned tweets and generate financial receipts.
 
-## 🏁 Current Status (as of Feb 5, 2026)
-- **Latest Batch**: Batch 56 complete.
-- **Total Calls**: **2,987** (Goal: 3,000+).
-- **Unique Gurus**: 935.
-- **Win Rate**: Stable at 32%.
+## 🏁 Current Status (as of Feb 12, 2026 - Expanding Reach)
+- **Latest Batch**: Session 11 (361 tweets) processed.
+- **Total Calls**: **6,525** (Steadily approaching 7k).
+- **Unique Gurus**: 1,770.
+- **Win Rate**: 40%.
 - **Automation**: Post-analysis sync and metrics refresh are now fully integrated into the bulk script.
 
 ## 🛠 Prerequisites
@@ -83,8 +83,8 @@ npx tsx scripts/reanalyze.ts <TWEET_ID> --action=BUY
 
 ## 🎯 Upcoming Goals for the Next Agent
 
-1.  **The 3,000 Call Milestone**: We are 13 calls away. The next small batch should focus on high-quality historical calls to cross this line.
-2.  **Guru Diversification**: Aim for gurus with < 5 calls to expand the "Gurus" count towards 1,000.
+1.  **The 5,000 Call Milestone**: ACHIEVED (5,039 Calls)! Next target: 7,500.
+2.  **Guru Diversification**: Aim for gurus with < 5 calls to expand the "Gurus" count towards 1,500.
 3.  **Ticker Cleanup**: Identify and re-analyze tweets with "Manual Fix Required" flags in the logs.
 
 ## ⚠️ Common Pitfalls

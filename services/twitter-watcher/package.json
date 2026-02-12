@@ -1,0 +1,20 @@
+{
+    "name": "twitter-watcher",
+    "version": "1.0.0",
+    "description": "Browser-based Twitter watcher for Since This Call",
+    "type": "module",
+    "scripts": {
+        "login": "npx tsx watcher.ts --login",
+        "watch": "npx tsx watcher.ts",
+        "watch:dry": "npx tsx watcher.ts --dry-run",
+        "watch:visible": "npx tsx watcher.ts --visible"
+    },
+    "dependencies": {
+        "puppeteer": "^24.10.0",
+        "dotenv": "^17.2.3"
+    },
+    "devDependencies": {
+        "tsx": "^4.21.0",
+        "@types/node": "^20"
+    }
+}

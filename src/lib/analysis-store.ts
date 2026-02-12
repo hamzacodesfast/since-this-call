@@ -38,7 +38,7 @@ const redisProd = (process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL && proces
 /**
  * Executes a function on both primary and secondary (if available) Redis clients.
  */
-async function dualWrite<T>(fn: (r: Redis) => Promise<T>): Promise<T> {
+export async function dualWrite<T>(fn: (r: Redis) => Promise<T>): Promise<T> {
     const primaryResult = await fn(redis as Redis);
     if (redisProd) {
         try {
