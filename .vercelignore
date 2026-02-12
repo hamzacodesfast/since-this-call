@@ -1,0 +1,10 @@
+services/
+videos/
+scripts/
+backups/
+docs/
+AGENT_RULES.md
+context.md
+deploy.sh
+docker-compose.yml
+server.js
