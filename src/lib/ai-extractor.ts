@@ -106,8 +106,10 @@ export async function extractCallFromText(
         
         NUMERICAL DIRECTIONALITY (CRITICAL OVERRIDE):
         - You must compare any provided price target or support level with current market context.
+        - **CONFLICT RESOLUTION**: If the author's tone is excited ("LFG", "Lads", "Magnets") but their price level is LOWER than current price, the signal is BEARISH (SELL). Numerical direction ALWAYS overrides emotional slang.
         - If a user sets a target or identifies "support" LOWER than the current price (especially if significantly lower), it is a BEARISH (SELL) signal. Identify this as a prediction of a major crash to that level.
         - Example: BTC is $100k. User says: "Targeting $80k for BTC." -> action: "SELL" (Bearish).
+        - Example: SOL is $75. User says: "$SOL to $30. Lads, the magnets are working!" -> action: "SELL" (Extreme Bearish). 
         - Example: BTC is $100k. User says: "Initial support around $10K." -> action: "SELL" (Extreme Bearish).
         - Example: BTC is $90k. User says: "Road to $100k." -> action: "BUY" (Bullish).
         - Example: ETH is $2000. User says: "Support at $1200." -> action: "SELL" (Bearish).
