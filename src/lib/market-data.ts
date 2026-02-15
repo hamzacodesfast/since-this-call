@@ -30,7 +30,7 @@ export function inferAssetType(symbol: string): 'CRYPTO' | 'STOCK' {
 
     // Default to STOCK for 1-4 character symbols unless it's a known crypto major
     // This prevents common stock tickers from being treated as crypto (e.g. LAC, GME)
-    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE', 'CHZ', 'ZEN', 'ZEC', 'TAO', 'WLFI']);
+    const CRYPTO_MAJORS = new Set(['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'DOT', 'LINK', 'PEPE', 'WIF', 'BONK', 'HYPE', 'CHZ', 'ZEN', 'ZEC', 'TAO', 'WLFI', 'SUI', 'APT', 'NEAR', 'AVAX', 'MATIC', 'ARB', 'OP', 'TON']);
     if (CRYPTO_MAJORS.has(clean)) {
         return 'CRYPTO';
     }
@@ -165,7 +165,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         }
     }
 
-    const YAHOO_SKIP_CRYPTO = new Set(['TAO', 'ASTER']);
+    const YAHOO_SKIP_CRYPTO = new Set(['TAO', 'ASTER', 'SUI', 'APT', 'PEPE']);
 
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
