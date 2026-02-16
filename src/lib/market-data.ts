@@ -139,7 +139,13 @@ export async function getMajorIndicesPrices(): Promise<Record<string, number>> {
 export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
     symbol = symbol.replace(/^\$/, '').toUpperCase();
 
-    if (KNOWN_STOCKS.has(symbol)) {
+    // FORCE CRYPTO MAJORS: Prevent collisions with stock/ETF tickers (e.g. BTC Mini Trust ETF at $30)
+    const CRYPTO_MAJORS_FORCE = ['BTC', 'ETH', 'SOL', 'USDT'];
+    if (CRYPTO_MAJORS_FORCE.includes(symbol)) {
+        type = 'CRYPTO';
+    }
+
+    if (KNOWN_STOCKS.has(symbol) && type !== 'CRYPTO') {
         type = 'STOCK';
     }
     if (!type) {
