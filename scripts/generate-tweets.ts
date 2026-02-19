@@ -89,9 +89,9 @@ The herd is moving. Are you?
     }
 
     // 3. Top Analysts
-    // Filter: Minimum 15 calls matches platform leaderboard
+    // Filter: Minimum 20 calls matches platform leaderboard
     const topAnalysts = userProfiles
-        .filter(u => u.totalAnalyses >= 15)
+        .filter(u => u.totalAnalyses >= 20)
         .sort((a, b) => b.winRate - a.winRate || b.totalAnalyses - a.totalAnalyses)
         .slice(0, 5);
 
@@ -109,9 +109,9 @@ Respect the data. 📈
     output.push('\n---\n');
 
     // 4. Bottom Analysts
-    // Filter: Minimum 15 calls matches platform leaderboard
+    // Filter: Minimum 20 calls matches platform leaderboard
     const bottomAnalysts = userProfiles
-        .filter(u => u.totalAnalyses >= 15)
+        .filter(u => u.totalAnalyses >= 20)
         .sort((a, b) => a.winRate - b.winRate || b.totalAnalyses - a.totalAnalyses)
         .slice(0, 5);
 
