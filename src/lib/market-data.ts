@@ -111,10 +111,19 @@ const LAUNCH_DATES: Record<string, { date: Date, price: number }> = {
     'SOL': { date: new Date('2020-03-16'), price: 0.22 },
 };
 
+let cachedIndices: Record<string, number> | null = null;
+let lastIndicesFetch = 0;
+const INDICES_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Get current prices for major indices/cryptos to provide context to the AI.
  */
 export async function getMajorIndicesPrices(): Promise<Record<string, number>> {
+    const now = Date.now();
+    if (cachedIndices && (now - lastIndicesFetch < INDICES_CACHE_TTL)) {
+        return cachedIndices;
+    }
+
     try {
         const [btc, eth, sol] = await Promise.all([
             getPrice('BTC', 'CRYPTO'),
@@ -122,22 +131,36 @@ export async function getMajorIndicesPrices(): Promise<Record<string, number>> {
             getPrice('SOL', 'CRYPTO'),
         ]);
 
-        return {
+        cachedIndices = {
             'BTC': btc || 0,
             'ETH': eth || 0,
             'SOL': sol || 0,
         };
+        lastIndicesFetch = now;
+        return cachedIndices;
     } catch (e) {
         console.error('[MarketData] Failed to fetch major indices:', e);
-        return {};
+        return cachedIndices || {};
     }
 }
+
+const currentPriceCache: Record<string, { price: number | null, timestamp: number }> = {};
+const PRICE_CACHE_TTL = 60 * 1000; // 60 seconds
 
 /**
  * Main price fetching engine. Waterfall through Yahoo -> CMC -> CoinGecko.
  */
 export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?: Date): Promise<number | null> {
     symbol = symbol.replace(/^\$/, '').toUpperCase();
+
+    // Check cache for current price
+    if (!date) {
+        const cached = currentPriceCache[symbol];
+        if (cached && (Date.now() - cached.timestamp < PRICE_CACHE_TTL)) {
+            // console.log(`[Price] Cache hit for ${symbol}: ${cached.price}`);
+            return cached.price;
+        }
+    }
 
     // FORCE CRYPTO MAJORS: Prevent collisions with stock/ETF tickers (e.g. BTC Mini Trust ETF at $30)
     const CRYPTO_MAJORS_FORCE = ['BTC', 'ETH', 'SOL', 'USDT'];
@@ -172,6 +195,7 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
     }
 
     const YAHOO_SKIP_CRYPTO = new Set(['TAO', 'ASTER', 'SUI', 'APT', 'PEPE']);
+    let price: number | null = null;
 
     if (type === 'CRYPTO') {
         const mapping: Record<string, string> = {
@@ -190,32 +214,44 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         if (!YAHOO_SKIP_CRYPTO.has(symbol)) {
             console.log(`[Price] Trying Yahoo: ${yahooSymbol}`);
             const yahooPrice = await getYahooPrice(yahooSymbol, date);
-            if (yahooPrice !== null && yahooPrice > 0.000001) { // Basic sanity check for high value assets
+            if (yahooPrice !== null && yahooPrice > 0.000001) {
                 console.log(`[Price] Yahoo success for ${yahooSymbol}: ${yahooPrice}`);
-                return yahooPrice;
+                price = yahooPrice;
             }
         }
 
-        const cmcPrice = await getCoinMarketCapPrice(symbol, date);
-        if (cmcPrice !== null) {
-            console.log(`[Price] CMC success for ${symbol}: ${cmcPrice}`);
-            return cmcPrice;
-        }
-
-        const coinGeckoId = COINGECKO_IDS[symbol.toUpperCase()];
-        if (coinGeckoId) {
-            const cgPrice = await getCoinGeckoPrice(coinGeckoId, date);
-            if (cgPrice !== null) {
-                console.log(`[Price] CG success for ${coinGeckoId}: ${cgPrice}`);
-                return cgPrice;
+        if (price === null) {
+            const cmcPrice = await getCoinMarketCapPrice(symbol, date);
+            if (cmcPrice !== null) {
+                console.log(`[Price] CMC success for ${symbol}: ${cmcPrice}`);
+                price = cmcPrice;
             }
         }
-        console.log(`[Price] All providers failed for ${symbol}`);
+
+        if (price === null) {
+            const coinGeckoId = COINGECKO_IDS[symbol.toUpperCase()];
+            if (coinGeckoId) {
+                const cgPrice = await getCoinGeckoPrice(coinGeckoId, date);
+                if (cgPrice !== null) {
+                    console.log(`[Price] CG success for ${coinGeckoId}: ${cgPrice}`);
+                    price = cgPrice;
+                }
+            }
+        }
+
+        if (price === null) {
+            console.log(`[Price] All providers failed for ${symbol}`);
+        }
     } else {
-        return getYahooPrice(symbol, date);
+        price = await getYahooPrice(symbol, date);
     }
 
-    return null;
+    // Update cache for current prices
+    if (!date) {
+        currentPriceCache[symbol] = { price, timestamp: Date.now() };
+    }
+
+    return price;
 }
 
 async function getCoinMarketCapPrice(symbol: string, date?: Date): Promise<number | null> {

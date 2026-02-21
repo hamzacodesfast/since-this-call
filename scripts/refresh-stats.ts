@@ -20,9 +20,9 @@ async function main() {
 
     console.log('🔄 Triggering Profile Sync (Recalculate Stats)...');
     try {
-        execSync('npx tsx scripts/force-sync-profiles.ts', { stdio: 'inherit' });
+        execSync('npx tsx scripts/recalculate-all-production.ts', { stdio: 'inherit' });
     } catch (e) {
-        console.error('❌ Failed to run force-sync-profiles:', e);
+        console.error('❌ Failed to run recalculate-all-production:', e);
     }
 
     console.log('🔄 Triggering Ticker Backfill to sync stats...');

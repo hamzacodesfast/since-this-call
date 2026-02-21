@@ -66,7 +66,7 @@ export async function analyzeTweetContent(
     const marketContext = await getMajorIndicesPrices();
 
     console.log(`[Analyzer] Extracting from text: "${tweet.text?.substring(0, 50)}..."`);
-    const callData = await extractCallFromText(tweet.text, tweet.created_at, firstImageUrl, typeOverride, marketContext);
+    const callData = await extractCallFromText(tweet.text, tweet.created_at, tweet.user?.screen_name, firstImageUrl, typeOverride, marketContext);
 
     if (!callData) {
         console.error(`[Analyzer] AI failed to identify call in text: "${tweet.text}"`);

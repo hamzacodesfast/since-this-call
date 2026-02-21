@@ -13,82 +13,49 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### 1. Linguistic Disambiguation (The "Slang" Layer)
 *   **Cultural Fluency**: You must translate FinTwit idioms into binary signals. 
-    *   *Example:* "Cooked," "Surviving," "Pain," "Avoiding," "Dumpster Fire" = **SELL**.
+    *   *Example:* "Cooked," "Surviving," "Avoiding," "Dumpster Fire" = **SELL**.
     *   *Example:* "We are so back," "Corn is king," "Send it," "Accumulating" = **BUY**.
 *   **Inverse Sentiment Parsing**: Recognizing when "I'm ruined" or "Bags are heavy" actually implies a **BULLISH** stance (long position suffering drawdown) vs. a bearish prediction.
-*   **Skepticism & Mockery**: Identifying "I tried to warn you" or "Financial illiteracy" as **BEARISH** signals, even if the user references a generally bullish sentiment (they are mocking it).
-*   **Regret Parsing**: "I might regret selling" is a **BEARISH** action (Sold), despite the emotional "regret" (which usually implies bullishness). Action > Emotion.
+*   **Skepticism & Mockery**: Identifying "I tried to warn you" or "Financial illiteracy" as **BEARISH** signals, even if the user references a generally bullish sentiment.
+*   **Regret Parsing**: "I might regret selling" is a **BEARISH** action (Sold), despite the emotional "regret". Action > Emotion.
 
 ### 2. Numerical Directionality (The "Math" Layer)
 *   **Price Awareness**: You must inject `MARKET_CONTEXT` into the extraction layer.
 *   **Delta-Validation**: If a user targets $80k for BTC while the price is $100k, you must override any "checking off boxes" and flag it as a **BEARISH** (SELL) signal. 
-*   **Roadmap Logic**: Tracking checklists (✅ vs ⏳) and extracting the signal from the *next* unreached target.
 
 ### 3. Entity Proxy Resolution (The "Symbol" Layer)
 *   **Nicknames**: Mapping "Corn" (BTC), "Vitalik" (ETH), and "The Dog" (DOGE).
-*   **Authoritative Assets**: We ONLY track assets found on Yahoo Finance, CoinMarketCap, or CoinGecko.
-*   **No Meme Coins**: Contract addresses and DEX-only tokens are strictly filtered out.
+*   **Meme Coin Support**: We **DO** support meme coins via Contract Address (CA) extraction (Solana/Base). System uses GeckoTerminal for historical pricing.
+*   **Word-Ticker Protection**: Handling tickers that look like common words (e.g., `$HYPE`, `$ME`, `$BOBO`). AI must verify financial context before classifying as a ticker.
 *   **Proxy Overrides**: Identifying when a stock (MSTR) is used as a proxy for the underlying (BTC). For official Strategy/Saylor accounts, the data subject is **BTC**.
 *   **Dominance Parsing**: Understanding that a "Bearish" view on `USDT.D` (USDT Dominance) is a **BULLISH** signal for the crypto market.
 
 ### 4. Intent Discrimination (Active vs. Conditional)
 *   **Active Stance**: Treating "Holding," "Betting on," and "Avoided" as immediate executable signals.
-*   **Conditional Filter**: Correctly identifying "Buying IF..." or "Watching for..." as `NULL` results to prevent low-confidence data from entering the leaderboard.
+*   **Conditional Filter**: Correctly identifying "Buying IF..." or "Watching for..." as `NULL` results.
+*   **Noise Filter**: Automatically ignoring "Live Show" advertisements and "Space" countdowns that don't contain a specific price call.
 
 ---
 
 ## 🛑 Operational Protocols (The "Hard Rules")
 
 ### I. Data Integrity First
-*   **Main is Truth**: All code/logic modifications MUST be pushed to the `main` branch before database synchronization.
-*   **Sync Parity**: Always run `npx tsx scripts/sync-to-local.ts` after any push or pull. Never verify logic against stale local data.
-*   **Schema Safety**: Never use raw `SET` commands on Redis Hashes. Use the `AnalysisStore` wrapper to prevent production-breaking data-type collisions.
+*   **Main is Truth**: All code/logic modifications MUST be committed and pushed to the `main` branch before database synchronization.
+*   **Sync Parity**: Always run `npx tsx scripts/sync-to-local.ts` after any push or pull. 
+*   **Schema Safety**: Never use raw `SET` commands on Redis Hashes. Use `AnalysisStore` abstractions.
 
 
-### III. Validation & Logic Enforcement
-*   **Strict Timestamp Integrity**: The API (`/api/recent`) must **REJECT** any request without a valid timestamp. There is no fallback to `Date.now()` (Search Time). Timeline integrity is paramount.
+### II. Validation & Logic Enforcement
 *   **Asset Type Segregation**: Stock searches initiated by the user must **strictly** bypass Crypto APIs to prevent ticker collisions (e.g. $MSTR, $AAPL).
-*   **Dynamic Market Context**: The AI must be fed real-time prices (BTC/ETH/SOL) via `MARKET_CONTEXT` injection to correctly validate "Numerical Directionality" (e.g. Buying BTC at $90k when market is $100k = Bearish/Short).
-
-### IV. Fix Protocols
-*   **Main First**: Data repairs (scripts) must target **Production** first. Local environment is downstream from Main.
-*   **Force-Fix**: For stubborn data points where AI/Market Data fails, use the `scripts/force-fix-[case].ts` pattern to manually inject the correct `StoredAnalysis` object directly into production Redis.
-*   **Scripted Repairs**: Never manually edit database entries. Create reusable scripts committed to `main`:
-    *   `scripts/bulk-process-main.ts`: For processing a queue of tweets with optional manual overrides (Symbol/Sentiment/Type).
-    *   `scripts/remove-production.ts`: For surgical removal of bad data points directly from the cloud instance.
-    *   `scripts/repair-all-users.ts`: For historical timestamp/price corrections.
-    *   `scripts/backfill-tickers.ts`: For rebuilding the ticker index.
-    *   `scripts/reanalyze.ts`: For individual fix-ups.
+*   **Hard Bearish Sentinel**: Explicitly ensure that known market skeptics (e.g. Peter Schiff on $BTC) are not marked `NULL` when they post bearish content. Instructions exist to prioritize the bearish sentiment over "financial illiteracy" noise.
 
 ---
 
-## 🧪 Tech Stack Proficiency
+## 🛠️ Tech Stack Proficiency
 *   **AI**: Gemini 2.0 Flash (Multimodal) for text + chart analysis.
 *   **Data**: Redis (Upstash/LocalProxy) with a focus on Hash/List parity.
-*   **Pricing**: Authoritative Waterfall (Yahoo Finance -> CoinMarketCap -> CoinGecko).
-
-### V. Context Hardening Protocol
-*   **The Problem**: AI sometimes misinterprets nuance (e.g., "Buying Dips" = Bearish).
-*   **The Process**:
-    1.  **Debug**: Create a script (`scripts/debug-[case].ts`) to fetch the raw AI output. Identify the specific "Reasoning" failure.
-    2.  **RCA**: Determine if the error is due to a prompt rule (e.g., "Target Rule") overriding intuition.
-    3.  **Harden**: Update `ai-extractor.ts` prompt with a specific **OVERRIDE RULE**. Use explicit triggers ("Best Chart", "Accumulating") to force the correct sentiment.
-    4.  **Verify**: Re-run the debug script to confirm the prompt change works.
-    5.  **Repair**: Run a `fix-[case].ts` script to correct the specific Production entry.
-
-
-
-### VI. Market Data Reliability Protocol
-*   **Stock Whitelisting**: Tickers that look like crypto but are stocks (e.g. `ONDS`, `ASST`, `BIZIM`, `DXY`) must be added to `KNOWN_STOCKS` in `market-data.ts`.
-*   **Index Mapping**: Use `INDEX_FALLBACKS` in `market-data.ts` to map commodities/indices to their Futures equivalents (e.g., `COPPER` -> `HG=F`, `DXY` -> `DX-Y.NYB`).
-*   **Symbol Cleaning**: Logic in `analyzer.ts` must handle exotic suffixes (`.P` for Perpetuals, `.D` for Dominance) to extract cleanliness (e.g. `PUMP` from `PUMPUSDT.P`).
-*   **Recent Date Fallback**: Yahoo Finance Historical API is unreliable for "Today's" data. Logic must fallback to **Current Price** if the historical fetch fails for a date < 24h old.
-*   **Type Enforcement**: Major assets (BTC, ETH, SOL) must be hard-coded as `CRYPTO` in `price-updater.ts` to prevent "Stock" misclassification (e.g. ETH -> Ethan Allen).
-
-### VII. Local Environment Protocol
-*   **Redis Client**: Do not use `eval('require')` hacks for `ioredis`. Configure `serverComponentsExternalPackages: ['ioredis']` in `next.config.mjs` to support local drivers natively.
-*   **Port Discipline**: Local apps run on 3000 (Main) and 3001 (Twitter Watcher). Ensure no zombie processes before starting `dev`.
+*   **Pricing**: Authoritative Waterfall (GeckoTerminal (Meme) -> Yahoo Finance (Global) -> CMC -> CoinGecko).
 
 ---
 
-*Blueprint Version: 2.5 (Jan 30, 2026)*
+*Blueprint Version: 3.0 (Feb 21, 2026)*

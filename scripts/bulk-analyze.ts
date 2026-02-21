@@ -55,88 +55,92 @@ async function bulkAnalyze() {
         process.exit(1);
     }
 
-    console.log(`🚀 Starting bulk analysis of ${tweetsToProcess.length} tweets...\n`);
+    console.log(`🚀 Starting bulk analysis of ${tweetsToProcess.length} tweets (Concurrency: 5)...\n`);
 
     let processedCount = 0;
     let skippedCount = 0;
     let failedCount = 0;
 
-    for (let i = 0; i < tweetsToProcess.length; i++) {
-        const tweetInfo = tweetsToProcess[i];
-        const tweetId = tweetInfo.id;
+    const concurrency = 5;
+    for (let i = 0; i < tweetsToProcess.length; i += concurrency) {
+        const chunk = tweetsToProcess.slice(i, i + concurrency);
 
-        console.log(`--- [${i + 1}/${tweetsToProcess.length}] Processing Tweet ${tweetId} ---`);
+        await Promise.all(chunk.map(async (tweetInfo, chunkIdx) => {
+            const tweetId = tweetInfo.id;
+            const globalIdx = i + chunkIdx + 1;
 
-        try {
-            // Check for duplicates
-            const recent = await redis.lrange('recent_analyses', 0, -1);
-            const isDuplicate = recent.some((a: any) => {
-                const parsed = typeof a === 'string' ? JSON.parse(a) : a;
-                return parsed.id === tweetId;
-            });
+            try {
+                // Check for duplicates
+                const recent = await redis.lrange('recent_analyses', 0, -1);
+                const isDuplicate = recent.some((a: any) => {
+                    const parsed = typeof a === 'string' ? JSON.parse(a) : a;
+                    return parsed.id === tweetId;
+                });
 
-            if (isDuplicate) {
-                console.log('⏭️ Skipping: Tweet already analyzed.');
-                skippedCount++;
-                continue;
-            }
+                if (isDuplicate) {
+                    console.log(`[${globalIdx}/${tweetsToProcess.length}] ⏭️ Skipping: Tweet already analyzed.`);
+                    skippedCount++;
+                    return;
+                }
 
-            console.log('🤖 Analyzing tweet content...');
-            const sentimentOverride = tweetInfo.action === 'BUY' ? 'BULLISH' :
-                tweetInfo.action === 'SELL' ? 'BEARISH' : undefined;
-            const result = await analyzeTweet(tweetId, undefined, (tweetInfo as any).symbol, sentimentOverride);
+                console.log(`[${globalIdx}/${tweetsToProcess.length}] 🤖 Analyzing tweet ${tweetId}...`);
+                const sentimentOverride = tweetInfo.action === 'BUY' ? 'BULLISH' :
+                    tweetInfo.action === 'SELL' ? 'BEARISH' : undefined;
 
-            if (!result) {
-                console.log('ℹ️  Skipped: No financial call (Noise/News/Chatter).');
-                skippedCount++;
-                continue;
-            }
+                const result = await analyzeTweet(tweetId, undefined, (tweetInfo as any).symbol, sentimentOverride);
 
-            if (!result.analysis.action) {
-                console.log('❌ Failed: Invalid analysis result (No Action)');
+                if (!result) {
+                    console.log(`[${globalIdx}/${tweetsToProcess.length}] ℹ️  Skipped: No financial call (Noise).`);
+                    skippedCount++;
+                    return;
+                }
+
+                if (!result.analysis.action) {
+                    console.log(`[${globalIdx}/${tweetsToProcess.length}] ❌ Failed: Invalid analysis result (No Action)`);
+                    failedCount++;
+                    return;
+                }
+
+                console.log(`[${globalIdx}/${tweetsToProcess.length}] ✅ Extracted: ${result.analysis.action} ${result.analysis.symbol} @ $${result.market.callPrice}`);
+
+                const storedItem = {
+                    id: result.tweet.id,
+                    username: result.tweet.username,
+                    author: result.tweet.author,
+                    avatar: result.tweet.avatar,
+                    symbol: result.analysis.symbol,
+                    sentiment: result.analysis.sentiment,
+                    performance: result.market.performance,
+                    isWin: result.market.performance > 0,
+                    timestamp: new Date(result.tweet.date).getTime(),
+                    entryPrice: result.market.callPrice,
+                    currentPrice: result.market.currentPrice,
+                    type: result.analysis.type,
+                    ticker: result.analysis.symbol,
+                    action: result.analysis.action,
+                    confidence_score: result.analysis.confidence_score,
+                    timeframe: result.analysis.timeframe,
+                    is_sarcasm: result.analysis.is_sarcasm,
+                    reasoning: result.analysis.reasoning,
+                    warning_flags: result.analysis.warning_flags,
+                    tweetUrl: `https://x.com/${result.tweet.username}/status/${result.tweet.id}`,
+                    text: result.tweet.text
+                };
+
+                await updateUserProfile(storedItem);
+                await addAnalysis(storedItem);
+                console.log(`[${globalIdx}/${tweetsToProcess.length}] ✅ Saved to @${storedItem.username}.`);
+                processedCount++;
+
+            } catch (e: any) {
+                console.error(`[${globalIdx}/${tweetsToProcess.length}] ❌ Error processing ${tweetId}:`, e.message);
                 failedCount++;
-                continue;
             }
+        }));
 
-            console.log(`   ✅ Extracted: ${result.analysis.action} ${result.analysis.symbol} @ $${result.market.callPrice}`);
-
-            const storedItem = {
-                id: result.tweet.id,
-                username: result.tweet.username,
-                author: result.tweet.author,
-                avatar: result.tweet.avatar,
-                symbol: result.analysis.symbol,
-                sentiment: result.analysis.sentiment,
-                performance: result.market.performance,
-                isWin: result.market.performance > 0,
-                timestamp: new Date(result.tweet.date).getTime(),
-                entryPrice: result.market.callPrice,
-                currentPrice: result.market.currentPrice,
-                type: result.analysis.type,
-                ticker: result.analysis.symbol,
-                action: result.analysis.action,
-                confidence_score: result.analysis.confidence_score,
-                timeframe: result.analysis.timeframe,
-                is_sarcasm: result.analysis.is_sarcasm,
-                reasoning: result.analysis.reasoning,
-                warning_flags: result.analysis.warning_flags,
-                tweetUrl: `https://x.com/${result.tweet.username}/status/${result.tweet.id}`,
-                text: result.tweet.text
-            };
-
-            await updateUserProfile(storedItem);
-            await addAnalysis(storedItem);
-            console.log(`   ✅ Saved to @${storedItem.username}'s history and global feed.`);
-            processedCount++;
-
-        } catch (e: any) {
-            console.error(`❌ Error processing tweet ${tweetId}:`, e.message);
-            failedCount++;
-        }
-
-        if (i < tweetsToProcess.length - 1) {
-            console.log('⏳ Waiting 2 seconds...\n');
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        if (i + concurrency < tweetsToProcess.length) {
+            // console.log('⏳ Waiting 1 second...\n');
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
     }
 

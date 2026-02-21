@@ -2,7 +2,7 @@
 
 **Project:** SinceThisCall (STC) - "Call Receipts for Crypto/Meme Twitter"  
 **Current Status:** Production (Main Branch - Hardened)  
-**Last Updated:** January 30, 2026  
+**Last Updated:** February 21, 2026  
 
 ---
 
@@ -15,99 +15,62 @@
 2. **SYNC-TO-LOCAL**: Run `npx tsx scripts/sync-to-local.ts` after any push to ensure your local environment reflects the live production data.
 3. **NO REDIS TYPE OVERWRITES**: Never overwrite a Hash (`user:profile`) with a String. Use `AnalysisStore` abstractions.
 4. **MARKETING ON MAIN**: Always prepare tweets and marketing content using **Production** stats (Main database). Never use local data for public performance reports.
+5. **LEADERBOARD THRESHOLD**: Strictly **20 calls minimum** for leaderboard eligibility.
 
 ---
 
-## 📊 Current Metrics (Jan 31, 2026 - Live Refresh)
+## 📊 Current Metrics (Feb 21, 2026 - Live Snapshot)
 
 | Metric | Value |
 |--------|-------|
-| Total Analyses | 1,219 (Post-Purge) |
-| Unique Gurus | 563 |
-| Tracked Tickers | 189 |
-| Platform Win Rate| 36% |
-| Verified Edge Cases| 120+ |
+| Total Analyses | 6,500+ |
+| Unique Gurus | 1,890+ |
+| Tracked Tickers | 550+ |
+| Platform Win Rate| ~44.5% (Weighted) |
+| Leaderboard Min Calls| 20 |
 
 ---
 
-## 🏗️ Core Architecture
+## 🆕 Recent Features (Feb 12-21, 2026)
 
-- **Framework:** Next.js 14 (App Router) + TypeScript + TailwindCSS
-- **Database:** Upstash Redis (REST API)
-  - **Local Dev:** Uses standard `redis:alpine` Docker container.
-  - **Redis Wrapper:** `src/lib/redis-wrapper.ts` (IORedis proxy) handles protocol translation.
-  - **Unified Client:** `src/lib/redis-client.ts` automatically switches between Local Proxy and Production Upstash based on env.
-- **AI Engine:** `src/lib/ai-extractor.ts` using Gemini 2.0 Flash (Tier 1 / Paid).
-  - **Asset Type Selection:** Now supports explicit "Crypto" vs "Stock" selection for higher accuracy.
-- **Pricing Engine:** `src/lib/market-data.ts` (CA-Aware Waterfall: GeckoTerminal -> DexScreener -> CoinGecko -> Yahoo Finance).
-
-## 🆕 Recent Features (Jan 24-25, 2026)
-
-1.  **Historical Pricing Integrity**
-    - **Fix:** System now uses **Tweet Creation Date** (not analysis time) for all entry prices.
-    - **Repair:** Full database repair run on all 245 gurus.
-2.  **Contract Address (CA) Awareness**
-    - **Analyzer:** Automatically extracts CAs for meme coins (Solana/Base).
-    - **Price Refresher:** Now supports CA-based historical lookups via GeckoTerminal.
-    - **Impact:** Accurate "Win/Loss" tracking for low-cap tokens.
-3.  **Asset Type Selection (Search)**
-    - Two-step flow on homepage: Choose "Analyze Crypto" or "Analyze Stock" first.
-4.  **Main-First Maintenance Scripts**
-    - `refresh-metrics.ts` and `refresh-stats.ts` now prioritize `.env.production`.
-5.  **Metrics Engine Upgrade** (Jan 26)
-    - **Logic**: "Most Tracked" now uses a strictly timestamp-sorted window of the last 500 tweets.
-    - **Fix**: Resolved "ghost calls" discrepancy by forcing cache refresh on production.
-6.  **Full Environment Parity**
-    - Local dev environment now fully synced with production snapshot (1,500+ analyses).
-7.  **UX Enhancement (Jan 30)**
-    - **Renaming**: "Most Tracked Tickers" -> "Trending Tickers" to better reflect the dynamic nature of the list.
-8.  **AI Logic Hardening (Feb 2)**
-    - **Patterns Added**: "Regret Selling", "Mocking/Sarcasm" (e.g. "dumpster fire", "financial illiteracy"), "New Lows", "Excessive FOMO".
-    - **Impact**: Reduced false positives on bearish "warning" tweets.
-9.  **Critical Pricing Engine Fix (Feb 2)**
-    - **Mechanism**: Implemented 12-hour high-precision search window + "Closest Past Close" logic.
-    - **Result**: Solved "Neutral" errors for overnight/weekend tweets (8 PM - 4 AM). Verified on $PLTR.
+1.  **AI Extraction Hardening (v2)**
+    - **Logic**: Added instructions to ignore "Live Show" noise, handle "$HYPE" style word-tickers, and ensure bearish sentiment on core pairs (like Peter Schiff on $BTC) is never marked NULL.
+2.  **Twitter Watcher (Production Ready)**
+    - **Location**: `services/twitter-watcher/`
+    - **Command**: `npm run watch -- --headless`
+    - **Maintenance**: Delete `.chrome-profile` to logout/switch accounts.
+3.  **Vercel Build Optimization**
+    - Added `.vercelignore` to exclude massive `services/node_modules` and `videos/` from the web deployment.
+4.  **Leaderboard Maturity**
+    - Minimum qualified calls increased from 15 → 20 to ensure statistics are statistically significant.
+5.  **Workspace Consolidation**
+    - Purged over 7,000 lines of legacy batch files and redundant debug scripts.
+6.  **Stats Engine Repair**
+    - `refresh-stats.ts` now correctly calls `recalculate-all-production.ts` to sync the whole production database.
 
 ## 📂 Key Files
 
 | File | Purpose |
 |------|---------|
 | `src/app/api/metrics/route.ts` | Platform metrics + topTickers |
-| `src/app/stats/page.tsx` | Stats dashboard page |
-| `src/components/charts/` | Chart components (recharts) |
+| `src/app/leaderboard/page.tsx` | Leaderboard UI (20-call filter) |
 | `src/lib/ai-extractor.ts` | **BATTLE-HARDENED LINGUISTIC ENGINE** |
-| `src/lib/price-refresher.ts` | Ticker price update logic |
+| `services/twitter-watcher/` | Puppeteer automation service |
 
 ## 🛠️ Admin Scripts
 
 | Script | Purpose |
 |--------|-------|
 | `sync-to-local.ts` | **HARD RULE:** Run after `git pull` or prod check. |
-| `sync-to-production.ts` | **DANGEROUS:** Overwrites Live with Local. |
-| `local-redis-proxy.ts` | Runs the local Redis server with the Upstash-compatible proxy. |
+| `recalculate-all-production.ts` | **SYNC EVERYTHING:** Re-calculates all wins/losses/counts for the production DB. |
 | `reanalyze.ts` | Fix incorrect analysis for a tweet ID. |
-| `remove-tweet.ts` | Delete a single analysis from history and recent. |
 | `bulk-analyze.ts` | Process a JSON list of tweet URLs into the DB. |
-| `backup-data.ts` | Export all Redis data to JSON. |
-| `restore-users.ts` | Restore users from a backup file. |
 
 ## 🎯 Immediate Priorities
 
-1. **Content Marketing** - Post prepared tweets in `/brain/.../marketing_content.md`
-2. **Video Narration** - Add audio to Remotion videos in `videos/`
-3. **Pro Tier** - Implement subscription features
-4. **1K Follower Target** - Estimated mid-March
-
-## 📜 Standard Procedures
-
-### Wrong Analysis Fix
-`npx tsx scripts/reanalyze.ts <TWEET_ID>`
-
-### Force Metrics Refresh
-`curl -X POST http://localhost:3000/api/metrics`
-
-### Price Refresh (All Tickers)
-`curl http://localhost:3000/api/cron/refresh`
+1. **Video Automation** - Finalize the Remotion pipeline for "Receipt Videos".
+2. **Pro Tier** - Implement Stripe/Subscription logic.
+3. **API Access** - Potential external API for other developers to query guru scores.
 
 ---
 
