@@ -16,8 +16,7 @@ async function getProducts() {
         headers: {
             'Authorization': `Bearer ${printifyApiKey}`
         },
-        // Revalidate every 10 minutes to keep catalog fresh but fast
-        next: { revalidate: 600 }
+        cache: 'no-store'
     });
 
     if (!res.ok) {
