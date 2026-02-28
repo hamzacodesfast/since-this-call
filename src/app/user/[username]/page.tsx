@@ -65,36 +65,36 @@ export default async function UserProfilePage({ params }: { params: { username: 
                         </div>
 
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-3 md:grid-cols-4 gap-4 max-w-2xl">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 max-w-2xl">
                             <Card className="bg-card/50 backdrop-blur border-border/50">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold">{profile.totalAnalyses}</div>
-                                    <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Calls</div>
+                                <CardContent className="p-3 sm:p-4 text-center">
+                                    <div className="text-xl sm:text-2xl font-bold">{profile.totalAnalyses}</div>
+                                    <div className="text-[10px] sm:text-xs text-muted-foreground uppercase font-bold tracking-wider">Calls</div>
                                 </CardContent>
                             </Card>
                             <Card className="bg-green-500/10 border-green-500/20">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold text-green-500 flex items-center justify-center gap-2">
-                                        <Trophy className="w-5 h-5" /> {profile.wins}
+                                <CardContent className="p-3 sm:p-4 text-center">
+                                    <div className="text-xl sm:text-2xl font-bold text-green-500 flex items-center justify-center gap-1 sm:gap-2">
+                                        <Trophy className="w-4 h-4 sm:w-5 sm:h-5" /> {profile.wins}
                                     </div>
-                                    <div className="text-xs text-green-500/60 uppercase font-bold tracking-wider">Wins</div>
+                                    <div className="text-[10px] sm:text-xs text-green-500/60 uppercase font-bold tracking-wider">Wins</div>
                                 </CardContent>
                             </Card>
                             <Card className="bg-red-500/10 border-red-500/20">
-                                <CardContent className="p-4 text-center">
-                                    <div className="text-2xl font-bold text-red-500 flex items-center justify-center gap-2">
-                                        <XCircle className="w-5 h-5" /> {profile.losses}
+                                <CardContent className="p-3 sm:p-4 text-center">
+                                    <div className="text-xl sm:text-2xl font-bold text-red-500 flex items-center justify-center gap-1 sm:gap-2">
+                                        <XCircle className="w-4 h-4 sm:w-5 sm:h-5" /> {profile.losses}
                                     </div>
-                                    <div className="text-xs text-red-500/60 uppercase font-bold tracking-wider">Losses</div>
+                                    <div className="text-[10px] sm:text-xs text-red-500/60 uppercase font-bold tracking-wider">Losses</div>
                                 </CardContent>
                             </Card>
                             {profile.neutral > 0 && (
                                 <Card className="bg-yellow-500/10 border-yellow-500/20">
-                                    <CardContent className="p-4 text-center">
-                                        <div className="text-2xl font-bold text-yellow-500 flex items-center justify-center gap-2">
-                                            <MinusCircle className="w-5 h-5" /> {profile.neutral}
+                                    <CardContent className="p-3 sm:p-4 text-center">
+                                        <div className="text-xl sm:text-2xl font-bold text-yellow-500 flex items-center justify-center gap-1 sm:gap-2">
+                                            <MinusCircle className="w-4 h-4 sm:w-5 sm:h-5" /> {profile.neutral}
                                         </div>
-                                        <div className="text-xs text-yellow-500/60 uppercase font-bold tracking-wider">Flat</div>
+                                        <div className="text-[10px] sm:text-xs text-yellow-500/60 uppercase font-bold tracking-wider">Flat</div>
                                     </CardContent>
                                 </Card>
                             )}

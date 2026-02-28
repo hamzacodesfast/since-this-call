@@ -115,37 +115,37 @@ export default function Home() {
 
             <MetricsBar />
 
-            <div className="w-full max-w-xl relative mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10">
+            <div className="w-full max-w-xl relative mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 z-10 mx-auto px-2">
                 {!assetType ? (
-                    <div className="grid grid-cols-2 gap-4 animate-in zoom-in-95 duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in zoom-in-95 duration-300">
                         <Button
                             onClick={() => setAssetType('CRYPTO')}
-                            className="h-32 flex flex-col gap-3 rounded-2xl bg-card/80 backdrop-blur-md border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                            className="h-28 sm:h-32 flex flex-col gap-2 sm:gap-3 rounded-2xl bg-card/80 backdrop-blur-md border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all group"
                         >
-                            <Sparkles className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <div className="text-xl font-bold text-foreground">Analyze Crypto</div>
+                            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 group-hover:scale-110 transition-transform" />
+                            <div className="text-lg sm:text-xl font-bold text-foreground">Analyze Crypto</div>
                         </Button>
                         <Button
                             onClick={() => setAssetType('STOCK')}
-                            className="h-32 flex flex-col gap-3 rounded-2xl bg-card/80 backdrop-blur-md border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                            className="h-28 sm:h-32 flex flex-col gap-2 sm:gap-3 rounded-2xl bg-card/80 backdrop-blur-md border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all group"
                         >
-                            <TrendingUp className="w-8 h-8 text-purple-500 group-hover:scale-110 transition-transform" />
-                            <div className="text-xl font-bold text-foreground">Analyze Stock</div>
+                            <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 group-hover:scale-110 transition-transform" />
+                            <div className="text-lg sm:text-xl font-bold text-foreground">Analyze Stock</div>
                         </Button>
                     </div>
                 ) : (
-                    <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+                    <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300 w-full max-w-lg mx-auto">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                        <form onSubmit={handleAnalyze} className="relative flex flex-col gap-2 p-2 bg-card/80 backdrop-blur-md border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                            <div className="flex gap-2">
+                        <form onSubmit={handleAnalyze} className="relative flex flex-col gap-3 p-3 sm:p-2 bg-card/90 backdrop-blur-xl border rounded-2xl shadow-xl ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <div className="relative flex-1">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
                                         <Search className="w-5 h-5" />
                                     </div>
                                     <Input
                                         type="url"
-                                        placeholder={`Paste Tweet URL for ${assetType === 'CRYPTO' ? 'Crypto' : 'Stock'} Call`}
-                                        className="w-full h-12 pl-10 bg-transparent border-none focus-visible:ring-0 text-base"
+                                        placeholder={`Paste URL for ${assetType === 'CRYPTO' ? 'Crypto' : 'Stock'} Call`}
+                                        className="w-full h-14 pl-10 bg-background/50 border-border/50 focus-visible:ring-0 text-base rounded-xl"
                                         value={url}
                                         onChange={(e) => setUrl(e.target.value)}
                                         autoFocus
@@ -155,13 +155,13 @@ export default function Home() {
                                     type="submit"
                                     size="lg"
                                     disabled={isLoading || !url}
-                                    className="h-12 px-8 rounded-xl font-bold text-md shadow-lg"
+                                    className="h-14 sm:h-14 px-8 rounded-xl font-bold text-md shadow-lg w-full sm:w-auto shrink-0"
                                 >
                                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check Receipt'}
                                 </Button>
                             </div>
                         </form>
-                        <div className="flex justify-center sm:justify-between items-center px-1 pt-2">
+                        <div className="flex justify-center sm:justify-start items-center px-1 pt-2">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -169,7 +169,7 @@ export default function Home() {
                                     setData(null);
                                     setError(null);
                                 }}
-                                className="group flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 hover:bg-secondary text-sm font-medium text-foreground transition-all active:scale-95"
+                                className="group flex items-center justify-center gap-2 px-5 py-3 sm:py-2 rounded-full bg-secondary/80 hover:bg-secondary border border-border/50 text-sm font-medium text-foreground transition-all active:scale-95 w-full sm:w-auto shadow-sm"
                             >
                                 <ArrowRight className="w-4 h-4 text-primary group-hover:-translate-x-1 transition-transform rotate-180" />
                                 <span>Switch to {assetType === 'CRYPTO' ? 'Stocks' : 'Crypto'}</span>

@@ -150,7 +150,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
                     {/* Thumbnail Gallery */}
                     {uniqueImages.length > 1 && (
-                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                             {uniqueImages.map((img: any, idx: number) => (
                                 <button
                                     key={idx}
@@ -173,19 +173,19 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 </div>
 
                 {/* Product Details */}
-                <div className="space-y-8 lg:sticky lg:top-24">
+                <div className="space-y-6 lg:space-y-8 lg:sticky lg:top-24 pb-24 lg:pb-0">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2">{product?.title ? product.title.split(' | ')[0] : 'Unknown Product'}</h1>
-                        <div className="text-2xl font-black text-foreground mb-6">${price}</div>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{product?.title ? product.title.split(' | ')[0] : 'Unknown Product'}</h1>
+                        <div className="text-xl sm:text-2xl font-black text-foreground mb-4 sm:mb-6">${price}</div>
                         {product?.description && (
                             <div className="prose prose-sm sm:prose-base dark:prose-invert text-muted-foreground" dangerouslySetInnerHTML={{ __html: product.description }} />
                         )}
                     </div>
 
                     {/* Variant Selection */}
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         <div className="flex justify-between items-center">
-                            <span className="font-medium text-foreground">Select Variant</span>
+                            <span className="font-medium text-foreground text-sm sm:text-base">Select Variant</span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {activeVariants.map((variant: any) => (
@@ -194,6 +194,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                                     onClick={() => setSelectedVariant(variant)}
                                     variant={selectedVariant?.id === variant.id ? 'default' : 'outline'}
                                     className={`truncate ${selectedVariant?.id === variant.id ? 'bg-primary border-primary text-primary-foreground' : 'hover:border-primary/50'}`}
+                                    size="sm"
                                 >
                                     {variant.title}
                                 </Button>
@@ -201,7 +202,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                         </div>
                     </div>
 
-                    <div className="pt-6 space-y-4">
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t z-50 lg:relative lg:p-0 lg:bg-transparent lg:border-none lg:pt-6 space-y-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] lg:shadow-none">
                         <Button
                             onClick={handleAddToCart}
                             disabled={!selectedVariant}
@@ -210,7 +211,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                             <ShoppingCart className="mr-2 w-5 h-5" />
                             Add to Cart
                         </Button>
-                        <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                        <p className="hidden lg:flex text-xs text-center text-muted-foreground items-center justify-center gap-1.5">
                             <ShieldAlert className="w-3.5 h-3.5" />
                             Secure checkout powered by Stripe.
                         </p>

@@ -33,7 +33,7 @@ export function Navbar() {
 
                 {/* Nav Links + Theme Toggle */}
                 <div className="flex items-center gap-1 sm:gap-2">
-                    <nav className="flex items-center gap-1">
+                    <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar pr-2 pb-1 -mb-1">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href;
                             const Icon = item.icon;
@@ -41,13 +41,14 @@ export function Navbar() {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                                    title={item.label}
+                                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${isActive
                                         ? 'bg-primary/10 text-primary'
                                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                         }`}
                                 >
-                                    <Icon className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{item.label}</span>
+                                    <Icon className="w-4 h-4 sm:w-4 sm:h-4" />
+                                    <span className="hidden lg:inline">{item.label}</span>
                                 </Link>
                             );
                         })}
@@ -55,7 +56,7 @@ export function Navbar() {
 
                     <button
                         onClick={() => setIsCartOpen(true)}
-                        className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                        className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
                         aria-label="Open cart"
                     >
                         <ShoppingCart className="w-5 h-5" />
