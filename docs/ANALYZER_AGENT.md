@@ -2,14 +2,41 @@
 
 This document outlines how to use the **Bulk Analysis Engine** to process lists of scanned tweets and generate financial receipts.
 
-## 🏁 Current Status (as of Feb 21, 2026 - Consistency in Scale)
-- **Latest Milestone**: **6,500+ Financial Calls** verified across the platform.
-- **Guru Pool**: 1,890+ Unique Analysts tracked.
-- **Data Hardening**: 
-    - **Minimum 20 Calls** required for leaderboard eligibility.
-    - **Linguistic Logic**: Hardened against "Noise" (Live Shows/Spaces) and Ambiguous Tickers ($HYPE).
-    - **Persistent Sentiment**: Peter Schiff cases ($BTC bear) are correctly classified as SELL.
-- **Automation**: Twitter Watcher service is fully operational in `services/twitter-watcher/`.
+## 🏁 Current Status (as of Feb 27, 2026 - Session 39 Final ✅)
+- **Total Calls**: **16,019** (MILESTONE: CROSSED 16,000 CALLS! 🏆🎉).
+- **Unique Gurus**: 4,474 (MILESTONE: CROSSED 4,000 UNIQUE ANALYSTS! 🎯).
+- **Win Rate**: 47% 📈 (Holding steady).
+- **Tracked Assets**: 961.
+- **Service**: Twitter Watcher service is fully operational in `services/twitter-watcher/`.
+
+## ⚡ Session Optimizations (Session 34 Updates)
+The system has been significantly hardened for scale:
+1.  **5x Parallel Processing**: `bulk-analyze.ts` now uses concurrency of 5, reducing batch processing time by ~80%.
+2.  **Major Indices Caching**: 5-minute singleton cache for BTC/ETH/SOL prices in `market-data.ts`.
+3.  **Active Price Caching**: 60-second in-memory cache for all current price lookups. 
+4.  **Auto-Normalization**: Enhanced dominance parsing (e.g., Bearish $USDT.D is auto-converted to Bullish $BTC).
+5.  **Pricing Integrity**: Forced `CRYPTO` type for BTC/ETH/SOL to prevent Grayscale Mini Trust ETF collisions ($30 vs $68k).
+6.  **Personality Awareness**: AI now receives `username` context to handle perma-bears like Peter Schiff correctly.
+
+## ⏭️ Next Session Tasks (FOR THE NEXT AGENT)
+1.  **Generate Next Batch**: Use `scripts/sync_and_check.ts` to identify the next wave of tweets:
+    ```bash
+    npx tsx scripts/sync_and_check.ts
+    ```
+2.  **Process New Batch**: Run the generated batch file through bulk analysis.
+3.  **Verify Metrics**: After processing, ensure the Win Rate holds steady near 50%.
+
+## 🗃️ Milestone Log
+- **Session 30**: 1,400 tweets processed. Crossed 10,000 total calls. 🚀
+- **Session 31**: 1,592 tweets processed. Crossed 3,000 unique gurus. 🎯
+- **Session 32/33**: Win Rate reached and sustained at **50%**. 🏆
+- **Session 34**: System cleanup and optimization update. Fresh batch `session35_batch.json` (1,155 tweets) ready for next session.
+- **Session 35**: 19,499 tweets processed (9 batches) → 3,509 net new calls. Total calls: 14,125. Unique gurus: 4,052. Win rate: **38%**. 880 tracked assets.
+- **Session 36**: 573 tweets processed -> 995 net new calls. Total calls: 15,120. Unique gurus: 4,264. Win rate: **55%**. 915 tracked assets.
+- **Session 37**: 860 tweets processed. Total calls: 15,549. Unique gurus: 4,353. Win rate: **53%**. 939 tracked assets.
+- **Session 38**: 917 tweets processed. Total calls: 15,868. Unique gurus: 4,440. Win rate: **47%**. 951 tracked assets.
+- **Session 39**: 709 tweets processed. Total calls: 16,019. Unique gurus: 4,474. Win rate: **47%**. 961 tracked assets.
+
 
 ## 🛠 Prerequisites
 
@@ -75,3 +102,5 @@ npx tsx scripts/reanalyze.ts <TWEET_ID> --action=SELL
 - **20-Call Filter**: If you add a new analyst, they won't appear on the leaderboard until they hit **20 calls**.
 - **Chrome Sessions**: If the Watcher fails, delete `services/twitter-watcher/.chrome-profile` to reset the login session.
 - **Vercel Build Errors**: If a "Puppeteer not found" error appears during deployment, it's usually because `.vercelignore` was modified or a top-level file is importing from the `services/` folder.
+- **Pricing Collisions**: Major cryptos (BTC, ETH, SOL) are guarded against ETF collisions. If a price looks wildly low ($30 for BTC), check `market-data.ts` forcing logic.
+- **AI Hallucinations (Sentiment)**: For Peter Schiff, the AI is instructed to never "inverse" him despite his perma-bear track record. We want HIS intent.

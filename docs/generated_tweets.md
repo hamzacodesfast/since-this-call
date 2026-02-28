@@ -2,10 +2,10 @@
 
 📊 Since This Call - Platform Update!
 
-🔥 Total Calls analyzed: 10,757
-👔 Total Financial Analysts: 3,165
-📈 Average Analyst Win Rate: 49.0%
-💎 Tracked Assets: 752
+🔥 Total Calls analyzed: 16,007
+👔 Total Financial Analysts: 4,474
+📈 Average Analyst Win Rate: 39.0%
+💎 Tracked Assets: 961
 
 The truth is on-chain. Audit your guru. 🕵️‍♂️
 #STC #Fintwit #Trading
@@ -16,11 +16,11 @@ The truth is on-chain. Audit your guru. 🕵️‍♂️
 
 🔥 Top 5 Trending Tickers on STC:
 
-1. $BTC: 76% Win Rate | 79% Bullish (389 calls)
-2. $ETH: 79% Win Rate | 80% Bullish (56 calls)
-3. $SOL: 88% Win Rate | 92% Bullish (52 calls)
-4. $NBIS: 7% Win Rate | 81% Bullish (16 calls)
-5. $TSLA: 75% Win Rate | 88% Bullish (16 calls)
+1. $BTC: 23% Win Rate | 80% Bullish (313 calls)
+2. $ETH: 31% Win Rate | 69% Bullish (84 calls)
+3. $NVDA: 45% Win Rate | 55% Bullish (53 calls)
+4. $SOL: 3% Win Rate | 98% Bullish (40 calls)
+5. $TSLA: 26% Win Rate | 74% Bullish (23 calls)
 
 The herd is moving. Are you?
 #STC #TradingSignals #Crypto #Stocks
@@ -31,11 +31,11 @@ The herd is moving. Are you?
 
 🏆 Top 5 Performing Analysts this week:
 
-1. @BigCheds: 76.2% WR (21 calls)
-2. @LayerYapper: 73.1% WR (26 calls)
-3. @0xchainlog: 70.4% WR (27 calls)
-4. @R1chardMaur1ce: 70.0% WR (20 calls)
-5. @AdamBLiv: 69.2% WR (26 calls)
+1. @PeterSchiff: 96.9% WR (32 calls)
+2. @AdeptMarket: 91.8% WR (49 calls)
+3. @DarioCpx: 87.0% WR (23 calls)
+4. @hajiyev_rashad: 85.2% WR (27 calls)
+5. @rektcapital: 85.2% WR (27 calls)
 
 Respect the data. 📈
 #STC #Fintwit #EliteAnalysts
@@ -46,11 +46,11 @@ Respect the data. 📈
 
 ⚠️ Reality Check: Bottom 5 Analyst Win Rates:
 
-1. @eliz883: 3.8% WR (26 calls)
-2. @MMatters22596: 20.8% WR (24 calls)
-3. @TheLongInvest: 23.4% WR (47 calls)
-4. @JamesEastonUK: 26.0% WR (50 calls)
-5. @MizerXBT: 26.1% WR (23 calls)
+1. @CryptosR_Us: 0.0% WR (24 calls)
+2. @daniexbt: 2.9% WR (34 calls)
+3. @eliz883: 6.5% WR (31 calls)
+4. @Vivek4real_: 12.5% WR (40 calls)
+5. @Ethprofit: 14.3% WR (21 calls)
 
 Numbers don't lie. Don't blindly follow the hype. 📉
 #STC #TradingMistakes #AuditEverything

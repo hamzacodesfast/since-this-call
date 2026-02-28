@@ -68,6 +68,26 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 
 ---
 
+## 👕 THE MERCH STORE (E-Commerce)
+A fully dynamic, multi-item headless Shopify-alternative built natively into STC. 
+
+### Core Providers
+- **Printify**: Handles POD (Print On Demand) fulfillment.
+- **Stripe**: Handles Checkout and Payments.
+- **PrivateEmail (Nodemailer)**: Dispatches automated HTML email receipts.
+
+### Key Architecture Rules
+- **Cart Context**: The Shopping Cart is global via `src/context/CartContext.tsx` and persists in `localStorage`.
+- **Composite Keys**: To add distinct items, the cart relies on a strict `productId + variantId` composite key (Printify re-uses variant numbers across different base garments).
+- **Metadata Compression**: To support multi-item checkout through Stripe, the cart footprint is compressed into a JSON string `session.metadata.cart_items` mapped as `[{p: productId, v: variantId, q: quantity, i: imageUrl}]`.
+- **Webhook Fulfillment**: `/api/webhooks/stripe/route.ts` unwraps the metadata, loops through the items, creates a unified order in Printify, and finally dispatches an HTML receipt via SMTP.
+- **Thank You Page**: `/merch/thank-you` automatically triggers a `clearCart` action and renders the final `line_items` (including customized images fetched back out of Stripe's metadata via `/api/stripe/session`).
+
+### Emergency Fixes
+- **Stuck Publishing Rescue**: `npx tsx scripts/rescue-printify.ts` explicitly fixes a known Printify API bug where newly published products get stuck in the "Publishing" state by forcing the correct `shop_id` and mock shipping overrides.
+
+---
+
 ## 🐦 Twitter Watcher Service
 
 An automated Puppeteer-based watcher that monitors your Twitter timeline for financial calls and submits them to STC.

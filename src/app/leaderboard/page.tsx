@@ -150,7 +150,7 @@ export default function LeaderboardPage() {
                             </Card>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8" id="leaderboard-panel">
                             {/* Top 10 */}
                             <Card className="border-green-500/20 bg-background/40">
                                 <CardHeader className="pb-4">

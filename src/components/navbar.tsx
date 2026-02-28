@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Clock, Trophy, Users, BarChart3, TrendingUp } from 'lucide-react';
+import { Home, Clock, Trophy, Users, BarChart3, TrendingUp, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
+import { useCart } from '@/context/CartContext';
+import { CartSheet } from './cart-sheet';
 
 const navItems = [
     { href: '/', label: 'Home', icon: Home },
@@ -12,10 +14,12 @@ const navItems = [
     { href: '/stats', label: 'Stats', icon: BarChart3 },
     { href: '/tickers', label: 'Tickers', icon: TrendingUp },
     { href: '/profiles', label: 'Profiles', icon: Users },
+    { href: '/merch', label: 'Merch', icon: ShoppingBag },
 ];
 
 export function Navbar() {
     const pathname = usePathname();
+    const { totalItems, setIsCartOpen } = useCart();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -28,7 +32,7 @@ export function Navbar() {
                 </Link>
 
                 {/* Nav Links + Theme Toggle */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 sm:gap-2">
                     <nav className="flex items-center gap-1">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href;
@@ -48,9 +52,24 @@ export function Navbar() {
                             );
                         })}
                     </nav>
+
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                        aria-label="Open cart"
+                    >
+                        <ShoppingCart className="w-5 h-5" />
+                        {totalItems > 0 && (
+                            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
+                                {totalItems}
+                            </span>
+                        )}
+                    </button>
+
                     <ThemeToggle />
                 </div>
             </div>
+            <CartSheet />
         </header>
     );
 }

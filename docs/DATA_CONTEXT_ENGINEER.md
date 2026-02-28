@@ -18,6 +18,8 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 *   **Inverse Sentiment Parsing**: Recognizing when "I'm ruined" or "Bags are heavy" actually implies a **BULLISH** stance (long position suffering drawdown) vs. a bearish prediction.
 *   **Skepticism & Mockery**: Identifying "I tried to warn you" or "Financial illiteracy" as **BEARISH** signals, even if the user references a generally bullish sentiment.
 *   **Regret Parsing**: "I might regret selling" is a **BEARISH** action (Sold), despite the emotional "regret". Action > Emotion.
+*   **Personality-Based Sentiment**: The AI now receives the `username` meta-context. You must account for perma-bear/perma-bull personalities.
+    *   *The Schiff Rule:* If `@PeterSchiff` mocks Bitcoin, calls it a "bubble", or says "sell the rip", it is **ALWAYS Action: SELL**. The AI must NOT "inverse" him or interpret him sarcastically for the reader; we extract the author's actual intent.
 
 ### 2. Numerical Directionality (The "Math" Layer)
 *   **Price Awareness**: You must inject `MARKET_CONTEXT` into the extraction layer.
@@ -27,6 +29,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 *   **Nicknames**: Mapping "Corn" (BTC), "Vitalik" (ETH), and "The Dog" (DOGE).
 *   **Meme Coin Support**: We **DO** support meme coins via Contract Address (CA) extraction (Solana/Base). System uses GeckoTerminal for historical pricing.
 *   **Word-Ticker Protection**: Handling tickers that look like common words (e.g., `$HYPE`, `$ME`, `$BOBO`). AI must verify financial context before classifying as a ticker.
+*   **Ticker Collision Shielding**: We explicitly shield major cryptocurrencies (`BTC`, `ETH`, `SOL`, `USDT`) from New York Stock Exchange / ETF ticker collisions (e.g., Grayscale Mini Trust ETFs trading at $30 vs. Bitcoin at $68k). These symbols are **forced** to `CRYPTO` type in `market-data.ts`.
 *   **Proxy Overrides**: Identifying when a stock (MSTR) is used as a proxy for the underlying (BTC). For official Strategy/Saylor accounts, the data subject is **BTC**.
 *   **Dominance Parsing**: Understanding that a "Bearish" view on `USDT.D` (USDT Dominance) is a **BULLISH** signal for the crypto market.
 
@@ -58,4 +61,4 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ---
 
-*Blueprint Version: 3.0 (Feb 21, 2026)*
+*Blueprint Version: 3.1 (Feb 21, 2026)*

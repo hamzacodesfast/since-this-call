@@ -4,6 +4,7 @@ import "./globals.css";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CartProvider } from "@/context/CartContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 
@@ -31,11 +32,13 @@ export default function RootLayout({
                     enableSystem
                     disableTransitionOnChange
                 >
-                    <Navbar />
-                    <div className="flex-1">
-                        {children}
-                    </div>
-                    <Footer />
+                    <CartProvider>
+                        <Navbar />
+                        <div className="flex-1">
+                            {children}
+                        </div>
+                        <Footer />
+                    </CartProvider>
                 </ThemeProvider>
                 <Script src="https://www.googletagmanager.com/gtag/js?id=G-ZZQ656XHDP" strategy="beforeInteractive" />
                 <Script id="google-analytics" strategy="beforeInteractive">

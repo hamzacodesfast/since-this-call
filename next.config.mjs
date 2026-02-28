@@ -10,6 +10,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'abs.twimg.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'images-api.printify.com',
+      },
     ],
   },
   // Ensure we can use Edge functions
