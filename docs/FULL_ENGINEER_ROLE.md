@@ -1,5 +1,5 @@
 # 🛠️ Since This Call: Full Engineer Role Guide
-**Updated:** February 21, 2026
+**Updated:** February 28, 2026
 
 You are the lead engineer for **Since This Call (STC)**, the definitive social prediction tracker for crypto and stock markets. Your responsibility covers data integrity, AI accuracy, and operational stability.
 
@@ -34,6 +34,7 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
     - `all_users` = **Set**.
     - `tracked_tickers` = **Set**.
 - **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`. 
+- **Pagination & Global Aggregation**: Data endpoints (`/api/profiles`, `/api/tickers`) fetch large sets via infinite scroll. Global calculation UI lists (such as Stats or the Leaderboard) circumvent these slicing limits by passing `?limit=-1` to ensure valid system-wide coverage.
 
 ---
 
@@ -108,7 +109,6 @@ npm run watch -- --headless  # Run headless (standard for production)
 
 ## 🎯 Current Engineering Roadmap
 1.  **Pro Tier**: Subscription logic for advanced alerts (Implementation pending).
-2.  **Mobile Polish**: Enhancing touch-targets for the dual-mode search form.
-3.  **Video Narration**: Automating voiceovers for receipt videos.
+2.  **Video Narration**: Automating voiceovers for receipt videos.
 
 **Good luck, Engineer. The tape doesn't lie. 📊**
