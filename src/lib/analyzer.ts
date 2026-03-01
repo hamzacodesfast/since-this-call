@@ -22,6 +22,7 @@ function cleanSymbol(symbol: string): string {
             break;
         }
     }
+    if (clean === 'NVDAX') return 'NVDA';
     return clean;
 }
 

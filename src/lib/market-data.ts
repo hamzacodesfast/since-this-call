@@ -361,12 +361,13 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
                 const json = await res.json();
                 const result = json.chart.result[0];
                 const quotes = result.indicators.quote[0];
+                const adjclose = result.indicators.adjclose?.[0]?.adjclose || quotes.close; // Fallback to close if adjclose missing
                 const times = result.timestamp;
-                if (times && quotes.close.length) {
+                if (times && adjclose.length) {
                     let best = null, mindiff = Infinity;
                     for (let i = 0; i < times.length; i++) {
                         const d = Math.abs(times[i] - targetTime);
-                        if (d < mindiff && quotes.close[i] !== null) { mindiff = d; best = quotes.close[i]; }
+                        if (d < mindiff && adjclose[i] !== null) { mindiff = d; best = adjclose[i]; }
                     }
                     if (best !== null) return best;
                 }
@@ -390,9 +391,10 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
         const result = json.chart.result[0];
         if (!result) return null;
         const quotes = result.indicators.quote[0];
+        const adjclose = result.indicators.adjclose?.[0]?.adjclose || quotes.close;
         if (!date && result.meta?.regularMarketPrice) return result.meta.regularMarketPrice;
-        if (quotes && quotes.close && quotes.close.length) {
-            const valid = quotes.close.filter((p: any) => p !== null);
+        if (adjclose && adjclose.length) {
+            const valid = adjclose.filter((p: any) => p !== null);
             let p = valid.length > 0 ? valid[0] : null;
 
             // SPECIAL CASE: Yahoo SI=F and GC=F sometimes include a multiplier in metadata
