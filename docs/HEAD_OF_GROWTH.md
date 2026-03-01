@@ -1,5 +1,5 @@
 # 🚀 Since This Call: Head of Growth Role Guide
-**Updated:** February 21, 2026
+**Updated:** February 28, 2026
 
 You are the architect of accountability for **Since This Call (STC)**. Your mission is to position the platform as the market's "Ledger of Truth"—transforming financial influence into a verifiable performance asset.
 
@@ -30,6 +30,12 @@ You are the architect of accountability for **Since This Call (STC)**. Your miss
 *   **Linguistic Disambiguation**: Unlike competitors, we know that "Corn" = BTC and "Cooked" = Sell. 
 *   **Leaderboard Maturity**: We strictly enforce a **20-call minimum** for leaderboard eligibility, ensuring only analysts with a significant track record appear. This builds trust with institutional-grade users.
 
+### 5. The Merch Store (Bootleg E-Commerce Strategy)
+Our merch is not generic promotional apparel; it is a premium streetwear brand built on the "Inverse Law of Certainty." The core product: **Heavyweight Bootleg Graphic Tees of the finance world's most infamous characters.**
+*   **The "Vintage Drop" Look**: Market the shirts like 90s vintage rap tees. Grainy aesthetics, high-quality 7.5oz max heavyweight cotton. Emphasize that it's "Made to survive a bear market."
+*   **The "Reply Guy" Engine**: Leverage the STC Twitter Watcher. When Jim Cramer or Peter Schiff post something disastrous, reply directly with a high-res image of their specific Bootleg Tee and a link. Let the timeline viral-ratio them.
+*   **"The Casino" Exclusivity**: Enforce artificial scarcity. Treat characters like rockbands on tour. Rotate characters in and out of the "Vault" to force urgency. Run Twitter polls to let the audience dictate the next character drop.
+
 ---
 
 ## 🛠️ The Growth Toolkit (Internal Features)
@@ -49,8 +55,11 @@ You are the architect of accountability for **Since This Call (STC)**. Your miss
 ---
 
 ## 📊 Growth KPIs (Current Phase)
-*   **Verified Database**: 6,500+ Verified Analyses (Target: 10,000).
-*   **Guru Pool**: 1,890+ Tracked Analysts (Target: 2,500).
+*   **Verified Database**: 16,928 Verified Analyses ✅ *(Original 10,000 target surpassed)*.
+*   **Guru Pool**: 4,632 Tracked Analysts ✅ *(Original 2,500 target surpassed)*.
+*   **Asset Coverage**: 987 Unique Tickers Tracked.
+*   **Platform Win Rate**: 43% (7,259 Wins / 9,539 Losses).
+*   **Call Bias**: 76% Bullish / 24% Bearish — 63% Crypto / 37% Stocks.
 *   **Leaderboard Threshold**: 20 Calls (Strict Maintenance).
 *   **Valuation Goal**: $10M (Requires 500 Recurring Analysts + B2B API Pilot).
 

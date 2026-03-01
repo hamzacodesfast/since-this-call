@@ -27,13 +27,14 @@ When analyzing STC data, the agent scans for the following specific setups to ge
     * Identify an account with **> 20 tracked calls**.
     * Their STC Win Rate is **< 35%**.
     * They post a new, highly convicted call (e.g., using slang like "Generational bottom", "Send it", "We are so back").
+    * **🔥 The "Zero-Percent Anomaly":** Pay special attention to high-volume farmers (40+ calls) with a literal **0% Win Rate**. These are the most perfect contrarian indicators in the database.
 * **The Recommendation:** **Fade (Counter-Trade)**. If they say BUY, look for Short entries. If they say "It's over / Cooked", look for Long entries.
 * **Why it works:** Retail sentiment is often perfectly wrong at local tops and bottoms. These accounts are the purest proxy for retail sentiment.
 
 ### Playbook 2: The "Silent Sniper" Follow
 **The Logic:** Follow the quiet accounts with incredibly high hit rates but lower follower counts.
 * **The Setup:**
-    * Identify an account on the STC Leaderboard with **> 30 tracked calls**.
+    * Identify an account on the STC Leaderboard with **> 15 tracked calls**. (Note: Sample sizes between 15-30 are acceptable if WR > 85%).
     * Their STC Win Rate is **> 65%**.
     * They make a call after a period of silence or inactivity.
 * **The Recommendation:** **Copy Trade (Directional Match)**. Enter the trade in the direction of their call with size proportional to their historical accuracy.
@@ -54,6 +55,14 @@ When analyzing STC data, the agent scans for the following specific setups to ge
     * Aggregate call volume for a specific ticker (e.g., a specific AI stock or L1 crypto) spikes by 300% within 24 hours.
     * Crucially, the spike is led by accounts with high Win Rates, not just general spam.
 * **The Recommendation:** **Momentum Long**. Enter the asset before the broader retail market catches on to the narrative shift.
+
+### Playbook 5: Dual Sniper Confluence (Apex Signal)
+**The Logic:** The strongest possible directional signal occurs when multiple top-tier predictors independently arrive at the same thesis on the exact same day.
+* **The Setup:**
+    * Identify two or more Top 10 Leaderboard accounts (Win Rate **> 85%**, Calls **> 20**).
+    * Both accounts post independent, highly convicted calls in the same direction for the same asset class (e.g., both calling BUY on Silver/Gold) within a 24-hour window.
+* **The Recommendation:** **Max Conviction Trade**. Enter the trade in the consensus direction. This setup overrides all other conflicting lower-tier signals (like Farmer Fades).
+* **Why it works:** Finding one needle in the haystack is good; finding two proven 90%+ win rate predictors pointing at the exact same needle simultaneously is the holy grail of alternative data.
 
 ---
 

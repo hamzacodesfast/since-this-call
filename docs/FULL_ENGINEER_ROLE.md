@@ -1,5 +1,5 @@
 # 🛠️ Since This Call: Full Engineer Role Guide
-**Updated:** February 28, 2026
+**Updated:** February 28, 2026 (Post-Cleanup)
 
 You are the lead engineer for **Since This Call (STC)**, the definitive social prediction tracker for crypto and stock markets. Your responsibility covers data integrity, AI accuracy, and operational stability.
 
@@ -67,6 +67,36 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 - **Individual Analysis Fix**: `npx tsx scripts/reanalyze.ts <TWEET_ID>`
 - **User Stats Recalculation**: `npx tsx scripts/recalculate-all-production.ts` (for whole DB sync).
 
+### Full Scripts Inventory (`scripts/`)
+| Script | Purpose |
+|--------|--------|
+| `refresh-metrics.ts` | Refresh global homepage metrics cache |
+| `refresh-stats.ts` | Refresh win rates (calls `recalculate-all-production.ts`) |
+| `recalculate-all-production.ts` | Full production DB wins/losses/counts recalculation |
+| `sync-to-local.ts` | Sync production data → local Redis |
+| `sync-to-production.ts` | Sync local data → production Redis |
+| `reanalyze.ts` | Re-analyze a single tweet by ID |
+| `bulk-analyze.ts` | Batch-process a JSON list of tweet URLs |
+| `backfill-tickers.ts` | Rebuild the ticker index |
+| `refresh-uniform-prices.ts` | Refresh all stored prices uniformly |
+| `rebuild-recent.ts` | Rebuild the recent analyses list |
+| `backup-data.ts` | Export full database backup to JSON |
+| `remove-tweet.ts` | Remove a tweet from the database |
+| `purge-tickers.ts` | Purge invalid/corrupt ticker entries |
+| `purge-corrupted.ts` | Purge corrupted user data |
+| `clear-metrics-cache.ts` | Clear the metrics cache |
+| `find-fix-candidates.ts` | Find analyses that may need re-analysis |
+| `fix-flagged-tweets.ts` | Batch-fix flagged/problematic tweets |
+| `rescue-printify.ts` | Fix Printify "stuck publishing" bug |
+| `generate-morning-tweet.ts` | Generate daily marketing tweet |
+| `generate-tweets.ts` | Generate marketing tweet batches |
+| `get-extreme-tilt.ts` | Find extreme bullish/bearish ticker tilts |
+| `get-quant-trends.ts` | Quant trend analysis |
+| `get-specific-ticker.ts` | Lookup a specific ticker's data |
+| `get-ticker-tilt.ts` | Get sentiment tilt for a ticker |
+| `list-twitter-links.ts` | List stored Twitter URLs |
+| `local-redis-proxy.ts` | Local Redis proxy for dev |
+
 ---
 
 ## 👕 THE MERCH STORE (E-Commerce)
@@ -108,7 +138,8 @@ npm run watch -- --headless  # Run headless (standard for production)
 ---
 
 ## 🎯 Current Engineering Roadmap
-1.  **Pro Tier**: Subscription logic for advanced alerts (Implementation pending).
-2.  **Video Narration**: Automating voiceovers for receipt videos.
+
+### ✅ Completed
+- **Project Cleanup (Feb 28, 2026)**: Removed 48 temp files, debug scripts, stale docs, and dead directories. Pruned `scripts/` from 36 → 26 operational scripts.
 
 **Good luck, Engineer. The tape doesn't lie. 📊**
