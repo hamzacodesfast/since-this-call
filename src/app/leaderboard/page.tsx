@@ -28,7 +28,8 @@ export default function LeaderboardPage() {
     useEffect(() => {
         const fetchProfiles = async () => {
             try {
-                const res = await fetch('/api/profiles');
+                // Fetch ALL profiles bypassing the default 30 limit for the leaderboard
+                const res = await fetch('/api/profiles?limit=-1');
                 const data = await res.json();
                 setProfiles(data.profiles || []);
             } catch (e) {

@@ -927,10 +927,18 @@ export async function getAllUserProfiles(
         allProfiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
 
         // 4. Apply Pagination
+        const limit = options?.limit !== undefined ? options.limit : 30;
+        if (limit === -1) {
+            return {
+                profiles: allProfiles,
+                hasMore: false
+            };
+        }
+
         const page = Math.max(1, options?.page || 1);
-        const limit = Math.max(1, options?.limit || 30);
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
+        const validLimit = Math.max(1, limit);
+        const startIndex = (page - 1) * validLimit;
+        const endIndex = startIndex + validLimit;
 
         const paginatedProfiles = allProfiles.slice(startIndex, endIndex);
         const hasMore = endIndex < allProfiles.length;
