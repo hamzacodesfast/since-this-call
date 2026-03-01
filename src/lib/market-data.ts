@@ -169,13 +169,12 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         type = 'CRYPTO';
     }
 
-    if (KNOWN_STOCKS.has(symbol) && type !== 'CRYPTO') {
+    if (KNOWN_STOCKS.has(symbol)) {
         type = 'STOCK';
     }
     if (!type) {
         type = inferAssetType(symbol);
     }
-
     // Normalization logic for stocks...
     const STOCK_OVERRIDES: Record<string, string> = {
         'GOLD': 'GLD',
