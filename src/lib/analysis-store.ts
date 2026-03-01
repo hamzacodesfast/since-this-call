@@ -680,21 +680,38 @@ export async function removeTickerStats(analysis: StoredAnalysis): Promise<void>
     }
 }
 
-export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
+export async function getAllTickerProfiles(
+    options?: { page?: number; limit?: number; search?: string }
+): Promise<{ profiles: TickerProfile[]; hasMore: boolean }> {
     try {
-        const tickers = await redis.smembers(TRACKED_TICKERS_KEY);
-        if (tickers.length === 0) return [];
+        const tickers = await redis.smembers(TRACKED_TICKERS_KEY) as string[];
+        if (tickers.length === 0) return { profiles: [], hasMore: false };
 
+        // 1. Filter by search term before parsing full profiles
+        let filteredTickers = tickers;
+        if (options?.search) {
+            const term = options.search.toLowerCase();
+            // tickers are format TYPE:SYMBOL (e.g. CRYPTO:BTC)
+            filteredTickers = tickers.filter((t: string) => {
+                const parts = t.split(':');
+                const symbol = parts.length > 1 ? parts[1] : t;
+                return symbol.toLowerCase().includes(term);
+            });
+        }
+
+        if (filteredTickers.length === 0) return { profiles: [], hasMore: false };
+
+        // 2. Fetch lightweight profiles first
         const pipeline = redis.pipeline();
-        tickers.forEach((t) => pipeline.hgetall(`${TICKER_PROFILE_PREFIX}${t}`));
+        filteredTickers.forEach((t) => pipeline.hgetall(`${TICKER_PROFILE_PREFIX}${t}`));
 
         const results = await pipeline.exec();
 
-        const profiles: TickerProfile[] = [];
+        const allProfiles: TickerProfile[] = [];
         results.forEach((res) => {
             const data = res as any;
             if (data && data.symbol) {
-                profiles.push({
+                allProfiles.push({
                     symbol: data.symbol,
                     type: data.type as any,
                     totalAnalyses: parseInt(data.totalAnalyses || '0'),
@@ -709,10 +726,25 @@ export async function getAllTickerProfiles(): Promise<TickerProfile[]> {
             }
         });
 
-        return profiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
+        // 3. Sort by Total Analyses Descending
+        allProfiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
+
+        // 4. Apply Pagination
+        const page = Math.max(1, options?.page || 1);
+        const limit = Math.max(1, options?.limit || 30);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+
+        const paginatedProfiles = allProfiles.slice(startIndex, endIndex);
+        const hasMore = endIndex < allProfiles.length;
+
+        return {
+            profiles: paginatedProfiles,
+            hasMore
+        };
     } catch (error) {
-        console.error('[AnalysisStore] Failed to get all ticker profiles:', error);
-        return [];
+        console.error('[AnalysisStore] Failed to get paginated ticker profiles:', error);
+        return { profiles: [], hasMore: false };
     }
 }
 
@@ -846,29 +878,38 @@ export async function getUserProfile(username: string): Promise<{ profile: UserP
     }
 }
 
-export async function getAllUserProfiles(): Promise<UserProfile[]> {
+export async function getAllUserProfiles(
+    options?: { page?: number; limit?: number; search?: string }
+): Promise<{ profiles: UserProfile[]; hasMore: boolean }> {
     try {
-        const users = await redis.smembers(ALL_USERS_KEY);
-        if (users.length === 0) return [];
+        const users = await redis.smembers(ALL_USERS_KEY) as string[];
+        if (users.length === 0) return { profiles: [], hasMore: false };
 
+        // 1. Filter by search term before parsing full profiles
+        let filteredUsers = users;
+        if (options?.search) {
+            const term = options.search.toLowerCase();
+            filteredUsers = users.filter((u: string) => u.toLowerCase().includes(term));
+        }
+
+        if (filteredUsers.length === 0) return { profiles: [], hasMore: false };
+
+        // 2. Fetch lightweight profiles first to sort them by totalAnalyses (since Redis SMEMBERS is unsorted)
+        // Optimization: In a production scale system with 100k+ users, we would use a ZSET for sorting directly in Redis.
+        // For now, pipelining all filtered HGETALLs is still relatively fast.
         const pipeline = redis.pipeline();
-        users.forEach((user) => pipeline.hgetall(`${USER_PROFILE_PREFIX}${user}`));
+        filteredUsers.forEach((user) => pipeline.hgetall(`${USER_PROFILE_PREFIX}${user}`));
 
         const results = await pipeline.exec();
 
-        const profiles: UserProfile[] = [];
+        const allProfiles: UserProfile[] = [];
         results.forEach((res) => {
-            // Pipeline results are now normalized by LocalRedisWrapper proxy locally,
-            // and native Upstash client works purely. No manual unwrapping needed.
             const data = res;
-
             if (data && Object.keys(data as object).length > 0) {
                 const safeProfile = data as Record<string, string>;
-
-                // Ensure username exists (fallback to generic if missing in hash)
                 if (!safeProfile.username) return;
 
-                profiles.push({
+                allProfiles.push({
                     username: safeProfile.username,
                     avatar: safeProfile.avatar || '',
                     totalAnalyses: parseInt(safeProfile.totalAnalyses || '0'),
@@ -882,11 +923,26 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
             }
         });
 
-        // Sort by Total Analyses Descending
-        return profiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
+        // 3. Sort by Total Analyses Descending
+        allProfiles.sort((a, b) => b.totalAnalyses - a.totalAnalyses);
+
+        // 4. Apply Pagination
+        const page = Math.max(1, options?.page || 1);
+        const limit = Math.max(1, options?.limit || 30);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+
+        const paginatedProfiles = allProfiles.slice(startIndex, endIndex);
+        const hasMore = endIndex < allProfiles.length;
+
+        return {
+            profiles: paginatedProfiles,
+            hasMore
+        };
+
     } catch (error) {
-        console.error('[AnalysisStore] Failed to get all profiles:', error);
-        return [];
+        console.error('[AnalysisStore] Failed to get paginated user profiles:', error);
+        return { profiles: [], hasMore: false };
     }
 }
 

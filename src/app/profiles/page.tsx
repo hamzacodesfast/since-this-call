@@ -1,9 +1,8 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, User, Trophy, XCircle, TrendingUp, Search } from 'lucide-react';
+import { ArrowLeft, User, Trophy, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,34 +20,86 @@ interface UserProfile {
 
 export default function ProfilesPage() {
     const [profiles, setProfiles] = useState<UserProfile[]>([]);
-    const [filteredProfiles, setFilteredProfiles] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastElementRef = useCallback((node: HTMLAnchorElement | null) => {
+        if (loading || loadingMore) return;
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => prevPage + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [loading, loadingMore, hasMore]);
+
+    // Initial load and search changes
     useEffect(() => {
         const fetchProfiles = async () => {
+            setLoading(true);
             try {
-                const res = await fetch('/api/profiles');
+                // Determine API route correctly parsing URLSearchParams
+                const params = new URLSearchParams({
+                    page: '1',
+                    limit: '30'
+                });
+                if (search.trim()) params.append('search', search.trim());
+
+                const res = await fetch(`/api/profiles?${params.toString()}`);
                 const data = await res.json();
+
                 setProfiles(data.profiles || []);
-                setFilteredProfiles(data.profiles || []);
+                setHasMore(data.hasMore ?? false);
+                setPage(1); // Reset page on new search
             } catch (e) {
                 console.error('Failed to fetch profiles:', e);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProfiles();
-    }, []);
 
+        // Debounce search
+        const timeoutId = setTimeout(() => {
+            fetchProfiles();
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [search]);
+
+    // Load more pages
     useEffect(() => {
-        if (!search.trim()) {
-            setFilteredProfiles(profiles);
-            return;
-        }
-        const term = search.toLowerCase();
-        setFilteredProfiles(profiles.filter(p => p.username.toLowerCase().includes(term)));
-    }, [search, profiles]);
+        if (page === 1) return; // Handled by search effect
+
+        const loadMore = async () => {
+            setLoadingMore(true);
+            try {
+                const params = new URLSearchParams({
+                    page: page.toString(),
+                    limit: '30'
+                });
+                if (search.trim()) params.append('search', search.trim());
+
+                const res = await fetch(`/api/profiles?${params.toString()}`);
+                const data = await res.json();
+
+                setProfiles(prev => [...prev, ...(data.profiles || [])]);
+                setHasMore(data.hasMore ?? false);
+            } catch (e) {
+                console.error('Failed to load more profiles:', e);
+            } finally {
+                setLoadingMore(false);
+            }
+        };
+
+        loadMore();
+    }, [page]); // Removed search from dependency array to prevent double fetching
 
     return (
         <main className="min-h-screen bg-background relative overflow-hidden">
@@ -85,52 +136,69 @@ export default function ProfilesPage() {
                             <div key={i} className="h-48 bg-muted/50 rounded-xl" />
                         ))}
                     </div>
+                ) : profiles.length === 0 ? (
+                    <div className="text-center py-20 text-muted-foreground">
+                        No profiles found matching "{search}"
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredProfiles.map((p) => (
-                            <Link key={p.username} href={`/user/${p.username}`}>
-                                <Card className="h-full hover:scale-[1.02] transition-all cursor-pointer border-2 border-border/50 bg-background/40 hover:bg-background/60 hover:border-primary/20 group">
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="relative">
-                                                {p.avatar ? (
-                                                    <img src={p.avatar} alt={p.username} className="w-16 h-16 rounded-full border-2 border-border" />
-                                                ) : (
-                                                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                                                        <User className="w-8 h-8 text-muted-foreground" />
+                        {profiles.map((p, index) => {
+                            const isLastElement = index === profiles.length - 1;
+                            return (
+                                <Link
+                                    key={`${p.username}-${index}`}
+                                    href={`/user/${p.username}`}
+                                    ref={isLastElement ? lastElementRef : null}
+                                >
+                                    <Card className="h-full hover:scale-[1.02] transition-all cursor-pointer border-2 border-border/50 bg-background/40 hover:bg-background/60 hover:border-primary/20 group">
+                                        <CardContent className="p-6">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="relative">
+                                                    {p.avatar ? (
+                                                        <img src={p.avatar} alt={p.username} className="w-16 h-16 rounded-full border-2 border-border object-cover" />
+                                                    ) : (
+                                                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                                                            <User className="w-8 h-8 text-muted-foreground" />
+                                                        </div>
+                                                    )}
+                                                    <div className={`absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-background shadow-sm ${p.winRate >= 50 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                                                        {p.winRate.toFixed(0)}% WR
                                                     </div>
-                                                )}
-                                                <div className={`absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-background shadow-sm ${p.winRate >= 50 ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-                                                    {p.winRate.toFixed(0)}% WR
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-lg truncate group-hover:text-primary transition-colors">@{p.username}</div>
+                                                    <div className="text-muted-foreground text-sm flex items-center gap-1">
+                                                        <Trophy className="w-3 h-3 text-yellow-500" />
+                                                        {p.totalAnalyses} Calls
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="font-bold text-lg truncate group-hover:text-primary transition-colors">@{p.username}</div>
-                                                <div className="text-muted-foreground text-sm flex items-center gap-1">
-                                                    <Trophy className="w-3 h-3 text-yellow-500" />
-                                                    {p.totalAnalyses} Calls
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                                            <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
-                                                <div className="font-bold text-green-500">{p.wins}</div>
-                                                <div className="text-[10px] uppercase text-muted-foreground">Wins</div>
+                                            <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                                                <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
+                                                    <div className="font-bold text-green-500">{p.wins}</div>
+                                                    <div className="text-[10px] uppercase text-muted-foreground">Wins</div>
+                                                </div>
+                                                <div className="p-2 rounded bg-red-500/10 border border-red-500/20">
+                                                    <div className="font-bold text-red-500">{p.losses}</div>
+                                                    <div className="text-[10px] uppercase text-muted-foreground">Losses</div>
+                                                </div>
+                                                <div className="p-2 rounded bg-muted/50 border border-white/5">
+                                                    <div className="font-bold text-muted-foreground">{p.neutral}</div>
+                                                    <div className="text-[10px] uppercase text-muted-foreground">Flat</div>
+                                                </div>
                                             </div>
-                                            <div className="p-2 rounded bg-red-500/10 border border-red-500/20">
-                                                <div className="font-bold text-red-500">{p.losses}</div>
-                                                <div className="text-[10px] uppercase text-muted-foreground">Losses</div>
-                                            </div>
-                                            <div className="p-2 rounded bg-muted/50 border border-white/5">
-                                                <div className="font-bold text-muted-foreground">{p.neutral}</div>
-                                                <div className="text-[10px] uppercase text-muted-foreground">Flat</div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {loadingMore && (
+                    <div className="mt-8 flex justify-center pb-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                     </div>
                 )}
             </div>
