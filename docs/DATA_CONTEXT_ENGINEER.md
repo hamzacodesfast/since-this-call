@@ -30,6 +30,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 *   **Meme Coin Support**: We **DO** support meme coins via Contract Address (CA) extraction (Solana/Base). System uses GeckoTerminal for historical pricing.
 *   **Word-Ticker Protection**: Handling tickers that look like common words (e.g., `$HYPE`, `$ME`, `$BOBO`). AI must verify financial context before classifying as a ticker.
 *   **Ticker Collision Shielding**: We explicitly shield major cryptocurrencies (`BTC`, `ETH`, `SOL`, `USDT`) from New York Stock Exchange / ETF ticker collisions (e.g., Grayscale Mini Trust ETFs trading at $30 vs. Bitcoin at $68k). These symbols are **forced** to `CRYPTO` type in `market-data.ts`.
+*   **Duplicate / Hallucination Alias Shielding**: Some assets are frequently hallucinated by the AI extractor (e.g., `NVDA` returned as `NVDAX`). You must enforce explicit strict mappings via `cleanSymbol` and instruction sets to prevent fragmented entity databases.
 *   **Proxy Overrides**: Identifying when a stock (MSTR) is used as a proxy for the underlying (BTC). For official Strategy/Saylor accounts, the data subject is **BTC**.
 *   **Dominance Parsing**: Understanding that a "Bearish" view on `USDT.D` (USDT Dominance) is a **BULLISH** signal for the crypto market.
 
@@ -51,6 +52,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 ### II. Validation & Logic Enforcement
 *   **Asset Type Segregation**: Stock searches initiated by the user must **strictly** bypass Crypto APIs to prevent ticker collisions (e.g. $MSTR, $AAPL).
 *   **Hard Bearish Sentinel**: Explicitly ensure that known market skeptics (e.g. Peter Schiff on $BTC) are not marked `NULL` when they post bearish content. Instructions exist to prioritize the bearish sentiment over "financial illiteracy" noise.
+*   **Split-Adjusted Historical Pricing**: When calculating historical performance for `STOCK` entities, you MUST retrieve split-adjusted prices (e.g., `adjclose` from Yahoo Finance) rather than unadjusted `close` data to prevent massive false negative performance calculations for events like the 10-for-1 $NVDA split.
 
 ---
 
@@ -61,4 +63,4 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ---
 
-*Blueprint Version: 3.1 (Feb 21, 2026)*
+*Blueprint Version: 3.2 (Feb 28, 2026)*
