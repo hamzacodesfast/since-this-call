@@ -45,7 +45,7 @@ export default function StatsPage() {
                 const metricsData = await metricsRes.json();
 
                 // Fetch profiles count
-                const profilesRes = await fetch('/api/profiles');
+                const profilesRes = await fetch('/api/profiles?limit=-1');
                 const profilesData = await profilesRes.json();
 
                 setStats({
