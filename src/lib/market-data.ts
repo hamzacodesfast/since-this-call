@@ -371,10 +371,10 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
                     if (best !== null) return best;
                 }
             }
-            // Daily fallback
-            const from = new Date(date); from.setDate(from.getDate() - 1);
+            // Daily fallback: Subtract 5 days to ensure we bridge weekends and long holidays
+            const from = new Date(date); from.setDate(from.getDate() - 5);
             period1 = Math.floor(from.getTime() / 1000);
-            const to = new Date(date); to.setDate(to.getDate() + 4);
+            const to = new Date(date); to.setDate(to.getDate() + 1); // We only need past prices
             period2 = Math.floor(to.getTime() / 1000);
         } else {
             const now = new Date();
@@ -391,10 +391,26 @@ async function getYahooPriceInternal(symbol: string, date?: Date): Promise<numbe
         if (!result) return null;
         const quotes = result.indicators.quote[0];
         const adjclose = result.indicators.adjclose?.[0]?.adjclose || quotes.close;
+        const times = result.timestamp;
+
         if (!date && result.meta?.regularMarketPrice) return result.meta.regularMarketPrice;
-        if (adjclose && adjclose.length) {
-            const valid = adjclose.filter((p: any) => p !== null);
-            let p = valid.length > 0 ? valid[0] : null;
+        if (times && adjclose && adjclose.length) {
+            let p = null;
+            if (date) {
+                const targetTime = Math.floor(date.getTime() / 1000);
+                for (let i = 0; i < times.length; i++) {
+                    if (times[i] <= targetTime && adjclose[i] !== null) {
+                        p = adjclose[i];
+                    }
+                }
+                if (p === null) {
+                    const valid = adjclose.filter((val: any) => val !== null);
+                    p = valid.length > 0 ? valid[0] : null;
+                }
+            } else {
+                const valid = adjclose.filter((val: any) => val !== null);
+                p = valid.length > 0 ? valid[valid.length - 1] : null;
+            }
 
             // SPECIAL CASE: Yahoo SI=F and GC=F sometimes include a multiplier in metadata
             // If SI=F is above 50, it's likely quoted in a way that needs scaling down (e.g. 82 -> 31)
