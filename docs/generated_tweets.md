@@ -2,10 +2,10 @@
 
 📊 Since This Call - Platform Update!
 
-🔥 Total Calls analyzed: 17,280
+🔥 Total Calls analyzed: 17,262
 👔 Total Financial Analysts: 4,743
-📈 Average Analyst Win Rate: 43.0%
-💎 Tracked Assets: 984
+📈 Average Analyst Win Rate: 42.0%
+💎 Tracked Assets: 975
 
 The truth is on-chain. Audit your guru. 🕵️‍♂️
 #STC #Fintwit #Trading
@@ -16,11 +16,11 @@ The truth is on-chain. Audit your guru. 🕵️‍♂️
 
 🔥 Top 5 Trending Tickers on STC:
 
-1. $BTC: 57% Win Rate | 75% Bullish (439 calls)
-2. $ETH: 64% Win Rate | 72% Bullish (61 calls)
-3. $SOL: 73% Win Rate | 85% Bullish (40 calls)
-4. $GOLD: 50% Win Rate | 69% Bullish (16 calls)
-5. $NBIS: 90% Win Rate | 94% Bullish (16 calls)
+1. $BTC: 56% Win Rate | 76% Bullish (437 calls)
+2. $ETH: 67% Win Rate | 73% Bullish (60 calls)
+3. $SOL: 74% Win Rate | 87% Bullish (39 calls)
+4. $NBIS: 91% Win Rate | 88% Bullish (17 calls)
+5. $IREN: 77% Win Rate | 75% Bullish (16 calls)
 
 The herd is moving. Are you?
 #STC #TradingSignals #Crypto #Stocks
@@ -31,11 +31,11 @@ The herd is moving. Are you?
 
 🏆 Top 5 Performing Analysts this week:
 
-1. @rektcapital: 77.8% WR (27 calls)
-2. @PeterSchiff: 75.8% WR (33 calls)
-3. @A_Najumi: 73.1% WR (26 calls)
-4. @traderosho: 71.0% WR (31 calls)
-5. @jimcramer: 70.0% WR (20 calls)
+1. @hajiyev_rashad: 89.3% WR (28 calls)
+2. @PeterSchiff: 84.8% WR (33 calls)
+3. @rektcapital: 81.5% WR (27 calls)
+4. @AdeptMarket: 80.4% WR (56 calls)
+5. @DarioCpx: 74.1% WR (27 calls)
 
 Respect the data. 📈
 #STC #Fintwit #EliteAnalysts
@@ -46,11 +46,11 @@ Respect the data. 📈
 
 ⚠️ Reality Check: Bottom 5 Analyst Win Rates:
 
-1. @eliz883: 9.4% WR (32 calls)
-2. @CryptosR_Us: 11.5% WR (26 calls)
-3. @daniexbt: 15.8% WR (38 calls)
-4. @Vivek4real_: 17.1% WR (41 calls)
-5. @TheSonOfWalkley: 17.6% WR (34 calls)
+1. @daniexbt: 2.6% WR (38 calls)
+2. @eliz883: 6.3% WR (32 calls)
+3. @CryptosR_Us: 11.5% WR (26 calls)
+4. @satoxis: 16.7% WR (24 calls)
+5. @Vivek4real_: 17.1% WR (41 calls)
 
 Numbers don't lie. Don't blindly follow the hype. 📉
 #STC #TradingMistakes #AuditEverything
