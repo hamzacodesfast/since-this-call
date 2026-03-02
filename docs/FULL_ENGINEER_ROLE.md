@@ -1,5 +1,5 @@
 # 🛠️ Since This Call: Full Engineer Role Guide
-**Updated:** February 28, 2026 (Post-Cleanup)
+**Updated:** March 2, 2026 (Redis Cost Optimization)
 
 You are the lead engineer for **Since This Call (STC)**, the definitive social prediction tracker for crypto and stock markets. Your responsibility covers data integrity, AI accuracy, and operational stability.
 
@@ -35,9 +35,19 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
     - `global:analyses:timestamp` = **ZSET**. Master index of every single call. 
     - `all_users` = **Set**.
     - `tracked_tickers` = **Set**.
+    - `cache:tickers:*` = **String (JSON)**. TTL-cached ticker profile pages (10 min).
+    - `cache:profiles:*` = **String (JSON)**. TTL-cached user profile pages (10 min).
+    - `platform_metrics` = **String (JSON)**. TTL-cached homepage metrics (15 min).
 - **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`. 
 - **Pagination & Global Aggregation**: Profile history fetches via the `user_index:*` ZSET for infinite scale, avoiding the 100-item hardcap of legacy lists. Global calculation UI lists (such as Stats or the Leaderboard) circumvent slicing limits by passing `?limit=-1` to ensure valid system-wide coverage.
 - **Vercel Deployments**: The Next.js Edge Runtime (`export const runtime = 'edge'`) has been specifically excluded from dynamic API routes due to ongoing infrastructure instability on Vercel's end. Default to Node.js serverless functions.
+
+### 3. Cost Optimization (Redis Command Reduction)
+- **API Caching**: `/api/tickers`, `/api/profiles`, and `/api/metrics` all use Redis TTL caches (10-15 min) to avoid full DB scans on every visitor.
+- **Cache-Control Headers**: All cached API routes return `Cache-Control: public, s-maxage=600, stale-while-revalidate=60` for Vercel CDN edge caching.
+- **Pipelined Writes**: The daily price refresher (`price-refresher.ts`) uses `redis.pipeline()` for all `LPUSH` batch operations instead of individual awaited calls.
+- **Deduped Reads**: `refreshByTicker()` caches user histories in-memory during a run so the same user's history is only fetched once across all their tickers.
+- **Cache Invalidation**: TTL caches auto-expire. For immediate refresh after bulk operations, run `npx tsx scripts/clear-metrics-cache.ts`.
 
 ---
 
@@ -143,6 +153,7 @@ npm run watch -- --headless  # Run headless (standard for production)
 ## 🎯 Current Engineering Roadmap
 
 ### ✅ Completed
+- **Redis Cost Optimization (Mar 2, 2026)**: Added TTL caches to `/api/tickers`, `/api/profiles`, `/api/metrics`. Pipelined LPUSH writes and deduplicated user history reads in `price-refresher.ts`. Added `Cache-Control` headers for Vercel CDN caching. Estimated ~80% reduction in daily Redis commands.
 - **Project Cleanup (Feb 28, 2026)**: Removed 48 temp files, debug scripts, stale docs, and dead directories. Pruned `scripts/` from 36 → 26 operational scripts.
 
 **Good luck, Engineer. The tape doesn't lie. 📊**
