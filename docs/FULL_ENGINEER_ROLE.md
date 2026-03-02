@@ -70,7 +70,7 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 
 ### Frequency & Crons
 - **Prices**: Updated **Daily** via Vercel Cron (`0 0 * * *`).
-- **Leaderboard**: **CRITICAL: Minimum 20 calls required** to appear on the leaderboard to ensure data reliability.
+- **Leaderboard**: **CRITICAL: Minimum 30 calls required** to appear on the leaderboard to ensure data reliability.
 - **Manual Overrides**: 
     - Full Metric Refresh: `npx tsx scripts/refresh-metrics.ts`
     - Full Stats/Win-Rate Refresh: `npx tsx scripts/refresh-stats.ts`.
