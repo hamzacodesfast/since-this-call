@@ -11,9 +11,6 @@ import { Button } from '@/components/ui/button';
 interface PageProps {
     params: { id: string };
 }
-
-export const runtime = 'edge';
-
 // Dynamic Metadata for Social Sharing
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     try {
