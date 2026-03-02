@@ -31,10 +31,13 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 - **STRICT TYPES**: Redis labels are sacred.
     - `user:profile:{user}` = **Hash**. Never `SET` a string on it (Site will crash).
     - `user:history:{user}` = **List**.
+    - `user_index:{user}` = **ZSET**. Required for infinite pagination (un-capped list of all `username:tweetId` calls). 
+    - `global:analyses:timestamp` = **ZSET**. Master index of every single call. 
     - `all_users` = **Set**.
     - `tracked_tickers` = **Set**.
 - **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`. 
-- **Pagination & Global Aggregation**: Data endpoints (`/api/profiles`, `/api/tickers`) fetch large sets via infinite scroll. Global calculation UI lists (such as Stats or the Leaderboard) circumvent these slicing limits by passing `?limit=-1` to ensure valid system-wide coverage.
+- **Pagination & Global Aggregation**: Profile history fetches via the `user_index:*` ZSET for infinite scale, avoiding the 100-item hardcap of legacy lists. Global calculation UI lists (such as Stats or the Leaderboard) circumvent slicing limits by passing `?limit=-1` to ensure valid system-wide coverage.
+- **Vercel Deployments**: The Next.js Edge Runtime (`export const runtime = 'edge'`) has been specifically excluded from dynamic API routes due to ongoing infrastructure instability on Vercel's end. Default to Node.js serverless functions.
 
 ---
 
