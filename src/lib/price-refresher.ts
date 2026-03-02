@@ -79,12 +79,12 @@ export async function refreshByTicker(): Promise<RefreshResult> {
         const cas: string[] = [];
 
         for (const ticker of trackedTickers) {
-            if (ticker.startsWith('CA:')) cas.push(ticker); // Handled via individual lookup for now
+            if (ticker.startsWith('CA:')) cas.push(ticker);
             else if (ticker.startsWith('STOCK:')) yahooSymbols.push(ticker.slice(6));
             else if (ticker.startsWith('CRYPTO:')) {
                 const s = ticker.slice(7);
                 if (COINGECKO_IDS[s]) cgSymbols.push(s);
-                else yahooSymbols.push(s); // Try Yahoo fallback
+                else yahooSymbols.push(s);
             }
         }
 
@@ -97,20 +97,17 @@ export async function refreshByTicker(): Promise<RefreshResult> {
         for (const [s, p] of cgPrices) priceMap.set(`CRYPTO:${s}`, p);
         for (const [s, p] of yahooPrices) {
             priceMap.set(`STOCK:${s}`, p);
-            priceMap.set(`CRYPTO:${s}`, p); // Fallback mapping
+            priceMap.set(`CRYPTO:${s}`, p);
         }
 
         const affectedUsers = new Set<string>();
         const updatedIds = new Set<string>();
 
+        // OPTIMIZATION: Cache user histories to avoid fetching the same user multiple times
+        const userHistoryCache = new Map<string, StoredAnalysis[]>();
+
         for (const ticker of trackedTickers) {
             let newPrice = priceMap.get(ticker);
-
-            // Individual fallback for things not in batch (like MOLT via CA)
-            if (!newPrice && ticker.startsWith('CA:')) {
-                // We keep CA keys in Redis only for known identities.
-                // Since this ticker has no price, it might be a remnant.
-            }
 
             if (!newPrice) {
                 result.skipped++;
@@ -120,36 +117,47 @@ export async function refreshByTicker(): Promise<RefreshResult> {
             const analysisRefs = await redis.zrange(`ticker_index:${ticker}`, 0, -1) as string[];
             for (const ref of analysisRefs) {
                 const [username, tweetId] = ref.split(':');
-                const historyKey = `user:history:${username}`;
-                const historyData = await redis.lrange(historyKey, 0, -1);
-                const history: StoredAnalysis[] = historyData.map((item: any) =>
-                    typeof item === 'string' ? JSON.parse(item) : item
-                );
 
-                let updated = false;
+                // OPTIMIZATION: Only fetch history once per user
+                if (!userHistoryCache.has(username)) {
+                    const historyData = await redis.lrange(`user:history:${username}`, 0, -1);
+                    const history: StoredAnalysis[] = historyData.map((item: any) =>
+                        typeof item === 'string' ? JSON.parse(item) : item
+                    );
+                    userHistoryCache.set(username, history);
+                }
+
+                const history = userHistoryCache.get(username)!;
+
                 for (const a of history) {
                     if (a.id === tweetId && a.entryPrice && a.currentPrice !== newPrice) {
                         a.currentPrice = newPrice;
                         a.performance = calculatePerformance(a.entryPrice, newPrice, a.sentiment);
                         a.isWin = a.performance > 0;
-                        updated = true;
                         result.updated++;
                         affectedUsers.add(username);
                         updatedIds.add(a.id);
                     }
                 }
+            }
+        }
 
-                if (updated) {
-                    await redis.del(historyKey);
-                    for (let i = history.length - 1; i >= 0; i--) {
-                        await redis.lpush(historyKey, JSON.stringify(history[i]));
-                    }
+        // OPTIMIZATION: Write back all modified user histories using pipelines
+        for (const username of affectedUsers) {
+            const history = userHistoryCache.get(username)!;
+            await redis.del(`user:history:${username}`);
+            if (history.length > 0) {
+                const pipe = redis.pipeline();
+                for (let i = history.length - 1; i >= 0; i--) {
+                    pipe.lpush(`user:history:${username}`, JSON.stringify(history[i]));
                 }
+                await pipe.exec();
             }
         }
 
         for (const username of affectedUsers) await recalculateUserProfile(username);
 
+        // OPTIMIZATION: Update recent_analyses with pipeline
         const recentData = await redis.lrange('recent_analyses', 0, -1);
         const recent: StoredAnalysis[] = recentData.map((item: any) =>
             typeof item === 'string' ? JSON.parse(item) : item
@@ -167,9 +175,11 @@ export async function refreshByTicker(): Promise<RefreshResult> {
         }
         if (recentUpdated) {
             await redis.del('recent_analyses');
+            const pipe = redis.pipeline();
             for (let i = recent.length - 1; i >= 0; i--) {
-                await redis.lpush('recent_analyses', JSON.stringify(recent[i]));
+                pipe.lpush('recent_analyses', JSON.stringify(recent[i]));
             }
+            await pipe.exec();
         }
     } catch (e) {
         console.error('[PriceRefresher] Fatal error:', e);

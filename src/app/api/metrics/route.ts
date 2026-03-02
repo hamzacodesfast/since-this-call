@@ -199,7 +199,9 @@ export async function GET() {
         const cached = await redis.get(METRICS_CACHE_KEY) as PlatformMetrics | null;
 
         if (cached) {
-            return NextResponse.json(cached);
+            return NextResponse.json(cached, {
+                headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' },
+            });
         }
 
         // Compute fresh metrics
@@ -208,7 +210,9 @@ export async function GET() {
         // Cache for 15 minutes
         await redis.set(METRICS_CACHE_KEY, JSON.stringify(metrics), { ex: CACHE_TTL });
 
-        return NextResponse.json(metrics);
+        return NextResponse.json(metrics, {
+            headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60' },
+        });
     } catch (error) {
         console.error('[Metrics API] Error:', error);
         return NextResponse.json(
