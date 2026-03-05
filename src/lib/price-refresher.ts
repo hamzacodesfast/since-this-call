@@ -3,7 +3,7 @@
  * @description Batch price refresh engine for live call tracking
  */
 import { Redis } from '@upstash/redis';
-import { StoredAnalysis, recalculateUserProfile } from './analysis-store';
+import { StoredAnalysis, recalculateUserProfile, dualWrite } from './analysis-store';
 import { calculatePerformance, getPrice } from './market-data';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
@@ -142,17 +142,19 @@ export async function refreshByTicker(): Promise<RefreshResult> {
             }
         }
 
-        // OPTIMIZATION: Write back all modified user histories using pipelines
+        // OPTIMIZATION: Write back all modified user histories using dualWrite for consistency
         for (const username of affectedUsers) {
             const history = userHistoryCache.get(username)!;
-            await redis.del(`user:history:${username}`);
-            if (history.length > 0) {
-                const pipe = redis.pipeline();
-                for (let i = history.length - 1; i >= 0; i--) {
-                    pipe.lpush(`user:history:${username}`, JSON.stringify(history[i]));
+            await dualWrite(async (r) => {
+                await r.del(`user:history:${username}`);
+                if (history.length > 0) {
+                    const pipe = r.pipeline();
+                    for (let i = history.length - 1; i >= 0; i--) {
+                        pipe.lpush(`user:history:${username}`, JSON.stringify(history[i]));
+                    }
+                    await pipe.exec();
                 }
-                await pipe.exec();
-            }
+            });
         }
 
         for (const username of affectedUsers) await recalculateUserProfile(username);
@@ -174,12 +176,14 @@ export async function refreshByTicker(): Promise<RefreshResult> {
             }
         }
         if (recentUpdated) {
-            await redis.del('recent_analyses');
-            const pipe = redis.pipeline();
-            for (let i = recent.length - 1; i >= 0; i--) {
-                pipe.lpush('recent_analyses', JSON.stringify(recent[i]));
-            }
-            await pipe.exec();
+            await dualWrite(async (r) => {
+                await r.del('recent_analyses');
+                const pipe = r.pipeline();
+                for (let i = recent.length - 1; i >= 0; i--) {
+                    pipe.lpush('recent_analyses', JSON.stringify(recent[i]));
+                }
+                await pipe.exec();
+            });
         }
     } catch (e) {
         console.error('[PriceRefresher] Fatal error:', e);

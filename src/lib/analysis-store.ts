@@ -37,23 +37,16 @@ const redisProd = (process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL && proces
 
 /**
  * Executes a function on both primary and secondary (if available) Redis clients.
+ * IMPORTANT: Both writes are awaited to prevent race conditions that can cause
+ * duplicate list entries when del+lpush operations interleave.
  */
 export async function dualWrite<T>(fn: (r: Redis) => Promise<T>): Promise<T> {
     const primaryResult = await fn(redis as Redis);
     if (redisProd) {
         try {
-            // Check if it's a valid Upstash client and we are in a context that supports it
-            // We fire-and-forget but wrap carefully
-            const runSecondary = async () => {
-                try {
-                    await fn(redisProd);
-                } catch (e) {
-                    // console.error('[AnalysisStore] Secondary Dual-Write Error:', e);
-                }
-            };
-            runSecondary();
+            await fn(redisProd);
         } catch (e) {
-            // Synchronous error from fn(redisProd) call
+            console.error('[AnalysisStore] Secondary Dual-Write Error:', e);
         }
     }
     return primaryResult;
@@ -484,9 +477,6 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
 
         // Add New to List
         history.unshift(analysis);
-        if (history.length > 100) {
-            history = history.slice(0, 100);
-        }
 
         // 4. Update Ticker Stats (Side Effect)
         if (!isNew && oldAnalysis) {
