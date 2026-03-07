@@ -131,8 +131,8 @@ async function main() {
 
                 // Save History
                 await dualWrite(async (r) => {
-                    await r.del(historyKey);
                     const pipeline = r.pipeline();
+                    pipeline.del(historyKey);
                     for (let j = history.length - 1; j >= 0; j--) {
                         pipeline.lpush(historyKey, JSON.stringify(history[j]));
                     }
@@ -171,12 +171,14 @@ async function main() {
     }
 
     if (hasRecentChanges) {
-        await redis.del(RECENT_KEY);
-        const pipeline = redis.pipeline();
-        for (const item of recentItems.reverse()) {
-            pipeline.lpush(RECENT_KEY, JSON.stringify(item));
-        }
-        await pipeline.exec();
+        await dualWrite(async (r) => {
+            const pipeline = r.pipeline();
+            pipeline.del(RECENT_KEY);
+            for (const item of recentItems.reverse()) {
+                pipeline.lpush(RECENT_KEY, JSON.stringify(item));
+            }
+            await pipeline.exec();
+        });
     }
 
     console.log(`✅ Uniform Refresh Complete.`);

@@ -61,7 +61,7 @@ async function bulkAnalyze() {
     let skippedCount = 0;
     let failedCount = 0;
 
-    const concurrency = 5;
+    const concurrency = 1;
     for (let i = 0; i < tweetsToProcess.length; i += concurrency) {
         const chunk = tweetsToProcess.slice(i, i + concurrency);
 

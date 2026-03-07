@@ -146,14 +146,14 @@ export async function refreshByTicker(): Promise<RefreshResult> {
         for (const username of affectedUsers) {
             const history = userHistoryCache.get(username)!;
             await dualWrite(async (r) => {
-                await r.del(`user:history:${username}`);
+                const pipe = r.pipeline();
+                pipe.del(`user:history:${username}`);
                 if (history.length > 0) {
-                    const pipe = r.pipeline();
                     for (let i = history.length - 1; i >= 0; i--) {
                         pipe.lpush(`user:history:${username}`, JSON.stringify(history[i]));
                     }
-                    await pipe.exec();
                 }
+                await pipe.exec();
             });
         }
 
@@ -177,8 +177,8 @@ export async function refreshByTicker(): Promise<RefreshResult> {
         }
         if (recentUpdated) {
             await dualWrite(async (r) => {
-                await r.del('recent_analyses');
                 const pipe = r.pipeline();
+                pipe.del('recent_analyses');
                 for (let i = recent.length - 1; i >= 0; i--) {
                     pipe.lpush('recent_analyses', JSON.stringify(recent[i]));
                 }

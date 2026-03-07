@@ -1,6 +1,6 @@
 import { getRedisClient } from './redis-client';
 import { getPrice, calculatePerformance, inferAssetType } from './market-data';
-import { updateGlobalRecentAnalysis, StoredAnalysis } from './analysis-store';
+import { updateGlobalRecentAnalysis, StoredAnalysis, dualWrite } from './analysis-store';
 
 const redis = getRedisClient();
 
@@ -110,12 +110,14 @@ export async function refreshUser(username: string, force: boolean = false) {
             lastAnalyzed: Date.now(),
         });
 
-        await redis.del(historyKey);
-        const pipeline = redis.pipeline();
-        for (let i = history.length - 1; i >= 0; i--) {
-            pipeline.lpush(historyKey, JSON.stringify(history[i]));
-        }
-        await pipeline.exec();
+        await dualWrite(async (r) => {
+            const pipeline = r.pipeline();
+            pipeline.del(historyKey);
+            for (let i = history.length - 1; i >= 0; i--) {
+                pipeline.lpush(historyKey, JSON.stringify(history[i]));
+            }
+            await pipeline.exec();
+        });
         console.log(`[PriceUpdater] Updated ${username}`);
     }
 }

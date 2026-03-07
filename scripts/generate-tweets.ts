@@ -32,7 +32,7 @@ async function main() {
 📈 Average Analyst Win Rate: ${winRate}%
 💎 Tracked Assets: ${uniqueTickers.toLocaleString()}
 
-The truth is on-chain. Audit your guru. 🕵️‍♂️
+Audit your guru. 🕵️‍♂️
 #STC #Fintwit #Trading`);
     } else {
         output.push('❌ Error: distinct platform_metrics not found in Redis.');
@@ -67,7 +67,6 @@ The truth is on-chain. Audit your guru. 🕵️‍♂️
 
 ${tickerList}
 
-The herd is moving. Are you?
 #STC #TradingSignals #Crypto #Stocks`);
     } else {
         output.push('❌ Error: topTickers not found in platform_metrics.');

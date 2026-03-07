@@ -325,8 +325,8 @@ export async function addAnalysis(analysis: StoredAnalysis): Promise<void> {
 
         // Use dualWrite for persistence
         await dualWrite(async (r) => {
-            await r.del(RECENT_KEY);
             const pipeline = r.pipeline();
+            pipeline.del(RECENT_KEY);
             for (const s of serializedItems) {
                 pipeline.rpush(RECENT_KEY, s);
             }
@@ -376,8 +376,8 @@ export async function updateGlobalRecentAnalysis(updatedItem: StoredAnalysis): P
 
             // Persist
             await dualWrite(async (r) => {
-                await r.del(RECENT_KEY);
                 const pipeline = r.pipeline();
+                pipeline.del(RECENT_KEY);
                 for (const s of serializedItems) {
                     pipeline.rpush(RECENT_KEY, s);
                 }
@@ -541,14 +541,14 @@ export async function updateUserProfile(analysis: StoredAnalysis): Promise<void>
             });
 
             // Update History List (Capped at 100)
-            await r.del(historyKey);
+            const p = r.pipeline();
+            p.del(historyKey);
             if (history.length > 0) {
-                const p = r.pipeline();
                 for (let i = history.length - 1; i >= 0; i--) {
                     p.lpush(historyKey, JSON.stringify(history[i]));
                 }
-                await p.exec();
             }
+            await p.exec();
         });
 
     } catch (error) {
