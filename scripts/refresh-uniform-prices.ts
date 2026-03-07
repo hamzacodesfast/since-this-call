@@ -9,7 +9,7 @@ dotenv.config();
 
 import { getRedisClient } from '../src/lib/redis-client';
 import { getPrice, calculatePerformance } from '../src/lib/market-data';
-import { StoredAnalysis } from '../src/lib/analysis-store';
+import { StoredAnalysis, dualWrite } from '../src/lib/analysis-store';
 
 const redis = getRedisClient();
 
@@ -130,12 +130,14 @@ async function main() {
                 });
 
                 // Save History
-                await redis.del(historyKey);
-                const pipeline = redis.pipeline();
-                for (let j = history.length - 1; j >= 0; j--) {
-                    pipeline.lpush(historyKey, JSON.stringify(history[j]));
-                }
-                await pipeline.exec();
+                await dualWrite(async (r) => {
+                    await r.del(historyKey);
+                    const pipeline = r.pipeline();
+                    for (let j = history.length - 1; j >= 0; j--) {
+                        pipeline.lpush(historyKey, JSON.stringify(history[j]));
+                    }
+                    await pipeline.exec();
+                });
             }
         }));
 
