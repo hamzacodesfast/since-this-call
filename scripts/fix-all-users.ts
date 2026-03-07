@@ -1,6 +1,3 @@
-import { getRedisClient } from '../src/lib/redis-client';
-import { dualWrite, recalculateUserProfile } from '../src/lib/analysis-store';
-import { Redis } from '@upstash/redis';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -9,6 +6,9 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
 
 async function main() {
+    const { getRedisClient } = await import('../src/lib/redis-client');
+    const { dualWrite, recalculateUserProfile } = await import('../src/lib/analysis-store');
+    
     const redis = getRedisClient();
     const allUsers = await redis.smembers('all_users');
 
@@ -40,14 +40,14 @@ async function main() {
 
             // Use dualWrite to ensure both primary and production are cleaned atomically
             await dualWrite(async (r) => {
-                await r.del(`user:history:${username}`);
+                const pipe = r.pipeline();
+                pipe.del(`user:history:${username}`);
                 if (cleanHistory.length > 0) {
-                    const pipe = r.pipeline();
                     for (let i = cleanHistory.length - 1; i >= 0; i--) {
                         pipe.lpush(`user:history:${username}`, JSON.stringify(cleanHistory[i]));
                     }
-                    await pipe.exec();
                 }
+                await pipe.exec();
             });
             console.log(`  - Wrote ${cleanHistory.length} unique items via dualWrite`);
 
