@@ -239,7 +239,6 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
                 }
             }
         }
-
         if (price === null) {
             console.log(`[Price] All providers failed for ${symbol}`);
         }

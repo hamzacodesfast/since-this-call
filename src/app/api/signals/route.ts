@@ -12,31 +12,28 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const forceRefresh = searchParams.get('refresh') === 'true';
 
-        // Check cache first
+        // Check cache first for the heavy scan data
         const cacheKey = 'cache:trader:scan';
+        let result: any;
+        let cacheHit = false;
+
         if (!forceRefresh) {
             const cached = await redis.get(cacheKey);
             if (cached) {
-                const data = typeof cached === 'string' ? JSON.parse(cached) : cached;
-                return NextResponse.json(data, {
-                    headers: {
-                        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-                        'X-Cache': 'HIT',
-                    },
-                });
+                result = typeof cached === 'string' ? JSON.parse(cached) : cached;
+                cacheHit = true;
             }
         }
 
-        // Run full scan
-        const result = await runFullScan();
-
-        // Cache the result
-        await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL });
+        if (!result) {
+            result = await runFullScan();
+            await redis.set(cacheKey, JSON.stringify(result), { ex: CACHE_TTL });
+        }
 
         return NextResponse.json(result, {
             headers: {
-                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
-                'X-Cache': 'MISS',
+                'Cache-Control': 'no-store, max-age=0',
+                'X-Cache': cacheHit ? 'HIT' : 'MISS',
             },
         });
     } catch (error) {

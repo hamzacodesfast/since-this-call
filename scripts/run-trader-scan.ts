@@ -1,96 +1,57 @@
-#!/usr/bin/env npx tsx
 /**
  * @file run-trader-scan.ts
- * @description CLI runner for the STC Trader Agent — prints a formatted terminal report.
- *
- * Usage: npx tsx scripts/run-trader-scan.ts
+ * @description Script to execute STC Trader Agent V2 scans and output recommendations.
  */
-import * as dotenv from 'dotenv';
-import * as path from 'path';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-dotenv.config();
-
-import { runFullScan, type TradeRecommendation } from '../src/lib/trader-agent';
-
-const SIGNAL_EMOJI: Record<string, string> = {
-    FADE: '🔄',
-    COPY: '📋',
-    MEAN_REVERSION: '🔀',
-    MOMENTUM: '🚀',
-    MAX_CONVICTION: '👑',
-};
-
-const CONFIDENCE_EMOJI: Record<string, string> = {
-    LOW: '⚪',
-    MEDIUM: '🟡',
-    HIGH: '🟢',
-    APEX: '💎',
-};
-
-function printRecommendation(rec: TradeRecommendation, index: number) {
-    const dirEmoji = rec.direction === 'LONG' ? '📈' : '📉';
-    const sigEmoji = SIGNAL_EMOJI[rec.signal] || '📊';
-    const confEmoji = CONFIDENCE_EMOJI[rec.confidence] || '⚪';
-
-    console.log(`\n  ${index + 1}. ${sigEmoji} ${rec.signal} ${dirEmoji} ${rec.direction} $${rec.ticker} (${rec.tickerType})`);
-    console.log(`     ${confEmoji} Confidence: ${rec.confidence}`);
-    console.log(`     🕐 ${rec.staleness}`);
-    console.log(`     💡 ${rec.reasoning}`);
-
-    // V2: Enhanced source account display
-    for (const a of rec.sourceAccounts) {
-        const parts = [`@${a.username} (${a.winRate.toFixed(1)}% WR, ${a.totalCalls} calls)`];
-        if (a.enhanced) {
-            const e = a.enhanced;
-            if (e.tickerWinRate !== null) parts.push(`$${rec.ticker} WR: ${e.tickerWinRate.toFixed(0)}% (${e.tickerCalls}c)`);
-            parts.push(`Recent: ${e.recentWinRate.toFixed(0)}% ${e.recentStreak}`);
-            if (e.callConviction > 0 && e.callConviction !== 0.5) parts.push(`Conv: ${(e.callConviction * 100).toFixed(0)}%`);
-        }
-        console.log(`     👤 ${parts.join(' | ')}`);
-    }
-
-    if (rec.riskWarnings.length > 0) {
-        console.log(`     ⚠️  ${rec.riskWarnings[0]}`);
-    }
-}
-
-function printSection(title: string, recs: TradeRecommendation[]) {
-    console.log(`\n${'═'.repeat(60)}`);
-    console.log(`  ${title}`);
-    console.log(`${'═'.repeat(60)}`);
-    if (recs.length === 0) {
-        console.log('  No signals detected.');
-    } else {
-        recs.forEach((r, i) => printRecommendation(r, i));
-    }
-}
+import { runFullScan } from '../src/lib/trader-agent';
+import { format } from 'date-fns';
 
 async function main() {
-    console.log('\n🔍 STC Trader Agent — Full Market Scan');
-    console.log(`📅 ${new Date().toISOString()}\n`);
+    console.log('🚀 Starting STC Trader Agent V2 Scan...');
+    console.log('Time:', format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    console.log('--------------------------------------------------');
 
-    const result = await runFullScan();
+    try {
+        const result = await runFullScan();
 
-    printSection('🔥 PLAYBOOK 1: Inverse Engagement Farmer (FADE)', result.farmerFades);
-    printSection('🎯 PLAYBOOK 2: Silent Sniper Follow (COPY)', result.silentSnipers);
-    printSection('🧠 PLAYBOOK 3: Smart Money Divergence', result.smartMoneyDivergences);
-    printSection('🔄 PLAYBOOK 4: Sector Rotation Anomaly', result.sectorRotations);
-    printSection('👑 PLAYBOOK 5: Dual Sniper Confluence (APEX)', result.dualSniperSignals);
+        console.log('\n📊 SCAN SUMMARY');
+        console.log(`Total Signals Found: ${result.totalSignals}`);
+        console.log(`Scan Duration: ${((Date.now() - result.scanTimestamp) / 1000).toFixed(1)}s (ago)`);
+        console.log('--------------------------------------------------');
 
-    console.log(`\n${'═'.repeat(60)}`);
-    console.log(`  📊 SCAN SUMMARY`);
-    console.log(`${'═'.repeat(60)}`);
-    console.log(`  Total Signals:     ${result.totalSignals}`);
-    console.log(`  Farmer Fades:      ${result.farmerFades.length}`);
-    console.log(`  Silent Snipers:    ${result.silentSnipers.length}`);
-    console.log(`  SM Divergences:    ${result.smartMoneyDivergences.length}`);
-    console.log(`  Sector Rotations:  ${result.sectorRotations.length}`);
-    console.log(`  Apex Signals:      ${result.dualSniperSignals.length}`);
-    console.log(`\n  ⚠️  DISCLAIMER: These are data-driven observations, not financial advice.`);
-    console.log(`  ⚠️  Never risk more than 2-3% of portfolio on any single recommendation.\n`);
+        if (result.totalSignals === 0) {
+            console.log('No high-probability signals found in this scan.');
+            return;
+        }
 
-    process.exit(0);
+        const sections = [
+            { title: '👑 APEX SIGNALS (Dual Sniper Confluence)', data: result.dualSniperSignals },
+            { title: '🔄 SECTOR ROTATION ANOMALIES', data: result.sectorRotations },
+            { title: '🧠 SMART MONEY DIVERGENCES', data: result.smartMoneyDivergences },
+            { title: '🎯 SILENT SNIPER FOLLOWS', data: result.silentSnipers },
+            { title: '🔄 INVERSE ENGAGEMENT FARMERS', data: result.farmerFades },
+        ];
+
+        for (const section of sections) {
+            if (section.data.length > 0) {
+                console.log(`\n${section.title}`);
+                section.data.forEach((rec, i) => {
+                    console.log(`\n[${i + 1}] ${rec.ticker} - ${rec.direction} (${rec.signal})`);
+                    console.log(`    Confidence: ${rec.confidence}`);
+                    console.log(`    Reasoning: ${rec.reasoning}`);
+                    console.log(`    Staleness: ${rec.staleness}`);
+                    if (rec.riskWarnings.length > 0) {
+                        console.log(`    ⚠️ Risk Warnings:`);
+                        rec.riskWarnings.forEach(w => console.log(`      - ${w}`));
+                    }
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ Error during trader scan:', error);
+        process.exit(1);
+    }
 }
 
 main();

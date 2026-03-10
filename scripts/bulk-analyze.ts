@@ -61,7 +61,14 @@ async function bulkAnalyze() {
     let skippedCount = 0;
     let failedCount = 0;
 
-    const concurrency = 1;
+    // Pre-fetch recent analyses to avoid multiple redis calls
+    const recentAnalysesRaw = await redis.lrange('recent_analyses', 0, -1);
+    const existingIds = new Set(recentAnalysesRaw.map((a: any) => {
+        const parsed = typeof a === 'string' ? JSON.parse(a) : a;
+        return parsed.id;
+    }));
+
+    const concurrency = 10;
     for (let i = 0; i < tweetsToProcess.length; i += concurrency) {
         const chunk = tweetsToProcess.slice(i, i + concurrency);
 
@@ -70,14 +77,8 @@ async function bulkAnalyze() {
             const globalIdx = i + chunkIdx + 1;
 
             try {
-                // Check for duplicates
-                const recent = await redis.lrange('recent_analyses', 0, -1);
-                const isDuplicate = recent.some((a: any) => {
-                    const parsed = typeof a === 'string' ? JSON.parse(a) : a;
-                    return parsed.id === tweetId;
-                });
-
-                if (isDuplicate) {
+                // Check for duplicates using the pre-fetched Set
+                if (existingIds.has(tweetId)) {
                     console.log(`[${globalIdx}/${tweetsToProcess.length}] ⏭️ Skipping: Tweet already analyzed.`);
                     skippedCount++;
                     return;
@@ -138,10 +139,6 @@ async function bulkAnalyze() {
             }
         }));
 
-        if (i + concurrency < tweetsToProcess.length) {
-            // console.log('⏳ Waiting 1 second...\n');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
     }
 
     console.log(`\n✨ Bulk Analysis Complete!`);

@@ -14,6 +14,7 @@ const navItems = [
     { href: '/stats', label: 'Stats', icon: BarChart3 },
     { href: '/tickers', label: 'Tickers', icon: TrendingUp },
     { href: '/profiles', label: 'Profiles', icon: Users },
+    { href: '/signals', label: 'Signals', icon: TrendingUp },
     { href: '/merch', label: 'Merch', icon: ShoppingBag },
 ];
 

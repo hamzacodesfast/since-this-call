@@ -1,6 +1,6 @@
 /**
  * @file trader-agent.ts
- * @description STC Trader Agent V2 — High-Probability Recommendation Engine
+ * @description STC Signals Engine V2 — High-Probability Recommendation Engine
  *
  * V2 Enhancements:
  *   - Ticker-Specific Win Rates: Per-ticker accuracy instead of global WR
@@ -250,8 +250,8 @@ export async function scanFarmerFades(): Promise<TradeRecommendation[]> {
     const profiles = await fetchAllProfiles();
     const recommendations: TradeRecommendation[] = [];
 
-    // Filter: 20+ calls, WR < 35%
-    const farmers = profiles.filter(p => p.totalAnalyses >= 20 && p.winRate < 35);
+    // Filter: 30+ calls, WR < 30%
+    const farmers = profiles.filter(p => p.totalAnalyses >= 30 && p.winRate < 30);
 
     for (const farmer of farmers) {
         const history = await fetchUserHistory(farmer.username, 100);
@@ -262,6 +262,9 @@ export async function scanFarmerFades(): Promise<TradeRecommendation[]> {
 
         // V2: Build enhanced metrics
         const enhanced = await buildEnhancedMetrics(farmer.username, latestCall, history);
+
+        // Precision Refinement: Min 0.5 conviction to avoid casual mentions
+        if (enhanced.callConviction < 0.5) continue;
 
         // Fade direction: opposite of their call
         const direction: 'LONG' | 'SHORT' =
@@ -312,7 +315,7 @@ export async function scanFarmerFades(): Promise<TradeRecommendation[]> {
                 'Never risk more than 2-3% of portfolio on a single Fade recommendation.',
                 ...(enhanced.momentum === 'HOT' ? ['⚠️ CAUTION: This farmer is on a recent winning streak — fade signal weakened.'] : []),
                 ...(isZeroPercent ? ['Zero-Percent anomalies are rare — verify the account has not been recently purged/reset.'] : []),
-            ],
+            ]
         });
     }
 
@@ -336,8 +339,8 @@ export async function scanSilentSnipers(): Promise<TradeRecommendation[]> {
     const profiles = await fetchAllProfiles();
     const recommendations: TradeRecommendation[] = [];
 
-    // Filter: 15+ calls, WR > 65%
-    const snipers = profiles.filter(p => p.totalAnalyses >= 15 && p.winRate > 65);
+    // Filter: 25+ calls, WR > 75%
+    const snipers = profiles.filter(p => p.totalAnalyses >= 25 && p.winRate > 75);
 
     for (const sniper of snipers) {
         const history = await fetchUserHistory(sniper.username, 100);
@@ -347,6 +350,9 @@ export async function scanSilentSnipers(): Promise<TradeRecommendation[]> {
 
         // V2: Build enhanced metrics
         const enhanced = await buildEnhancedMetrics(sniper.username, latestCall, history);
+
+        // Precision Refinement: Min 0.5 conviction
+        if (enhanced.callConviction < 0.5) continue;
 
         // Check "silence" — gap between last two calls > 3 days, or only 1 recent call
         let isSilentThenSpeaks = false;
@@ -410,7 +416,7 @@ export async function scanSilentSnipers(): Promise<TradeRecommendation[]> {
                 ...(enhanced.momentum === 'COLD' ? ['⚠️ CAUTION: This sniper is on a recent cold streak — accuracy may be declining.'] : []),
                 ...(enhanced.callConviction < 0.3 ? ['Low conviction call — may be a casual mention, not a strong thesis.'] : []),
                 ...(sniper.totalAnalyses < 30 ? [`Sample size of ${sniper.totalAnalyses} calls is relatively small.`] : []),
-            ],
+            ]
         });
     }
 
@@ -435,7 +441,7 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
 
     // V2: Smart money filtered by RECENT performance, not just lifetime WR
     // Fetch full histories for potential smart money to compute recency
-    const potentialSmart = profiles.filter(p => p.totalAnalyses >= 15 && p.winRate > 55);
+    const potentialSmart = profiles.filter(p => p.totalAnalyses >= 25 && p.winRate > 70);
     const smartHistories = new Map<string, StoredAnalysis[]>();
     const confirmedSmart: UserProfile[] = [];
 
@@ -443,7 +449,7 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
         const history = await fetchUserHistory(p.username, 100);
         const { recentWR } = computeRecentWinRate(history);
         // V2: Only count as "smart money" if BOTH lifetime AND recent WR are strong
-        if (p.winRate > 60 || (p.winRate > 55 && recentWR > 60)) {
+        if (p.winRate > 75 || (p.winRate > 70 && recentWR > 70)) {
             confirmedSmart.push(p);
             smartHistories.set(p.username.toLowerCase(), history);
         }
@@ -503,7 +509,7 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
 
         const totalCrowd = crowdBullish + crowdBearish;
         const totalSmart = smartBullish + smartBearish;
-        if (totalCrowd < 10 || totalSmart < 3) continue;
+        if (totalCrowd < 10 || totalSmart < 5) continue;
 
         const crowdBullPct = (crowdBullish / totalCrowd) * 100;
         const smartBullPct = (smartBullish / totalSmart) * 100;
@@ -535,7 +541,7 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
             riskWarnings: [
                 'Divergence signals work best at extreme sentiment readings.',
                 'Confirm with price action — not all divergences resolve immediately.',
-            ],
+            ]
         });
     }
 
@@ -549,7 +555,7 @@ export async function scanSectorRotation(): Promise<TradeRecommendation[]> {
     const recommendations: TradeRecommendation[] = [];
 
     const smartMoneySet = new Set(
-        profiles.filter(p => p.totalAnalyses >= 15 && p.winRate > 50)
+        profiles.filter(p => p.totalAnalyses >= 25 && p.winRate > 70)
             .map(p => p.username.toLowerCase())
     );
 
@@ -616,11 +622,11 @@ export async function scanSectorRotation(): Promise<TradeRecommendation[]> {
     }
 
     for (const [symbol, data] of Object.entries(tickerVolume)) {
-        if (data.total < 5) continue;
-        if (data.smartTotal < 2) continue;
+        if (data.total < 15) continue;
+        if (data.smartTotal < 5) continue;
 
         const smartRatio = data.smartTotal / data.total;
-        if (smartRatio < 0.3) continue;
+        if (smartRatio < 0.6) continue;
 
         // V2: Factor in average conviction of the calls
         data.avgConviction = data.convictionCount > 0 ? data.convictionSum / data.convictionCount : 0.5;
@@ -642,7 +648,7 @@ export async function scanSectorRotation(): Promise<TradeRecommendation[]> {
             riskWarnings: [
                 'Volume spikes can be noise — confirm the rotation narrative with price action.',
                 'Momentum signals degrade fast. Act early or not at all.',
-            ],
+            ]
         });
     }
 
@@ -732,7 +738,7 @@ export async function scanDualSniperConfluence(): Promise<TradeRecommendation[]>
             riskWarnings: [
                 'Apex signals are the highest conviction but also the rarest.',
                 'Stale Data Risk: Verify exact timestamps — both calls may have already played out.',
-            ],
+            ]
         });
     }
 

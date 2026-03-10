@@ -276,14 +276,14 @@ export default function TraderPage() {
     const fetchData = useCallback(async (force = false) => {
         try {
             if (force) setRefreshing(true);
-            const url = force ? '/api/trader?refresh=true' : '/api/trader';
+            const url = force ? '/api/signals?refresh=true' : '/api/signals';
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             setData(json);
             setError(null);
         } catch (e) {
-            console.error('Failed to fetch trader data:', e);
+            console.error('Failed to fetch signals data:', e);
             setError('Failed to load scan results. Make sure the server is running.');
         } finally {
             setLoading(false);
@@ -319,7 +319,7 @@ export default function TraderPage() {
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
                                 <Shield className="w-6 h-6 text-yellow-400" />
-                                Trader Agent
+                                Signals
                             </h1>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 High-Probability Recommendation Engine
@@ -349,6 +349,7 @@ export default function TraderPage() {
                         </div>
                     </div>
                 </div>
+
 
                 {/* Scan Summary Bar */}
                 {data && !loading && (

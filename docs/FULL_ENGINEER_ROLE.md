@@ -109,7 +109,7 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 | `get-quant-trends.ts` | Quant trend analysis |
 | `get-specific-ticker.ts` | Lookup a specific ticker's data |
 | `get-ticker-tilt.ts` | Get sentiment tilt for a ticker |
-| `run-trader-scan.ts` | CLI runner for the STC Trader Agent |
+| `run-trader-scan.ts` | CLI runner for the STC Signals Engine |
 | `purge-crypto-stocks.ts` | Fix incorrect stock labels categorized as crypto |
 | `silver.ts` | Sentiment analysis for silver markets ($SLV, $XAG) |
 | `check-all-users-dupes.ts` | Scan platform for duplicate entries |

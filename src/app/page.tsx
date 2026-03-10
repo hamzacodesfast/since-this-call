@@ -258,6 +258,7 @@ export default function Home() {
                     <Link href="/recent"><Button variant="ghost" className="text-muted-foreground hover:text-foreground"><Clock className="w-4 h-4 mr-2" />Recent</Button></Link>
                     <Link href="/leaderboard"><Button variant="ghost" className="text-muted-foreground hover:text-primary"><Trophy className="w-4 h-4 mr-2" />Leaderboard</Button></Link>
                     <Link href="/stats"><Button variant="ghost" className="text-muted-foreground hover:text-foreground"><BarChart3 className="w-4 h-4 mr-2" />Stats</Button></Link>
+                    <Link href="/signals"><Button variant="ghost" className="text-muted-foreground hover:text-foreground"><TrendingUp className="w-4 h-4 mr-2" />Signals</Button></Link>
                     <Link href="/profiles"><Button variant="ghost" className="text-muted-foreground hover:text-foreground">Profiles</Button></Link>
                 </div>
                 <div className="flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground opacity-30">
