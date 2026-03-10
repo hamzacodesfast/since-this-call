@@ -2,12 +2,12 @@
 
 📊 Since This Call - Platform Update!
 
-🔥 Total Calls analyzed: 17,262
-👔 Total Financial Analysts: 4,743
-📈 Average Analyst Win Rate: 42.0%
-💎 Tracked Assets: 975
+🔥 Total Calls analyzed: 22,701
+👔 Total Financial Analysts: 5,936
+📈 Average Analyst Win Rate: 55.0%
+💎 Tracked Assets: 1,188
 
-The truth is on-chain. Audit your guru. 🕵️‍♂️
+Audit your guru. 🕵️‍♂️
 #STC #Fintwit #Trading
 
 ---
@@ -16,13 +16,12 @@ The truth is on-chain. Audit your guru. 🕵️‍♂️
 
 🔥 Top 5 Trending Tickers on STC:
 
-1. $BTC: 56% Win Rate | 76% Bullish (437 calls)
-2. $ETH: 67% Win Rate | 73% Bullish (60 calls)
-3. $SOL: 74% Win Rate | 87% Bullish (39 calls)
-4. $NBIS: 91% Win Rate | 88% Bullish (17 calls)
-5. $IREN: 77% Win Rate | 75% Bullish (16 calls)
+1. $BTC: 76% Win Rate | 76% Bullish (332 calls)
+2. $HIMS: 37% Win Rate | 88% Bullish (76 calls)
+3. $CL: 62% Win Rate | 38% Bullish (61 calls)
+4. $ETH: 71% Win Rate | 71% Bullish (58 calls)
+5. $SOL: 90% Win Rate | 94% Bullish (31 calls)
 
-The herd is moving. Are you?
 #STC #TradingSignals #Crypto #Stocks
 
 ---
@@ -31,11 +30,11 @@ The herd is moving. Are you?
 
 🏆 Top 5 Performing Analysts this week:
 
-1. @hajiyev_rashad: 89.3% WR (28 calls)
-2. @PeterSchiff: 84.8% WR (33 calls)
-3. @rektcapital: 81.5% WR (27 calls)
-4. @AdeptMarket: 80.4% WR (56 calls)
-5. @DarioCpx: 74.1% WR (27 calls)
+1. @BitcoinMagazine: 91.7% WR (36 calls)
+2. @AltcoinDaily: 91.4% WR (35 calls)
+3. @ZynxBTC: 87.2% WR (47 calls)
+4. @AdamBLiv: 84.5% WR (71 calls)
+5. @MartiniGuyYT: 82.4% WR (51 calls)
 
 Respect the data. 📈
 #STC #Fintwit #EliteAnalysts
@@ -46,11 +45,11 @@ Respect the data. 📈
 
 ⚠️ Reality Check: Bottom 5 Analyst Win Rates:
 
-1. @daniexbt: 2.6% WR (38 calls)
-2. @eliz883: 6.3% WR (32 calls)
-3. @CryptosR_Us: 11.5% WR (26 calls)
-4. @satoxis: 16.7% WR (24 calls)
-5. @Vivek4real_: 17.1% WR (41 calls)
+1. @pdicarlotrader: 19.1% WR (47 calls)
+2. @daniexbt: 21.8% WR (55 calls)
+3. @TechCharts: 24.0% WR (50 calls)
+4. @TheSonOfWalkley: 26.7% WR (45 calls)
+5. @eliz883: 27.8% WR (36 calls)
 
 Numbers don't lie. Don't blindly follow the hype. 📉
 #STC #TradingMistakes #AuditEverything
