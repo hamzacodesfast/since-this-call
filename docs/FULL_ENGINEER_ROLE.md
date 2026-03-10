@@ -41,6 +41,8 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 - **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`. 
 - **Pagination & Global Aggregation**: Profile history fetches via the `user_index:*` ZSET for infinite scale, avoiding the 100-item hardcap of legacy lists. Global calculation UI lists (such as Stats or the Leaderboard) circumvent slicing limits by passing `?limit=-1` to ensure valid system-wide coverage.
 - **Vercel Deployments**: The Next.js Edge Runtime (`export const runtime = 'edge'`) has been specifically excluded from dynamic API routes due to ongoing infrastructure instability on Vercel's end. Default to Node.js serverless functions.
+- **Upstash Transactional Atomicity (CRITICAL)**: Because we use the REST API, independent `redis.del()` and `redis.lpush()` commands will interleave under network pressure, leading to exponential list duplication. **ALWAYS** push `r.del()` inside `r.pipeline()` (e.g., `pipe.del(key); pipe.lpush(key, ...); await pipe.exec();`) to enforce atomic overrides.
+- **Dual-Write Concurrency**: When calling `dualWrite()` locally, you must dynamically `await import('../src/lib/redis-client')` inside the `main()` function *after* `dotenv.config()` finishes injecting production keys. If ES Modules hoist the connection globally, the wrapper will silently fall back to `localhost` and falsely report successful "verification" against the production db.
 
 ### 3. Cost Optimization (Redis Command Reduction)
 - **API Caching**: `/api/tickers`, `/api/profiles`, and `/api/metrics` all use Redis TTL caches (10-15 min) to avoid full DB scans on every visitor.
@@ -153,6 +155,7 @@ npm run watch -- --headless  # Run headless (standard for production)
 ## 🎯 Current Engineering Roadmap
 
 ### ✅ Completed
+- **Data Integrity Rescue (Mar 9, 2026)**: Identified and patched a massive Read-Modify-Write list append duplication bug across Upstash pipelines. Rewrote `dualWrite()` implementation across 26 files to enforce `pipe.del()` atomicity, and purged exact duplicates from 7 targeted user accounts on Production. Fixed an ES Module `dotenv` load-order glitch that was causing localized false-positive verifications. Platform data integrity restored to 100%.
 - **Redis Cost Optimization (Mar 2, 2026)**: Added TTL caches to `/api/tickers`, `/api/profiles`, `/api/metrics`. Pipelined LPUSH writes and deduplicated user history reads in `price-refresher.ts`. Added `Cache-Control` headers for Vercel CDN caching. Estimated ~80% reduction in daily Redis commands.
 - **Project Cleanup (Feb 28, 2026)**: Removed 48 temp files, debug scripts, stale docs, and dead directories. Pruned `scripts/` from 36 → 26 operational scripts.
 
