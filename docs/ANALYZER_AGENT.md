@@ -2,13 +2,13 @@
 
 This document outlines how to use the **Bulk Analysis Engine** to process lists of scanned tweets and generate financial receipts.
 
-## 🏁 Current Status (as of Mar 11, 2026 - Session 57 Final ✅)
-- **Total Calls**: **23,864** (Database reality: **26,279**).
-- **Unique Gurus**: 6,098.
-- **Win Rate**: 54% 📈.
-- **Tracked Assets**: 1,217.
+## 🏁 Current Status (as of Mar 11, 2026 - Session 58 Final ✅)
+- **Total Calls**: **26,447**.
+- **Unique Gurus**: 6,113.
+- **Win Rate**: 57% 📈.
+- **Tracked Assets**: 1,225.
 
-## ⚡ Session Optimizations (Session 34 Updates)
+## ⚡ Session Optimizations (Session 57 Updates)
 The system has been significantly hardened for scale:
 1.  **Global Duplicate Check (Session 57)**: `bulk-analyze.ts` now checks the *entire* 26k+ global history instead of just the last 50 items. This prevents redundant re-analysis costs.
 2.  **5x Parallel Processing**: `bulk-analyze.ts` now uses concurrency of 5, reducing batch processing time by ~80%.
@@ -22,24 +22,12 @@ The system has been significantly hardened for scale:
 2.  **Generate Next Batch**: Extract URLs from `services/twitter-watcher/detected-calls.json`:
     ```bash
     grep -oP '"url":\s*"\K[^"]+' services/twitter-watcher/detected-calls.json | \
-      awk 'BEGIN{print "["} {if(NR>1)printf(",\n"); printf("  \"%s\"",$0)} END{print "\n]"}' > session58_batch.json
+      awk 'BEGIN{print "["} {if(NR>1)printf(",\n"); printf("  \"%s\"",$0)} END{print "\n]"}' > session59_batch.json
     ```
-3.  **Process New Batch**: Run the generated batch file through bulk analysis (`npx tsx scripts/bulk-analyze.ts session58_batch.json`).
-4.  **Verify Metrics**: After processing, ensure the Win Rate holds steady near 43-55%.
+3.  **Process New Batch**: Run the generated batch file through bulk analysis (`npx tsx scripts/bulk-analyze.ts session59_batch.json`).
+4.  **Verify Metrics**: After processing, ensure the Win Rate holds steady near 43-57%.
 
 ## 🗃️ Milestone Log
-- **Session 30**: 1,400 tweets processed. Crossed 10,000 total calls. 🚀
-- **Session 31**: 1,592 tweets processed. Crossed 3,000 unique gurus. 🎯
-- **Session 32/33**: Win Rate reached and sustained at **50%**. 🏆
-- **Session 34**: System cleanup and optimization update. Fresh batch `session35_batch.json` (1,155 tweets) ready for next session.
-- **Session 35**: 19,499 tweets processed (9 batches) → 3,509 net new calls. Total calls: 14,125. Unique gurus: 4,052. Win rate: **38%**. 880 tracked assets.
-- **Session 36**: 573 tweets processed -> 995 net new calls. Total calls: 15,120. Unique gurus: 4,264. Win rate: **55%**. 915 tracked assets.
-- **Session 37**: 860 tweets processed. Total calls: 15,549. Unique gurus: 4,353. Win rate: **53%**. 939 tracked assets.
-- **Session 38**: 917 tweets processed. Total calls: 15,868. Unique gurus: 4,440. Win rate: **47%**. 951 tracked assets.
-- **Session 39**: 709 tweets processed. Total calls: 16,019. Unique gurus: 4,474. Win rate: **47%**. 961 tracked assets.
-- **Session 40**: 1,769 tweets processed -> 866 net new calls. Total calls: 16,885. Unique gurus: 4,632. Win rate: **40%**. 987 tracked assets.
-- **Session 41**: 3,698 tweets processed → 395 net new calls. Total calls: 17,280. Unique gurus: 4,743. Win rate: **43%**. 984 tracked assets.
-- **Session 42**: 934 tweets processed → 347 net new calls. Total calls: 17,627. Unique gurus: 4,863. Win rate: **42%**. 1,001 tracked assets.
 - **Session 43**: 1,605 tweets processed → 415 net new calls. Total calls: 18,042. Unique gurus: 4,950. Win rate: **42%**. 1,014 tracked assets.
 - **Session 44**: 2,387 tweets processed → 462 net new calls. Total calls: 18,504. Unique gurus: 5,051. Win rate: **54%**. 1,037 tracked assets.
 - **Session 45**: 2,899 tweets processed → 463 net new calls. Total calls: 18,967. Unique gurus: 5,106. Win rate: **49%**. 1,046 tracked assets.
@@ -54,7 +42,7 @@ The system has been significantly hardened for scale:
 - **Session 55**: 587 tweets processed → 849 net new calls. Total calls: 23,550. Unique gurus: 6,061. Win rate: **55%**. 1,209 tracked assets.
 - **Session 56**: 999 tweets processed → 282 net new calls. Total calls: 23,832. Unique gurus: 6,093. Win rate: **54%**. 1,215 tracked assets.
 - **Session 57**: 1,029 tweets processed (697 skips) → 32 net new calls. Total calls: 23,864. **Hardened Duplicate Check implemented.**
-
+- **Session 58**: 1,243 tweets processed (1,029 skips) → 168 net new calls. Total calls: 26,447. Unique gurus: 6,113. Win rate: **57%**. 1,225 tracked assets.
 
 
 ## 🛠 Prerequisites
