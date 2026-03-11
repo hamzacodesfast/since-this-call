@@ -10,6 +10,7 @@
  * Scans the existing Redis database of user profiles, analysis histories,
  * and ticker data to identify trade setups across 5 playbooks.
  *
+ *
  * All functions are read-only — no data is mutated.
  */
 
@@ -17,6 +18,10 @@ import { getRedisClient } from './redis-client';
 import type { StoredAnalysis, UserProfile } from './analysis-store';
 
 const redis = getRedisClient();
+
+// ─── Request-Level Cache ──────────────────────────────────────────────────────
+// This prevents duplicate Redis requests across Playbooks during a single scan
+let globalRequestCache: Map<string, any> = new Map();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,10 +109,21 @@ async function fetchAllProfiles(): Promise<UserProfile[]> {
     return profiles;
 }
 
-/** Fetch a user's most recent N calls from their history list. */
+/** Fetch a user's most recent N calls from their history list (Cache-Backed). */
 async function fetchUserHistory(username: string, limit: number = 5): Promise<StoredAnalysis[]> {
-    const data = await redis.lrange(`user:history:${username.toLowerCase()}`, 0, limit - 1);
-    return data.map((item: any) => (typeof item === 'string' ? JSON.parse(item) : item));
+    const key = `user:history:${username.toLowerCase()}`;
+    if (limit === 100 && globalRequestCache.has(key)) {
+        return globalRequestCache.get(key);
+    }
+
+    const data = await redis.lrange(key, 0, limit - 1);
+    const parsed = data.map((item: any) => (typeof item === 'string' ? JSON.parse(item) : item));
+
+    if (limit === 100) {
+        globalRequestCache.set(key, parsed);
+    }
+
+    return parsed;
 }
 
 // ─── V2: Enhanced Metrics Engine ──────────────────────────────────────────────
@@ -477,9 +493,9 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
             const [username, id] = ref.split(':');
             const lowerUser = username.toLowerCase();
 
-            const historyData = await redis.lrange(`user:history:${lowerUser}`, 0, -1);
-            for (const d of historyData as any[]) {
-                const call: StoredAnalysis = typeof d === 'string' ? JSON.parse(d) : d;
+            const historyData = await fetchUserHistory(lowerUser, 100);
+            for (const d of historyData) {
+                const call = d;
                 if (call.id !== id) continue;
 
                 if (call.sentiment === 'BULLISH') crowdBullish++;
@@ -587,9 +603,9 @@ export async function scanSectorRotation(): Promise<TradeRecommendation[]> {
         const lowerUser = username.toLowerCase();
         const isSmart = smartMoneySet.has(lowerUser);
 
-        const historyData = await redis.lrange(`user:history:${lowerUser}`, 0, -1);
-        for (const d of historyData as any[]) {
-            const call: StoredAnalysis = typeof d === 'string' ? JSON.parse(d) : d;
+        const historyData = await fetchUserHistory(lowerUser, 100);
+        for (const d of historyData) {
+            const call = d;
             if (call.id !== id) continue;
 
             const symbol = call.symbol.toUpperCase();
@@ -752,6 +768,9 @@ export async function scanDualSniperConfluence(): Promise<TradeRecommendation[]>
 export async function runFullScan(): Promise<TraderScanResult> {
     console.log('[TraderAgent V2] Starting full scan with enhanced metrics...');
     const startTime = Date.now();
+
+    // Clear request cache at start of scan to prevent memory leaks across edge invocations
+    globalRequestCache = new Map();
 
     const [farmerFades, silentSnipers, smartMoneyDivergences, sectorRotations, dualSniperSignals] =
         await Promise.all([

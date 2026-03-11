@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json(result, {
             headers: {
-                'Cache-Control': 'no-store, max-age=0',
+                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
                 'X-Cache': cacheHit ? 'HIT' : 'MISS',
             },
         });

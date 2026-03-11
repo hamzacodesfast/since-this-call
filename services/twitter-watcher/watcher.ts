@@ -5,7 +5,18 @@
  */
 import puppeteer, { Browser, Page } from 'puppeteer';
 import * as fs from 'fs';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 import { config } from './config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load env files
+dotenv.config({ path: path.resolve(__dirname, '../../.env.production') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // CLI Flags
 const args = process.argv.slice(2);
@@ -190,6 +201,52 @@ async function runWatcher() {
                 console.log(`   ${tweet.text.substring(0, 120)}...`);
                 console.log(`   ${tweet.url}`);
                 logDetectedCall(tweet);
+
+                try {
+                    const { analyzeTweet } = await import('../../src/lib/analyzer');
+                    const { updateUserProfile, addAnalysis } = await import('../../src/lib/analysis-store');
+                    
+                    console.log(`🤖 Sending to AI Analyzer immediately...`);
+                    const result = await analyzeTweet(tweet.id);
+                    
+                    if (!result) {
+                        console.log(`ℹ️ AI determined it was noise.`);
+                    } else if (!result.analysis.action) {
+                        console.log(`❌ Failed: Invalid analysis result (No Action)`);
+                    } else {
+                        console.log(`✅ Extracted: ${result.analysis.action} ${result.analysis.symbol} @ $${result.market.callPrice}`);
+                        
+                        const storedItem = {
+                            id: result.tweet.id,
+                            username: result.tweet.username,
+                            author: result.tweet.author,
+                            avatar: result.tweet.avatar,
+                            symbol: result.analysis.symbol,
+                            sentiment: result.analysis.sentiment,
+                            performance: result.market.performance,
+                            isWin: result.market.performance > 0,
+                            timestamp: new Date(result.tweet.date).getTime(),
+                            entryPrice: result.market.callPrice,
+                            currentPrice: result.market.currentPrice,
+                            type: result.analysis.type,
+                            ticker: result.analysis.symbol,
+                            action: result.analysis.action,
+                            confidence_score: result.analysis.confidence_score,
+                            timeframe: result.analysis.timeframe,
+                            is_sarcasm: result.analysis.is_sarcasm,
+                            reasoning: result.analysis.reasoning,
+                            warning_flags: result.analysis.warning_flags,
+                            tweetUrl: `https://x.com/${result.tweet.username}/status/${result.tweet.id}`,
+                            text: result.tweet.text
+                        };
+
+                        await updateUserProfile(storedItem);
+                        await addAnalysis(storedItem);
+                        console.log(`✅ Saved to @${storedItem.username} in production database!`);
+                    }
+                } catch (e: any) {
+                    console.error(`❌ Analysis failed:`, e.message);
+                }
             }
 
             console.log(`   Scanned ${tweets.length} tweets, ${detected} calls detected`);
