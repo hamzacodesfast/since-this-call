@@ -70,7 +70,7 @@ export function PlatformStats({ stats }: PlatformStatsProps) {
                         <div className="text-lg font-bold">{winRate}%</div>
                     </div>
                 </div>
-                <div className="text-center text-xs text-muted-foreground">{total} total calls</div>
+                <div className="text-center text-xs text-muted-foreground">{total} resolved calls</div>
             </div>
 
             {/* Sentiment Distribution */}
