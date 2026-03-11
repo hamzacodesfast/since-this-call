@@ -489,19 +489,21 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
                     if (call.sentiment === 'BULLISH') smartBullish++;
                     else if (call.sentiment === 'BEARISH') smartBearish++;
 
-                    const profile = smartMoneyMap.get(lowerUser)!;
-                    const history = smartHistories.get(lowerUser);
-                    const enhanced = history
-                        ? await buildEnhancedMetrics(profile.username, call, history)
-                        : undefined;
+                    if (!smartSources.some(s => s.username.toLowerCase() === lowerUser)) {
+                        const profile = smartMoneyMap.get(lowerUser)!;
+                        const history = smartHistories.get(lowerUser);
+                        const enhanced = history
+                            ? await buildEnhancedMetrics(profile.username, call, history)
+                            : undefined;
 
-                    smartSources.push({
-                        username: profile.username,
-                        winRate: profile.winRate,
-                        totalCalls: profile.totalAnalyses,
-                        latestCall: call,
-                        enhanced,
-                    });
+                        smartSources.push({
+                            username: profile.username,
+                            winRate: profile.winRate,
+                            totalCalls: profile.totalAnalyses,
+                            latestCall: call,
+                            enhanced,
+                        });
+                    }
                 }
                 break;
             }
@@ -608,7 +610,7 @@ export async function scanSectorRotation(): Promise<TradeRecommendation[]> {
 
             if (isSmart) {
                 const profile = profiles.find(p => p.username.toLowerCase() === lowerUser);
-                if (profile) {
+                if (profile && !tickerVolume[symbol].sources.some(s => s.username === profile.username)) {
                     tickerVolume[symbol].sources.push({
                         username: profile.username,
                         winRate: profile.winRate,
