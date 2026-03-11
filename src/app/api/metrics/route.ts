@@ -48,7 +48,7 @@ export interface PlatformMetrics {
 async function computeMetrics(): Promise<PlatformMetrics> {
     // 1. Get Summary Stats (Overall)
     const allUsers = await redis.smembers('all_users') as string[];
-    let totalAnalyses = 0;
+    const totalAnalyses = await redis.zcard('global:analyses:timestamp') || 0;
     let totalWins = 0;
     let totalLosses = 0;
 
@@ -62,7 +62,6 @@ async function computeMetrics(): Promise<PlatformMetrics> {
     profiles.forEach((result: any) => {
         const profile = Array.isArray(result) ? result[1] : result;
         if (profile && profile.totalAnalyses !== undefined) {
-            totalAnalyses += parseInt(profile.totalAnalyses) || 0;
             totalWins += parseInt(profile.wins) || 0;
             totalLosses += parseInt(profile.losses) || 0;
         }

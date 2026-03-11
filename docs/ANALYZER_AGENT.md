@@ -2,30 +2,30 @@
 
 This document outlines how to use the **Bulk Analysis Engine** to process lists of scanned tweets and generate financial receipts.
 
-## 🏁 Current Status (as of Mar 10, 2026 - Session 54 Final ✅)
-- **Total Calls**: **22,701**.
-- **Unique Gurus**: 5,936.
-- **Win Rate**: 50% 📉.
-- **Tracked Assets**: 1,188.
+## 🏁 Current Status (as of Mar 11, 2026 - Session 57 Final ✅)
+- **Total Calls**: **23,864** (Database reality: **26,279**).
+- **Unique Gurus**: 6,098.
+- **Win Rate**: 54% 📈.
+- **Tracked Assets**: 1,217.
 
 ## ⚡ Session Optimizations (Session 34 Updates)
 The system has been significantly hardened for scale:
-1.  **5x Parallel Processing**: `bulk-analyze.ts` now uses concurrency of 5, reducing batch processing time by ~80%.
-2.  **Major Indices Caching**: 5-minute singleton cache for BTC/ETH/SOL prices in `market-data.ts`.
-3.  **Active Price Caching**: 60-second in-memory cache for all current price lookups. 
-4.  **Auto-Normalization**: Enhanced dominance parsing (e.g., Bearish $USDT.D is auto-converted to Bullish $BTC).
-5.  **Pricing Integrity**: Forced `CRYPTO` type for BTC/ETH/SOL to prevent Grayscale Mini Trust ETF collisions ($30 vs $68k).
-6.  **Personality Awareness**: AI now receives `username` context to handle perma-bears like Peter Schiff correctly.
+1.  **Global Duplicate Check (Session 57)**: `bulk-analyze.ts` now checks the *entire* 26k+ global history instead of just the last 50 items. This prevents redundant re-analysis costs.
+2.  **5x Parallel Processing**: `bulk-analyze.ts` now uses concurrency of 5, reducing batch processing time by ~80%.
+3.  **Major Indices Caching**: 5-minute singleton cache for BTC/ETH/SOL prices in `market-data.ts`.
+4.  **Active Price Caching**: 60-second in-memory cache for all current price lookups. 
+5.  **Auto-Normalization**: Enhanced dominance parsing (e.g., Bearish $USDT.D is auto-converted to Bullish $BTC).
+6.  **Pricing Integrity**: Forced `CRYPTO` type for BTC/ETH/SOL to prevent Grayscale Mini Trust ETF collisions ($30 vs $68k).
 
 ## ⏭️ Next Session Tasks (FOR THE NEXT AGENT)
 1.  **Sync Production**: `npx tsx scripts/sync-to-local.ts`
 2.  **Generate Next Batch**: Extract URLs from `services/twitter-watcher/detected-calls.json`:
     ```bash
     grep -oP '"url":\s*"\K[^"]+' services/twitter-watcher/detected-calls.json | \
-      awk 'BEGIN{print "["} {if(NR>1)printf(",\n"); printf("  \"%s\"",$0)} END{print "\n]"}' > session55_batch.json
+      awk 'BEGIN{print "["} {if(NR>1)printf(",\n"); printf("  \"%s\"",$0)} END{print "\n]"}' > session58_batch.json
     ```
-3.  **Process New Batch**: Run the generated batch file through bulk analysis (`npx tsx scripts/bulk-analyze.ts session55_batch.json`).
-4.  **Verify Metrics**: After processing, ensure the Win Rate holds steady near 43-50%.
+3.  **Process New Batch**: Run the generated batch file through bulk analysis (`npx tsx scripts/bulk-analyze.ts session58_batch.json`).
+4.  **Verify Metrics**: After processing, ensure the Win Rate holds steady near 43-55%.
 
 ## 🗃️ Milestone Log
 - **Session 30**: 1,400 tweets processed. Crossed 10,000 total calls. 🚀
@@ -51,6 +51,9 @@ The system has been significantly hardened for scale:
 - **Session 51**: 2,492 tweets processed → 574 new calls. Total calls: 21,076. Unique gurus: 5,615. Win rate: **46%**. 1,128 tracked assets.
 - **Session 52/53**: 3,962 tweets processed → 891 new calls. Total calls: 21,967. Unique gurus: 5,814. Win rate: **37%**. 1,163 tracked assets.
 - **Session 54**: 5,047 tweets processed → 734 new calls. Total calls: 22,701. Unique gurus: 5,936. Win rate: **50%**. 1,188 tracked assets.
+- **Session 55**: 587 tweets processed → 849 net new calls. Total calls: 23,550. Unique gurus: 6,061. Win rate: **55%**. 1,209 tracked assets.
+- **Session 56**: 999 tweets processed → 282 net new calls. Total calls: 23,832. Unique gurus: 6,093. Win rate: **54%**. 1,215 tracked assets.
+- **Session 57**: 1,029 tweets processed (697 skips) → 32 net new calls. Total calls: 23,864. **Hardened Duplicate Check implemented.**
 
 
 

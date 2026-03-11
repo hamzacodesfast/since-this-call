@@ -61,12 +61,12 @@ async function bulkAnalyze() {
     let skippedCount = 0;
     let failedCount = 0;
 
-    // Pre-fetch recent analyses to avoid multiple redis calls
-    const recentAnalysesRaw = await redis.lrange('recent_analyses', 0, -1);
-    const existingIds = new Set(recentAnalysesRaw.map((a: any) => {
-        const parsed = typeof a === 'string' ? JSON.parse(a) : a;
-        return parsed.id;
-    }));
+    // Pre-fetch ALL global analysis references to avoid redundant processing
+    // format: [username:id, username:id, ...]
+    console.log(`🔍 Fetching global analysis history for duplicate check...`);
+    const allRefs = await redis.zrange('global:analyses:timestamp', 0, -1) as string[];
+    const existingIds = new Set(allRefs.map(ref => ref.split(':')[1]));
+    console.log(`✅ Loaded ${existingIds.size} existing analysis IDs.\n`);
 
     const concurrency = 10;
     for (let i = 0; i < tweetsToProcess.length; i += concurrency) {
