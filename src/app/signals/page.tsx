@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
     ArrowLeft, RefreshCw, TrendingUp, TrendingDown, Shield, Zap,
-    Crown, Target, BarChart3, AlertTriangle, Clock, User, ExternalLink, ChevronDown, ChevronUp
+    Crown, Target, BarChart3, AlertTriangle, Clock, User, ExternalLink, ChevronDown, ChevronUp, Share2, Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -122,6 +122,18 @@ function DirectionArrow({ direction }: { direction: 'LONG' | 'SHORT' }) {
 
 function RecommendationCard({ rec }: { rec: TradeRecommendation }) {
     const [expanded, setExpanded] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const text = `🚨 STC Signal: ${rec.signal} $${rec.ticker} (${rec.direction})
+Confidence: ${rec.confidence}
+${rec.reasoning}`;
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const confConfig = CONFIDENCE_CONFIG[rec.confidence] || CONFIDENCE_CONFIG.LOW;
     const borderColor = rec.confidence === 'APEX'
         ? 'border-yellow-500/40'
@@ -143,6 +155,9 @@ function RecommendationCard({ rec }: { rec: TradeRecommendation }) {
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <ConfidenceBadge confidence={rec.confidence} />
                     <SignalBadge signal={rec.signal} />
+                    <button onClick={handleShare} className="p-1 rounded-md hover:bg-white/10 transition-colors" title="Share Signal">
+                        {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Share2 className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />}
+                    </button>
                 </div>
             </div>
 
