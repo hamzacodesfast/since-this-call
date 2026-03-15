@@ -3,17 +3,23 @@ import { Redis } from '@upstash/redis';
 import { LocalRedisWrapper } from './redis-wrapper';
 
 export function getRedisClient() {
-    const url = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
-    const token = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+    const redisUrl = process.env.REDIS_URL;
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+    const upstashToken = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN || process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
-    // Check if we are running locally (Standard Redis URL, localhost, or internal docker name 'redis')
-    if (!url || url.includes('localhost') || url.includes('127.0.0.1') || url.includes('redis') || url.startsWith('redis://')) {
-        return new LocalRedisWrapper(url || 'http://localhost:8080') as unknown as Redis;
+    // 1. Direct TCP (Recommended for Docker/Local)
+    if (redisUrl && redisUrl.startsWith('redis://')) {
+        return new LocalRedisWrapper(redisUrl) as unknown as Redis;
     }
 
-    // Production (Upstash HTTP)
-    return new Redis({
-        url,
-        token,
-    });
+    // 2. Upstash Cloud (HTTPS)
+    if (upstashUrl.startsWith('https://')) {
+        return new Redis({
+            url: upstashUrl,
+            token: upstashToken,
+        });
+    }
+
+    // 3. Fallback to Local (HTTP or internal docker name)
+    return new LocalRedisWrapper(upstashUrl || 'redis://localhost:6379') as unknown as Redis;
 }

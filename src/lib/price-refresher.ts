@@ -3,6 +3,7 @@
  * @description Batch price refresh engine for live call tracking
  */
 import { Redis } from '@upstash/redis';
+import { getRedisClient } from './redis-client';
 import { StoredAnalysis, recalculateUserProfile, dualWrite } from './analysis-store';
 import { calculatePerformance, getPrice } from './market-data';
 
@@ -63,10 +64,7 @@ async function batchFetchYahooPrices(symbols: string[]): Promise<Map<string, num
 }
 
 export async function refreshByTicker(): Promise<RefreshResult> {
-    const redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_KV_REST_API_URL!,
-        token: process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN!,
-    });
+    const redis = getRedisClient();
 
     const result: RefreshResult = { updated: 0, errors: 0, skipped: 0 };
 
