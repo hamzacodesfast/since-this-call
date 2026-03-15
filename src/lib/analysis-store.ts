@@ -136,95 +136,79 @@ export async function updateTickerProfile(tickerKey: string): Promise<void> {
         const indexKey = `${TICKER_INDEX_PREFIX}${tickerKey}`;
         const analysisRefs = await redis.zrange(indexKey, 0, -1) as string[];
 
-        let wins = 0;
-        let losses = 0;
-        let neutral = 0;
-        const total = analysisRefs.length;
-        let lastAnalyzed = 0;
-
-        // Fetch all analyses referenced 
-        // Note: This could be heavy if a ticker has thousands of calls. 
-        // Optimization: In extreme scale, we'd increment/decrement counters instead of full recalc.
-        // For now (<100k total calls), recalc is safer for consistency.
-
-        // We need to parse "username:tweetId"
-        if (total === 0) {
+        if (analysisRefs.length === 0) {
             await dualWrite(async (r) => {
                 await r.del(`${TICKER_PROFILE_PREFIX}${tickerKey}`);
             });
             return;
         }
 
-        const pipeline = redis.pipeline();
+        let wins = 0;
+        let losses = 0;
+        let neutral = 0;
+        let bullish = 0;
+        let bearish = 0;
+        let lastAnalyzed = 0;
+
+        // Group by username to minimize history fetches
+        const userMap = new Map<string, string[]>();
         for (const ref of analysisRefs) {
-            // ref is "username:id"
-            // But we store analyses in user:history:{username} or recent_analyses.
-            // Accessing random analysis by ID is not O(1) in our current structure (lists).
-            // However, we can reconstruct the path. 
-            // Actually, simplest way given current structure is to rely on the fact that
-            // we are likely calling this when we HAVE the analysis object in `updateUserProfile`.
-            // But for backfill/recalc, we need to fetch.
-
-            // Current architecture doesn't support O(1) fetch by ID globally easily without scanning.
-            // BUT, we have `user:history:{username}`. We can fetch that user's history and find the ID.
-            // This is O(N) where N is user history size (max 100). So it's fast.
             const [username, id] = ref.split(':');
-            pipeline.lrange(`user:history:${username}`, 0, -1);
+            if (!userMap.has(username)) userMap.set(username, []);
+            userMap.get(username)!.push(id);
         }
 
-        const results = await pipeline.exec();
-
-        // Process results
-        for (let i = 0; i < results.length; i++) {
-            const result = results[i]; // [error, data] or just data depending on adapter
-            // IORedis returns [err, result], Upstash might differ but wrapper usually handles it?
-            // Let's assume standard IORedis/Upstash behavior or our wrapper.
-            // checking redis-client.ts wrapper might be needed. 
-            // The `results` from pipeline.exec() in ioredis are [ [err, result], ... ]
-
-            // Standardizing access:
-            const historyData = result as any; // Allow any for now, refine if needed
-            // If using @upstash/redis directly it returns array of results.
-            // If using ioredis it returns [[err, res]].
-            // Our code uses `getRedisClient` which returns a wrapper or direct client.
-            // `src/lib/redis-client.ts` needs checking.
-
-            // Wait, existing `getAllUserProfiles` uses pipeline and iterates results directly?
-            // "results.forEach((res) => {"
-            // If it's the IORedis wrapper in `local-redis-proxy.ts` or `redis-client.ts`:
-            // Let's assume it returns data directly if wrapped, or tuple if native.
-
-            // SAFEST APPROACH: JUST USE THE REF DATA WE HAVE IF WE CAN, OR ACCEPT RECALC MIGHT FAIL IF WE CAN'T PARSE.
-            // Actually, for the Ticker Page, we really just need the stats.
-
-            // Let's fallback to "Best Effort" aggregation.
-            // If we are implementing this, we should really improve the data structure to allow O(1) analysis lookup
-            // OR we iterate.
-
-            // Given the complexity of "fetching arbitrary analysis", maybe we change the strategy:
-            // updateTickerProfile takes the `analysis` object and *incrementally* updates the stats?
-            // No, incremental is effectively what we want but handling "edits" (e.g. win to loss) is hard.
-
-            // Let's try the fetch approach but handle the Result type carefully.
-            // Actually, `backfill-tickers.ts` iterated ALL users.
-
-            // Let's assume specific "username:id" lookup is needed.
-            // For now, I will implement `getTickerProfile` and `getAllTickerProfiles`.
-            // `updateTickerProfile` will require passing the *Analyses* list if possible, or we skip full recalc 
-            // and just do it in the Backfill script which has access to everything.
-
-            // BETTER PLAN:
-            // 1. `scripts/backfill-ticker-profiles.ts`: Iterates ALL `all_users`, builds stats in memory, saves to `ticker:profile:{ticker}`.
-            // 2. `updateUserProfile`: calculates the ticker stats for the *specific ticker involved* in that analysis.
-            //    It can fetch the existing ticker profile, and `+/-` the stats based on the change.
-            //    But "change" is hard to track (was it a win before?).
-
-            // compromise: `updateTickerProfile` will just be used by the Backfill script for now to initialize.
-            // For "Real-time" updates, we can implement a simplified "Add to Ticker Stats" function.
-            // But if I want `updateTickerProfile` to be robust, I should search for the analysis.
+        const usernames = Array.from(userMap.keys());
+        const pipeline = redis.pipeline();
+        for (const u of usernames) {
+            pipeline.lrange(`${USER_HISTORY_PREFIX}${u}`, 0, -1);
         }
+        
+        // Execute pipeline. Our wrapper returns results directly as an array of data.
+        const histories = await pipeline.exec();
+
+        for (let i = 0; i < histories.length; i++) {
+            const username = usernames[i];
+            const targetIds = new Set(userMap.get(username));
+            const history = histories[i] as any[];
+
+            if (Array.isArray(history)) {
+                for (const item of history) {
+                    const a = typeof item === 'string' ? JSON.parse(item) : item;
+                    if (targetIds.has(a.id)) {
+                        if (Math.abs(a.performance) < 0.01) neutral++;
+                        else if (a.isWin) wins++;
+                        else losses++;
+
+                        if (a.sentiment === 'BULLISH') bullish++;
+                        else if (a.sentiment === 'BEARISH') bearish++;
+
+                        if (a.timestamp > lastAnalyzed) lastAnalyzed = a.timestamp;
+                    }
+                }
+            }
+        }
+
+        const parts = tickerKey.split(':');
+        const stats = {
+            symbol: parts[1] || tickerKey,
+            type: parts[0] as any,
+            totalAnalyses: analysisRefs.length,
+            wins,
+            losses,
+            neutral,
+            bullish,
+            bearish,
+            winRate: analysisRefs.length > 0 ? (wins / analysisRefs.length) * 100 : 0,
+            lastAnalyzed
+        };
+
+        await dualWrite(async (r) => {
+            await r.hset(`${TICKER_PROFILE_PREFIX}${tickerKey}`, stats as any);
+        });
+        
     } catch (error) {
-        // console.error...
+        console.error('[AnalysisStore] Failed to update ticker profile:', error);
     }
 }
 

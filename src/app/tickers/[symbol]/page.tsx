@@ -38,7 +38,8 @@ interface StoredAnalysis {
 
 export default function TickerDetailPage() {
     const params = useParams();
-    const symbol = params.symbol as string;
+    const rawSymbol = params.symbol as string;
+    const symbol = decodeURIComponent(rawSymbol);
 
     const [profile, setProfile] = useState<TickerProfile | null>(null);
     const [analyses, setAnalyses] = useState<StoredAnalysis[]>([]);
@@ -85,7 +86,7 @@ export default function TickerDetailPage() {
                                 Back
                             </Button>
                         </Link>
-                        <h1 className="text-3xl font-bold tracking-tight">{symbol.toUpperCase()}</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">{symbol}</h1>
                         {profile?.type === 'CRYPTO' && (
                             <span className="bg-blue-500/10 text-blue-400 text-xs px-2 py-1 rounded">CRYPTO</span>
                         )}

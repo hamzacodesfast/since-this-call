@@ -12,7 +12,7 @@ export async function GET(
     request: NextRequest,
     { params }: { params: { symbol: string } }
 ) {
-    const symbol = params.symbol.toUpperCase();
+    const symbol = decodeURIComponent(params.symbol).toUpperCase();
 
     // Determine type from query param or try both
     const url = new URL(request.url);
