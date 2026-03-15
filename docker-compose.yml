@@ -6,8 +6,8 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
+      - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
       - UPSTASH_REDIS_REST_URL=http://redis:6379
-      - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
 
