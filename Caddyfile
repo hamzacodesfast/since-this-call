@@ -1,0 +1,12 @@
+{
+    email hamza.fast.codes@gmail.com
+}
+
+sincethiscall.com, www.sincethiscall.com {
+    reverse_proxy app:3000
+}
+
+# Optional: If the user wants to test via IP first (no SSL)
+:80 {
+    reverse_proxy app:3000
+}

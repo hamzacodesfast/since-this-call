@@ -8,35 +8,22 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
 
 async function main() {
-    console.log('🔄 Refreshing all user profiles (Main First)...');
-    // Dynamic import to ensure env vars are loaded first
+    console.log('🔄 STARTING OPTIMIZED PLATFORM REFRESH...');
+    
+    // We only need to run these in a specific order. 
+    // refresh-stats was previously running them all, but the user's manual command also ran them.
+    
     try {
-        console.log('🔄 Triggering Uniform Price Refresh...');
+        console.log('1️⃣  Refreshing Latest Prices...');
         execSync('npx tsx scripts/refresh-uniform-prices.ts', { stdio: 'inherit' });
-    } catch (e) {
-        console.error('❌ Failed to run refresh-uniform-prices:', e);
-        process.exit(1);
-    }
-
-    console.log('🔄 Triggering Profile Sync (Recalculate Stats)...');
-    try {
-        execSync('npx tsx scripts/recalculate-all-production.ts', { stdio: 'inherit' });
-    } catch (e) {
-        console.error('❌ Failed to run recalculate-all-production:', e);
-    }
-
-    console.log('🔄 Triggering Ticker Backfill to sync stats...');
-    try {
-        execSync('npx tsx scripts/backfill-tickers.ts', { stdio: 'inherit' });
-    } catch (e) {
-        console.error('❌ Failed to run backfill-tickers:', e);
-    }
-
-    console.log('🔄 Triggering Platform Metrics Refresh...');
-    try {
+        
+        console.log('2️⃣  Refreshing Platform Metrics (Expensive aggregation)...');
         execSync('npx tsx scripts/refresh-metrics.ts', { stdio: 'inherit' });
+
+        console.log('\n✅ All core stats refreshed.');
     } catch (e) {
-        console.error('❌ Failed to run refresh-metrics:', e);
+        console.error('❌ Failed during refresh:', e);
+        process.exit(1);
     }
 
     process.exit(0);

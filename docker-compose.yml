@@ -1,8 +1,45 @@
 version: '3.8'
 
 services:
-  redis-local:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
+  app:
+    build: .
     restart: always
+    environment:
+      - NODE_ENV=production
+      - UPSTASH_REDIS_REST_URL=http://redis:6379
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+
+  watcher:
+    build: ./services/twitter-watcher
+    restart: always
+    environment:
+      - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      - redis
+
+  caddy:
+    image: caddy:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "444:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  redis-data:
+  caddy-data:
+  caddy-config:
