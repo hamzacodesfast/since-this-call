@@ -56,7 +56,9 @@ export async function extractCallFromText(
         1. Action: BUY (Active Long), SELL (Active Short), NULL (No trade).
            - **PETER SCHIFF RULE**: If the author is "PeterSchiff", any mention of Bitcoin, BTC, or MSTR is ALWAYS Action: "SELL". 
            - He is a perma-bear. Do NOT inverse him. Do NOT interpret him sarcastically. If he says "sell the rip", it is a SELL.
-        2. Ticker: Return pure symbol (e.g. BTC, HYPE, MSTR). For Nvidia, ALWAYS use "NVDA" (never NVDAX).
+        2. Ticker: Return pure symbol (e.g. BTC, HYPE, MSTR). For Nvidia, ALWAYS use "NVDA".
+           - **OIL RULE**: If the tweet mentions "Crude", "Oil", or "Crude Oil", the Ticker MUST be "CL=F".
+           - **COLGATE RULE**: The ticker "CL" is Colgate-Palmolive. Do NOT use "CL" for Oil. Use "CL=F".
         3. Sentiment Analysis: Handle sarcasm and slang as signals for AUTHOR intent.
         
         NEGATIVE CONSTRAINTS (RETURN action: "NULL"):

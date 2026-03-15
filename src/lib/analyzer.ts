@@ -23,6 +23,7 @@ function cleanSymbol(symbol: string): string {
         }
     }
     if (clean === 'NVDAX') return 'NVDA';
+    if (clean === 'OIL' || clean === 'CRUDE') return 'CL=F';
     return clean;
 }
 
@@ -83,7 +84,7 @@ export async function analyzeTweetContent(
     // The AI is smarter at knowing that TSLA is a STOCK.
     let finalType = callData.type;
 
-    const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC', 'CRCL', 'SILVER', 'GOLD', 'USO'];
+    const FORCE_STOCKS = ['BMNR', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'TSLA', 'NVDA', 'AMD', 'INTC', 'CRCL', 'SILVER', 'GOLD', 'USO', 'CL', 'CL=F'];
     if (symbol && FORCE_STOCKS.includes(symbol.toUpperCase())) {
         finalType = 'STOCK';
     }

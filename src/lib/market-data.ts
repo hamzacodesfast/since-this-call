@@ -17,7 +17,7 @@ const KNOWN_STOCKS: Set<string> = new Set([
     'MSTR', 'COIN', 'HOOD', 'TSLA', 'NVDA', 'AMD', 'INTC', 'AAPL', 'MSFT', 'GOOG', 'AMZN', 'NFLX', 'META', 'SPY', 'QQQ', 'IWM', 'DIA', 'GLD', 'SLV', 'TLT',
     'OKLO', 'SMR', 'ONDS', 'ASST', 'PLTR', 'MCD', 'BIZIM', 'DXY', 'XAU', 'XAG', 'XAUUSD', 'XAGUSD', 'OPEN',
     'GME', 'BABA', 'LAC', 'HIMS', 'SOFI', 'MARA', 'RIOT', 'CLSK', 'BITF', 'IREN', 'AMR', 'HCC', 'ARCH', 'BTU', 'CEIX', 'STLA', 'STX', 'CRCL', 'BMNR',
-    'GC1:COM'
+    'GC1:COM', 'CL', 'CL=F'
 ]);
 
 /**
@@ -181,6 +181,8 @@ export async function getPrice(symbol: string, type?: 'CRYPTO' | 'STOCK', date?:
         'SILVER': 'SI=F',
         'BIZIM': 'BIZIM.IS',
         'GC1:COM': 'GC=F',
+        'OIL': 'CL=F',
+        'CRUDE': 'CL=F',
     };
     if (STOCK_OVERRIDES[symbol]) {
         symbol = STOCK_OVERRIDES[symbol];
@@ -330,6 +332,7 @@ const INDEX_FALLBACKS: Record<string, string> = {
     'SPX': 'SPY', '^GSPC': 'SPY', '^SPX': 'SPY', 'ES': 'SPY', 'ES=F': 'SPY',
     'NDX': 'QQQ', '^NDX': 'QQQ', '^IXIC': 'QQQ', 'NQ': 'QQQ', 'NQ=F': 'QQQ',
     'GOLD': 'GC=F', 'XAU': 'GC=F', 'GC1:COM': 'GC=F', 'SILVER': 'SI=F', 'XAG': 'SI=F',
+    'OIL': 'CL=F', 'CRUDE': 'CL=F',
     'DXY': 'DX-Y.NYB',
 };
 
