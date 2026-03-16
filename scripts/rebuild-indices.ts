@@ -75,6 +75,10 @@ async function main() {
     }
     await recentPipe.exec();
 
+    // 5. Clear Cache
+    console.log('[Rebuild] Clearing platform metrics cache...');
+    await redis.del('platform_metrics');
+
     console.log('\n✨ ALL INDICES REBUILT SUCCESSFULLY!');
     console.log(`📊 Global analyses indexed: ${allAnalyses.length}`);
     console.log(`📊 Recent feed populated:   ${recent.length}`);

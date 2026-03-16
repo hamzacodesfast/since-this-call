@@ -14,8 +14,8 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.production'), override: true });
 
-const SOURCE_URL = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
-const SOURCE_TOKEN = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+const SOURCE_URL = process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+const SOURCE_TOKEN = process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN || process.env.PROD_UPSTASH_REDIS_REST_KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
 // REPLACE THIS with your new VPS Redis URL (e.g., redis://default:password@your-vps-ip:6379)
 const DEST_URL = process.env.NEW_REDIS_URL || 'redis://localhost:6379';
