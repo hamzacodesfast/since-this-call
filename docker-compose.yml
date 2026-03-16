@@ -4,6 +4,7 @@ services:
   app:
     build: .
     restart: always
+    env_file: .env.production
     environment:
       - NODE_ENV=production
       - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
@@ -21,6 +22,7 @@ services:
   watcher:
     build: ./services/twitter-watcher
     restart: always
+    env_file: .env.production
     environment:
       - REDIS_URL=redis://default:${REDIS_PASSWORD}@redis:6379
     depends_on:
