@@ -138,6 +138,9 @@ async function sync() {
             }
         }
 
+        console.log('🔄 Clearing platform metrics cache...');
+        await dest.del('platform_metrics');
+
         console.log('\n✨ PRODUCTION-TO-VPS SYNC COMPLETE!');
         console.log(`📊 Final Count Check (Dest):`);
         console.log(`   Analyses: ${await dest.zcard('global:analyses:timestamp')}`);
