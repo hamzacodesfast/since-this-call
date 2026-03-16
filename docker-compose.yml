@@ -33,7 +33,7 @@ services:
     restart: always
     ports:
       - "80:80"
-      - "444:443"
+      - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy-data:/data
