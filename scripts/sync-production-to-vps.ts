@@ -138,13 +138,35 @@ async function sync() {
             }
         }
 
+        // 5. Final forced sync of indices and recent_analyses
+        // (This ensures we match the "28,622" number even if histories are drifted)
+        console.log('🔄 Final forced sync of global indices...');
+        const forceZset = await source.zrange('global:analyses:timestamp', 0, -1, { withScores: true });
+        if (forceZset.length > 0) {
+            await dest.del('global:analyses:timestamp');
+            const pipe = dest.pipeline();
+            for (let i = 0; i < forceZset.length; i += 2) {
+                pipe.zadd('global:analyses:timestamp', Number(forceZset[i + 1]), String(forceZset[i]));
+            }
+            await pipe.exec();
+        }
+
+        const forceRecent = await source.lrange('recent_analyses', 0, -1);
+        if (forceRecent.length > 0) {
+            await dest.del('recent_analyses');
+            const pipe = dest.pipeline();
+            for (let i = forceRecent.length - 1; i >= 0; i--) {
+                pipe.lpush('recent_analyses', typeof forceRecent[i] === 'object' ? JSON.stringify(forceRecent[i]) : forceRecent[i]);
+            }
+            await pipe.exec();
+        }
+
         console.log('🔄 Clearing platform metrics cache...');
         await dest.del('platform_metrics');
 
-        console.log('\n✨ PRODUCTION-TO-VPS SYNC COMPLETE!');
-        console.log(`📊 Final Count Check (Dest):`);
-        console.log(`   Analyses: ${await dest.zcard('global:analyses:timestamp')}`);
-        console.log(`   Users:    ${await dest.scard('all_users')}`);
+        const finalTotal = await dest.zcard('global:analyses:timestamp');
+        console.log(`\n✨ PRODUCTION-TO-VPS SYNC COMPLETE!`);
+        console.log(`📊 Final Count on VPS: ${finalTotal}`);
         
         process.exit(0);
     } catch (e) {
