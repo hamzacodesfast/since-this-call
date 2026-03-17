@@ -79,7 +79,7 @@ npx tsx scripts/bulk-analyze.ts to_analyze.json
 
 **What it does automatically:**
 1.  **Duplicate Check**: Skips tweets already in the history.
-2.  **AI Extraction**: Uses Llama 3.2 70B (Local via Ollama) with high-accuracy prompts.
+2.  **AI Extraction**: Uses Llama 3.2 1B (Local via Ollama) with high-accuracy prompts.
 3.  **Storage**: Saves to Production via `AnalysisStore`.
 4.  **Auto-Sync**: Pulls the results back to your local environment.
 
