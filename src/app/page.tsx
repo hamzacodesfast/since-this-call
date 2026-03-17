@@ -15,8 +15,8 @@ export default function Home() {
             </div>
 
             <div className="mb-12 space-y-6 max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10">
-                    <NextImage src="/logo.png" alt="Since This Call" width={16} height={16} className="mr-2" />
+                <Badge variant="secondary" className="px-4 py-1.5 text-xs font-medium uppercase tracking-widest bg-secondary/50 backdrop-blur-md border border-primary/10 gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
                     The AI Powered Social Prediction Tracker
                 </Badge>
                 <h1 className="text-5xl md:text-8xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/40 pb-2">
