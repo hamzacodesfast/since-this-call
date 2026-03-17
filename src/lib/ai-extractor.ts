@@ -1,8 +1,3 @@
-/**
- * @file ai-extractor.ts
- * @description AI-powered tweet analysis using Google Gemini
- */
-import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
@@ -63,7 +58,6 @@ export async function extractCallFromText(
         OUTPUT: Return valid JSON matching the schema.
         `;
 
-        const provider = process.env.AI_PROVIDER || 'google';
         const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434/v1';
         const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:1b';
 
@@ -73,39 +67,28 @@ export async function extractCallFromText(
             apiKey: 'ollama' 
         });
 
-        const getModel = (name: string) => {
-            if (provider === 'ollama') {
-                return ollama(ollamaModel);
-            }
-            return google(name);
-        };
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                const { object } = await generateObject({
+                    model: ollama(ollamaModel),
+                    schema: CallSchema,
+                    prompt: promptText,
+                });
 
-        const modelNames = provider === 'ollama' ? [ollamaModel] : ['gemini-2.0-flash', 'gemini-flash-latest'];
-
-        for (const modelName of modelNames) {
-            for (let attempt = 0; attempt < 2; attempt++) {
-                try {
-                    const { object } = await generateObject({
-                        model: getModel(modelName) as any,
-                        schema: CallSchema,
-                        prompt: promptText,
-                    });
-
-                    // 1B Model Post-Processing: Normalize confidence_score if > 1
-                    if (object.confidence_score > 1) {
-                        object.confidence_score = object.confidence_score / 100;
-                    }
-                    
-                    // Cap at 1.0 and floor at 0.0
-                    object.confidence_score = Math.max(0, Math.min(1, object.confidence_score));
-
-                    if (object.action === 'NULL') return null;
-                    return object;
-
-                } catch (error: any) {
-                    console.error(`[AI-Extractor] Attempt failed with ${modelName}:`, error.message);
-                    if (attempt === 1) throw error;
+                // 1B Model Post-Processing: Normalize confidence_score if > 1
+                if (object.confidence_score > 1) {
+                    object.confidence_score = object.confidence_score / 100;
                 }
+                
+                // Cap at 1.0 and floor at 0.0
+                object.confidence_score = Math.max(0, Math.min(1, object.confidence_score));
+
+                if (object.action === 'NULL') return null;
+                return object;
+
+            } catch (error: any) {
+                console.error(`[AI-Extractor] Attempt failed with ${ollamaModel}:`, error.message);
+                if (attempt === 1) throw error;
             }
         }
 
