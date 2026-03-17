@@ -73,11 +73,19 @@ ${tickerList}
     }
     output.push('\n---\n');
 
-    // Fetch all profiles for Analyst Rankings
+    // Fetch all profiles for Analyst Rankings (OPTIMIZED WITH PIPELINE)
     const allUsers = await redis.smembers('all_users') as string[];
     const userProfiles = [];
+    
+    console.log(`👤 Fetching ${allUsers.length} profiles...`);
+    const profilePipeline = redis.pipeline();
     for (const user of allUsers) {
-        const p = await redis.hgetall(`user:profile:${user}`) as any;
+        profilePipeline.hgetall(`user:profile:${user}`);
+    }
+    const results = await profilePipeline.exec();
+    
+    for (let i = 0; i < results.length; i++) {
+        const p = (Array.isArray(results[i]) ? results[i][1] : results[i]) as any;
         if (p && p.username) {
             userProfiles.push({
                 username: p.username,

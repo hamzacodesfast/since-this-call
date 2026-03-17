@@ -11,10 +11,10 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 
 ## 🏗️ Technical Stack
 - **Framework**: Next.js 14 (App Router) / TypeScript / Tailwind CSS / shadcn/ui.
-- **AI Engine**: Gemini 2.0 Flash (via Vercel AI SDK).
-- **Database**: Upstash Redis (Production) / Docker `redis:alpine` (Local).
+- **Hosting**: Hetzner VPS (Dockerized) / Caddy Reverse Proxy.
+- **Database**: Redis (Self-hosted on VPS) / Docker `redis:alpine` (Local).
 - **Market Data**: Waterfall (Yahoo Finance → CoinMarketCap → CoinGecko).
-- **Visuals**: Recharts (Stats) / Remotion (Video) / html-to-image (Receipts).
+- **Visuals**: Recharts (Stats) / html-to-image (Receipts).
 
 ---
 
@@ -38,7 +38,7 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
     - `cache:tickers:*` = **String (JSON)**. TTL-cached ticker profile pages (10 min).
     - `cache:profiles:*` = **String (JSON)**. TTL-cached user profile pages (10 min).
     - `platform_metrics` = **String (JSON)**. TTL-cached homepage metrics (15 min).
-- **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-to-local.ts`. 
+- **The Sync Loop**: After any production update or `git pull`, run `npx tsx scripts/sync-vps-to-local.ts` to mirror VPS data locally.
 - **Pagination & Global Aggregation**: Profile history fetches via the `user_index:*` ZSET for infinite scale, avoiding the 100-item hardcap of legacy lists. Global calculation UI lists (such as Stats or the Leaderboard) circumvent slicing limits by passing `?limit=-1` to ensure valid system-wide coverage.
 - **Vercel Deployments**: The Next.js Edge Runtime (`export const runtime = 'edge'`) has been specifically excluded from dynamic API routes due to ongoing infrastructure instability on Vercel's end. Default to Node.js serverless functions.
 - **Upstash Transactional Atomicity (CRITICAL)**: Because we use the REST API, independent `redis.del()` and `redis.lpush()` commands will interleave under network pressure, leading to exponential list duplication. **ALWAYS** push `r.del()` inside `r.pipeline()` (e.g., `pipe.del(key); pipe.lpush(key, ...); await pipe.exec();`) to enforce atomic overrides.
@@ -88,8 +88,7 @@ The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
 | `refresh-metrics.ts` | Refresh global homepage metrics cache |
 | `refresh-stats.ts` | Refresh win rates (calls `recalculate-all-production.ts`) |
 | `recalculate-all-production.ts` | Full production DB wins/losses/counts recalculation |
-| `sync-to-local.ts` | Sync production data → local Redis |
-| `sync-to-production.ts` | Sync local data → production Redis |
+| `sync-vps-to-local.ts` | Sync production VPS data → local Redis |
 | `reanalyze.ts` | Re-analyze a single tweet by ID |
 | `bulk-analyze.ts` | Batch-process a JSON list of tweet URLs |
 | `backfill-tickers.ts` | Rebuild the ticker index |
@@ -160,6 +159,7 @@ npm run watch -- --headless  # Run headless (standard for production)
 ## 🎯 Current Engineering Roadmap
 
 ### ✅ Completed
+- **VPS Migration & Optimization (Mar 16, 2026)**: Migrated entire stack (Next.js, Redis, Caddy) to Hetzner VPS. Optimized `generate-tweets.ts` and `backup-data.ts` with Redis Pipelining for remote performance. Standardized documentation across all role guides for the new self-hosted infrastructure.
 - **Data Integrity Rescue (Mar 9, 2026)**: Identified and patched a massive Read-Modify-Write list append duplication bug across Upstash pipelines. Rewrote `dualWrite()` implementation across 26 files to enforce `pipe.del()` atomicity, and purged exact duplicates from 7 targeted user accounts on Production. Fixed an ES Module `dotenv` load-order glitch that was causing localized false-positive verifications. Platform data integrity restored to 100%.
 - **Redis Cost Optimization (Mar 2, 2026)**: Added TTL caches to `/api/tickers`, `/api/profiles`, `/api/metrics`. Pipelined LPUSH writes and deduplicated user history reads in `price-refresher.ts`. Added `Cache-Control` headers for Vercel CDN caching. Estimated ~80% reduction in daily Redis commands.
 - **Project Cleanup (Feb 28, 2026)**: Removed 48 temp files, debug scripts, stale docs, and dead directories. Pruned `scripts/` from 36 → 26 operational scripts.

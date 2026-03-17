@@ -11,11 +11,24 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    description: 'The AI Powered Social Prediction Tracker. Track the performance of financial influencers on X (Twitter) with verified price receipts.',
-    openGraph: {
-        title: 'Since This Call | AI Powered Social Prediction Tracker',
-        description: 'The AI Powered Social Prediction Tracker. Verify every financial guru call with immutable receipts.',
+    title: 'SinceThisCall – Track Crypto & Stock Influencer Predictions | Accountability Tool',
+    description: 'Track crypto and stock influencer calls with AI. See which gurus are actually right and which ones aren\'t. Real-time prediction accountability.',
+    alternates: {
+        canonical: 'https://www.sincethiscall.com/',
     },
+    openGraph: {
+        title: 'SinceThisCall – Track Crypto & Stock Influencer Predictions',
+        description: 'Track crypto and stock influencer calls with AI. Real-time prediction accountability.',
+    },
+};
+
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "SinceThisCall",
+    "applicationCategory": "FinanceApplication",
+    "description": "AI-powered tracker for crypto and stock influencer predictions",
+    "url": "https://www.sincethiscall.com"
 };
 
 export default function RootLayout({
@@ -25,6 +38,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            </head>
             <body className={`${inter.className} min-h-screen flex flex-col`}>
                 <ThemeProvider
                     attribute="class"

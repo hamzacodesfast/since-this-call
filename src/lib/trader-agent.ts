@@ -126,6 +126,26 @@ async function fetchUserHistory(username: string, limit: number = 5): Promise<St
     return parsed;
 }
 
+/** Pre-warm the global cache with histories for multiple users in a single pipeline. */
+async function fetchMultipleUserHistories(usernames: string[], limit: number = 100): Promise<void> {
+    const uniqueUsers = Array.from(new Set(usernames.map(u => u.toLowerCase())));
+    const needed = uniqueUsers.filter(u => !globalRequestCache.has(`user:history:${u}`));
+    
+    if (needed.length === 0) return;
+
+    const pipeline = redis.pipeline();
+    needed.forEach(u => pipeline.lrange(`user:history:${u}`, 0, limit - 1));
+    const results = await pipeline.exec();
+
+    results.forEach((res: any, i) => {
+        const data = res;
+        const parsed = data ? data.map((item: any) => (typeof item === 'string' ? JSON.parse(item) : item)) : [];
+        if (limit === 100) {
+            globalRequestCache.set(`user:history:${needed[i]}`, parsed);
+        }
+    });
+}
+
 // ─── V2: Enhanced Metrics Engine ──────────────────────────────────────────────
 
 /**
@@ -269,6 +289,9 @@ export async function scanFarmerFades(): Promise<TradeRecommendation[]> {
     // Filter: 30+ calls, WR < 30%
     const farmers = profiles.filter(p => p.totalAnalyses >= 30 && p.winRate < 30);
 
+    // Pre-warm cache for all farmers
+    await fetchMultipleUserHistories(farmers.map(f => f.username), 100);
+
     for (const farmer of farmers) {
         const history = await fetchUserHistory(farmer.username, 100);
         if (history.length === 0) continue;
@@ -357,6 +380,9 @@ export async function scanSilentSnipers(): Promise<TradeRecommendation[]> {
 
     // Filter: 25+ calls, WR > 75%
     const snipers = profiles.filter(p => p.totalAnalyses >= 25 && p.winRate > 75);
+
+    // Pre-warm cache for all snipers
+    await fetchMultipleUserHistories(snipers.map(s => s.username), 100);
 
     for (const sniper of snipers) {
         const history = await fetchUserHistory(sniper.username, 100);
@@ -458,6 +484,10 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
     // V2: Smart money filtered by RECENT performance, not just lifetime WR
     // Fetch full histories for potential smart money to compute recency
     const potentialSmart = profiles.filter(p => p.totalAnalyses >= 25 && p.winRate > 70);
+    
+    // Pre-warm histories for potential smart money
+    await fetchMultipleUserHistories(potentialSmart.map(p => p.username), 100);
+
     const smartHistories = new Map<string, StoredAnalysis[]>();
     const confirmedSmart: UserProfile[] = [];
 
@@ -475,13 +505,30 @@ export async function scanSmartMoneyDivergence(): Promise<TradeRecommendation[]>
     const smartMoneyMap = new Map(confirmedSmart.map(p => [p.username.toLowerCase(), p]));
 
     // Get all tracked tickers
-    const tickerKeys = await redis.smembers('tracked_tickers') as string[];
+    const tickerKeys = (await redis.smembers('tracked_tickers') as string[]).filter(k => !k.startsWith('CA:'));
+    
+    // Bulk fetch ALL ticker indices in one pipeline
+    const tickerPipeline = redis.pipeline();
+    tickerKeys.forEach(tk => tickerPipeline.zrange(`ticker_index:${tk}`, 0, -1));
+    const allRefsResults = await tickerPipeline.exec();
+    
+    // Collect all users mentioned in these indices to pre-warm their histories
+    const allMentionedUsers = new Set<string>();
+    allRefsResults.forEach((res: any) => {
+        const refs = res || [];
+        refs.forEach((ref: string) => {
+            const [username] = ref.split(':');
+            allMentionedUsers.add(username.toLowerCase());
+        });
+    });
+    
+    // Pre-warm ALL mentioned users
+    await fetchMultipleUserHistories(Array.from(allMentionedUsers), 100);
 
-    for (const tickerKey of tickerKeys) {
-        if (tickerKey.startsWith('CA:')) continue;
-
-        const refs = await redis.zrange(`ticker_index:${tickerKey}`, 0, -1) as string[];
-        if (refs.length < 10) continue;
+    for (let i = 0; i < tickerKeys.length; i++) {
+        const tickerKey = tickerKeys[i];
+        const refs = allRefsResults[i] as string[];
+        if (!refs || refs.length < 10) continue;
 
         let crowdBullish = 0;
         let crowdBearish = 0;
@@ -598,6 +645,10 @@ export async function scanSectorRotation(): Promise<TradeRecommendation[]> {
         convictionCount: number;
     }> = {};
 
+    // Pre-warm histories for recent refs
+    const usersToPrewarm = recentRefs.map(ref => ref.split(':')[0]);
+    await fetchMultipleUserHistories(usersToPrewarm, 100);
+
     for (const ref of recentRefs) {
         const [username, id] = ref.split(':');
         const lowerUser = username.toLowerCase();
@@ -691,6 +742,9 @@ export async function scanDualSniperConfluence(): Promise<TradeRecommendation[]>
         .slice(0, 10);
 
     if (qualified.length < 2) return [];
+
+    // Pre-warm histories for top 10 snipers
+    await fetchMultipleUserHistories(qualified.map(q => q.username), 100);
 
     // V2: Fetch deeper history and compute enhanced metrics for each Top 10
     const topCalls: { profile: UserProfile; call: StoredAnalysis; enhanced: EnhancedMetrics }[] = [];

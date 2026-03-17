@@ -11,7 +11,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 // Use local wrapper which connects to 6379 directly
-const redis = new LocalRedisWrapper(process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || 'http://localhost:8080');
+const redis = new LocalRedisWrapper(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_KV_REST_API_URL || 'redis://localhost:6379');
 
 interface BackupData {
     timestamp: string;
@@ -51,26 +51,31 @@ async function backup() {
     const usernames = await redis.smembers('all_users');
     console.log(`   Found ${usernames.length} users in all_users set`);
 
-    for (const username of usernames) {
-        try {
-            // Backup profile (stored as Hash)
-            const profile = await redis.hgetall(`user:profile:${username}`);
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
+        const chunk = usernames.slice(i, i + CHUNK_SIZE);
+        const pipe = redis.pipeline();
+        
+        for (const username of chunk) {
+            pipe.hgetall(`user:profile:${username}`);
+            pipe.lrange(`user:history:${username}`, 0, -1);
+        }
+        
+        const results = await pipe.exec();
+        
+        for (let j = 0; j < chunk.length; j++) {
+            const username = chunk[j];
+            const profile = (Array.isArray(results[j*2]) ? results[j*2][1] : results[j*2]) as any;
+            const history = (Array.isArray(results[j*2+1]) ? results[j*2+1][1] : results[j*2+1]) as any[];
+            
             if (profile && Object.keys(profile).length > 0) {
                 data.userProfiles[username] = profile;
             }
-        } catch (e) {
-            console.log(`   ⚠️ Skipping profile for ${username} (error: ${e})`);
-        }
-
-        try {
-            // Backup history
-            const history = await redis.lrange(`user:history:${username}`, 0, -1);
-            if (history.length > 0) {
+            if (history && history.length > 0) {
                 data.userHistories[username] = history;
             }
-        } catch (e) {
-            console.log(`   ⚠️ Skipping history for ${username}`);
         }
+        console.log(`   [Backup] Processed ${Math.min(i + CHUNK_SIZE, usernames.length)}/${usernames.length} users...`);
     }
 
     console.log(`   Exported ${Object.keys(data.userProfiles).length} profiles`);
@@ -82,18 +87,24 @@ async function backup() {
     data.trackedTickers = tickers;
     console.log(`   Found ${tickers.length} tracked tickers`);
 
-    for (const ticker of tickers) {
-        try {
-            const profile = await redis.hgetall(`ticker:profile:${ticker}`);
-            if (profile) data.tickerProfiles[ticker] = profile;
-
-            const index = await redis.zrange(`ticker_index:${ticker}`, 0, -1, { withScores: true });
-            if (index && index.length > 0) {
-                data.tickerIndices[ticker] = index;
-            }
-        } catch (e) {
-            console.log(`   ⚠️ Skipping ticker data for ${ticker}`);
+    // Batch tickers
+    const TICKER_CHUNK = 100;
+    for (let i = 0; i < tickers.length; i += TICKER_CHUNK) {
+        const chunk = tickers.slice(i, i + TICKER_CHUNK);
+        const pipe = redis.pipeline();
+        for (const ticker of chunk) {
+            pipe.hgetall(`ticker:profile:${ticker}`);
+            pipe.zrange(`ticker_index:${ticker}`, 0, -1, { withScores: true });
         }
+        const results = await pipe.exec();
+        for (let j = 0; j < chunk.length; j++) {
+            const ticker = chunk[j];
+            const profile = (Array.isArray(results[j*2]) ? results[j*2][1] : results[j*2]) as any;
+            const index = (Array.isArray(results[j*2+1]) ? results[j*2+1][1] : results[j*2+1]) as any[];
+            if (profile) data.tickerProfiles[ticker] = profile;
+            if (index && index.length > 0) data.tickerIndices[ticker] = index;
+        }
+        console.log(`   [Backup] Processed ${Math.min(i + TICKER_CHUNK, tickers.length)}/${tickers.length} tickers...`);
     }
     console.log(`   Exported ${Object.keys(data.tickerProfiles).length} ticker profiles`);
 

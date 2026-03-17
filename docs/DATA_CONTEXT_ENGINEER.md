@@ -45,8 +45,8 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ### I. Data Integrity First
 *   **Main is Truth**: All code/logic modifications MUST be committed and pushed to the `main` branch before database synchronization.
-*   **Sync Parity**: Always run `npx tsx scripts/sync-to-local.ts` after any push or pull. 
-*   **Schema Safety**: Never use raw `SET` commands on Redis Hashes. Use `AnalysisStore` abstractions.
+- [x] **Sync Parity**: Always run `npx tsx scripts/sync-vps-to-local.ts` after any push or pull to mirror live VPS data locally. 
+- [x] **Schema Safety**: Never use raw `SET` commands on Redis Hashes. Use `AnalysisStore` abstractions.
 
 
 ### II. Validation & Logic Enforcement
@@ -58,7 +58,7 @@ The Data/Context Engineer is the "Chief Linguistic Officer" of the STC platform.
 
 ## 🛠️ Tech Stack Proficiency
 *   **AI**: Gemini 2.0 Flash (Multimodal) for text + chart analysis.
-*   **Data**: Redis (Upstash/LocalProxy) with a focus on Hash/List parity.
+*   **Data**: Redis (Self-hosted on VPS / Docker) with a focus on Hash/List parity.
 *   **Pricing**: Authoritative Waterfall (GeckoTerminal (Meme) -> Yahoo Finance (Global) -> CMC -> CoinGecko).
 
 ---

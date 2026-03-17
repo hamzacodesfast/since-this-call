@@ -16,15 +16,20 @@ dotenv.config();
 async function refreshMetrics() {
     const isLocal = process.argv.includes('--local');
     const baseUrl = process.env.PRODUCTION_URL ||
-        (isLocal ? 'http://localhost:3000' : 'https://www.sincethiscall.com');
+        (isLocal ? 'http://localhost:3000' : 'https://sincethiscall.com');
 
     console.log(`🔄 Refreshing platform metrics...`);
     console.log(`🔗 Target: ${baseUrl}\n`);
 
     try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
         const res = await fetch(`${baseUrl}/api/metrics`, {
             method: 'POST',
+            signal: controller.signal
         });
+        clearTimeout(timeout);
 
         const data = await res.json();
 

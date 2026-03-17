@@ -13,54 +13,37 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
 ## ✨ Features
 
 - **Asset Type Selection**: Explicit "Crypto" vs "Stock" search modes for maximum accuracy
-- **AI-Powered Extraction**: Uses **Google Gemini 2.0 Flash** to intelligently parse tweets, identifying asset symbols, sentiment (Bullish/Bearish), and prediction dates
+- **AI-Powered Extraction**: Uses **Google Gemini 2.0 Flash** to intelligently parse tweets
 - **📊 Stats Dashboard**: Charts and analytics at `/stats` showing platform-wide performance
 - **📈 Trending Tickers**: See which assets gurus are calling most (BTC, ETH, SOL, etc.)
 - **Live Price Updates**: Automatic price refresh to keep call receipts accurate
-- **Multi-Asset Support**:
-  - **Crypto**: Real-time prices via **CoinMarketCap** & **CoinGecko** (Authoritative assets only)
-  - **Stocks & ETFs**: Free data via **Yahoo Finance**
-  - **Index Fallbacks**: Automatically resolves SPX→SPY, NQ→QQQ, DJI→DIA
 - **Leaderboard**: Track the top (and worst) financial gurus with win/loss records
 - **Profile Pages**: Individual pages for each guru with full prediction history and charts
-- **Community Comments**: Disqus integration for discussion on each profile
-- **Social Sharing**: One-click visual sharing generates a screenshot of the analysis
 - **Premium UI**: Sleek dark-mode design with Tailwind CSS and shadcn/ui
 
 ## 🛑 Hard Rules for Contributors/Agents
 1. **Push to `main` first**: Commit and push code changes before database actions.
-2. **Sync Data**: Always run `npx tsx scripts/sync-to-local.ts` after a push or pull to keep local data in sync with production.
+2. **Local Sync**: Always run `npx tsx scripts/sync-vps-to-local.ts` to keep your local environment in sync with the live VPS data.
 3. **Type Safety**: Never overwrite Redis Hashes (`user:profile`) with Strings. Use `AnalysisStore`.
-
-
-### 📊 Current Stats (Feb 2, 2026 - Live)
-
-| Metric | Value |
-|--------|-------|
-| Total Analyses | 1,221 |
-| Unique Gurus | 563 |
-| Platform Win Rate | 36% |
-| Tracked Tickers | 189 |
-
+4. **Maintenance**: Run `npm run watch` locally in `services/twitter-watcher` to capture new calls. It writes directly to the VPS.
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | Framework | [Next.js 14](https://nextjs.org/) (App Router) |
-| Language | [TypeScript](https://www.typescriptlang.org/) |
-| Database | [Upstash Redis](https://upstash.com/) (Serverless) |
+| Hosting | **Hetzner VPS (Dockerized)** |
+| Proxy | **Caddy** (Automatic SSL / Reverse Proxy) |
+| Database | **Redis** (Self-hosted on VPS) |
 | AI | [Vercel AI SDK](https://sdk.vercel.ai/) + [Google Gemini](https://ai.google.dev/) |
 | Styling | [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
-| Charts | [Recharts](https://recharts.org/) |
-| Monitoring | [Vercel Speed Insights](https://vercel.com/docs/speed-insights) |
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+
-- Google Gemini API Key (Free)
-- Upstash Redis account (Free tier available)
+- Docker & Docker Compose (for production)
+- Google Gemini API Key
 
 ### Installation
 
@@ -79,81 +62,47 @@ Paste a tweet URL, and the app will tell you exactly how that asset has performe
    ```bash
    cp .env.example .env.local
    ```
-   
-   Add your keys to `.env.local`:
-   ```env
-   # Required
-   GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_key
-   UPSTASH_REDIS_REST_KV_REST_API_URL=your_upstash_url
-   UPSTASH_REDIS_REST_KV_REST_API_TOKEN=your_upstash_token
-   ```
+   *Add your `REDIS_URL` (VPS) and `GOOGLE_GENERATIVE_AI_API_KEY` to `.env.local`.*
 
-4. **Run the Local Redis Proxy:**
-   In a separate terminal, run:
+4. **Sync Data from VPS:**
    ```bash
-   npx tsx scripts/local-redis-proxy.ts
-   ```
-   *Note: This starts a local Redis server and a proxy that makes it compatible with the Upstash API used in the app.*
-
-5. **Sync Data from Production (Recommended):**
-   ```bash
-   npx tsx scripts/sync-to-local.ts
+   npx tsx scripts/sync-vps-to-local.ts
    ```
 
-6. **Run the Development Server:**
+5. **Run the Development Server:**
    ```bash
    npm run dev
    ```
 
-7. **Open the App:**
-   Visit `http://localhost:3000`
+## 🧰 Admin & Maintenance Scripts
 
-## 🧰 Admin Scripts
-
-Located in `/scripts`, these help manage and correct data:
+Located in `/scripts`, optimized with **Redis Pipelining** for remote performance:
 
 | Script | Usage | Purpose |
 |--------|-------|---------|
-| `reanalyze.ts` | `npx tsx scripts/reanalyze.ts <TWEET_ID>` | Re-analyze a tweet to fix incorrect data |
-| `refresh-metrics.ts` | `npx tsx scripts/refresh-metrics.ts` | Manually refresh homepage metrics |
-| `remove-tweet.ts` | `npx tsx scripts/remove-tweet.ts <TWEET_ID>` | Remove a single analysis |
-| `sync-profile.ts` | `npx tsx scripts/sync-profile.ts <USERNAME>` | Recalculate user stats |
-| `backup-data.ts` | `npx tsx scripts/backup-data.ts` | Export all Redis data |
+| `sync-vps-to-local.ts` | `npx tsx scripts/sync-vps-to-local.ts` | Mirros live VPS data to local laptop |
+| `backup-data.ts` | `npx tsx scripts/backup-data.ts` | Full JSON export of current Redis state |
+| `generate-tweets.ts` | `npx tsx scripts/generate-tweets.ts` | Generates daily metrics tweets to `docs/` |
+| `refresh-metrics.ts` | `npx tsx scripts/refresh-metrics.ts` | Warms/Refreshes global stats cache |
+| `recalculate-all-production.ts` | `npx tsx scripts/recalculate-all-production.ts` | Full profile/WR reconciliation |
 
-## 📦 Deployment
+## 📦 Deployment (VPS)
 
-Optimized for [Vercel](https://vercel.com):
+The app is deployed via Docker and Caddy for zero-maintenance SSL.
 
-1. Push code to GitHub
-2. Import project into Vercel
-3. Add environment variables in Vercel Dashboard
-4. Deploy!
+1. **Build and Deploy**:
+   ```bash
+   docker compose up -d --build
+   ```
 
-### Cron Setup
-For Vercel Hobby plan (Daily):
-```json
-{
-  "crons": [{
-    "path": "/api/cron/refresh",
-    "schedule": "0 0 * * *"
-  }]
-}
-```
-*Note: For 15-minute updates, upgrade to Pro or use an external cron service.*
+2. **Caddy Config**:
+   Managed via the `Caddyfile` in the root directory.
 
 ## 🛡️ Data Integrity
     
-This project uses Upstash Redis and relies on strict data types.
-    
 - **Profiles (`user:profile:*`)** are **Hashes**. Never use `set` or `setnx` on them.
 - **Histories (`user:history:*`)** are **Lists**.
-- **Sets (`all_users`)** track membership.
-    
-**Always use the `src/lib/analysis-store.ts` abstractions.** Do not write raw Redis commands in new features unless strictly necessary and type-verified.
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+- **Always use `AnalysisStore`**: Abstractions are located in `src/lib/analysis-store.ts`.
 
 ---
 

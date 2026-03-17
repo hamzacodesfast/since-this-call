@@ -158,6 +158,18 @@ function createPipelineProxy(ioredisPipe: any) {
                     return target.zadd(key, member.score, member.member);
                 };
             }
+            if (prop === 'zrange') {
+                return (key: string, start: number, stop: number, options?: { withScores?: boolean }) => {
+                    if (options?.withScores) return target.zrange(key, start, stop, 'WITHSCORES');
+                    return target.zrange(key, start, stop);
+                };
+            }
+            if (prop === 'zrevrange') {
+                return (key: string, start: number, stop: number, options?: { withScores?: boolean }) => {
+                    if (options?.withScores) return target.zrevrange(key, start, stop, 'WITHSCORES');
+                    return target.zrevrange(key, start, stop);
+                };
+            }
             const value = target[prop];
             if (typeof value === 'function') {
                 return value.bind(target);

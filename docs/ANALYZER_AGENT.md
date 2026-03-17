@@ -18,7 +18,7 @@ The system has been significantly hardened for scale:
 6.  **Pricing Integrity**: Forced `CRYPTO` type for BTC/ETH/SOL to prevent Grayscale Mini Trust ETF collisions ($30 vs $68k).
 
 ## ⏭️ Next Session Tasks (FOR THE NEXT AGENT)
-1.  **Sync Production**: `npx tsx scripts/sync-to-local.ts`
+1.  **Sync Production**: `npx tsx scripts/sync-vps-to-local.ts`
 2.  **Generate Next Batch**: Extract URLs from `services/twitter-watcher/detected-calls.json`:
     ```bash
     grep -oP '"url":\s*"\K[^"]+' services/twitter-watcher/detected-calls.json | \
@@ -51,9 +51,9 @@ The system has been significantly hardened for scale:
     ```bash
     docker start redis-local
     # Sync with production before starting
-    npx tsx scripts/sync-to-local.ts
+    npx tsx scripts/sync-vps-to-local.ts
     ```
-2.  **Environment**: Ensure `.env.local` (Gemini Keys) and `.env.production` (Upstash Keys) are present.
+2.  **Environment**: Ensure `.env.local` contains the `REDIS_URL` (VPS) and Gemini keys.
 3.  **Vercel Build**: Note that `.vercelignore` excludes non-web folders from build to prevent errors.
 
 ## 📥 Input Format
@@ -101,7 +101,7 @@ npx tsx scripts/reanalyze.ts <TWEET_ID> --action=SELL
 | :--- | :--- |
 | `scripts/recalculate-all-production.ts` | **THE BIG FIX**: Re-runs win/loss/count logic for every user in the DB. |
 | `scripts/refresh-stats.ts` | A "Master Refresh" that triggers prices, recalculations, and metrics in sequence. |
-| `scripts/sync-to-local.ts` | Clones production Redis data to local Redis. |
+| `scripts/sync-vps-to-local.ts` | Clones production VPS Redis data to local laptop. |
 | `scripts/list-twitter-links.ts` | Exports all tracked analyst Twitter links to `docs/twitter_profiles.txt`. |
 
 ## ⚠️ Common Pitfalls

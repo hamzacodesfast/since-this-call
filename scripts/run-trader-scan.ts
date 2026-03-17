@@ -5,6 +5,10 @@
 
 import { runFullScan } from '../src/lib/trader-agent';
 import { format } from 'date-fns';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 async function main() {
     console.log('🚀 Starting STC Trader Agent V2 Scan...');
