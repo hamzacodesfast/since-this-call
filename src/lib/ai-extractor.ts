@@ -87,28 +87,39 @@ export async function extractCallFromText(
         - If Target < Current Price -> Action: SELL.
         `;
 
-        const models = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
+        const provider = process.env.AI_PROVIDER || 'google';
+        const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api';
+        const ollamaModel = process.env.OLLAMA_MODEL || 'llama3';
+
+        const { createOllama } = await import('ollama-ai-provider');
+        const ollama = createOllama({ baseURL: ollamaBaseUrl });
+
+        const getModel = (name: string) => {
+            if (provider === 'ollama') {
+                return ollama(ollamaModel);
+            }
+            return google(name);
+        };
+
+        const models = provider === 'ollama' ? [ollamaModel] : ['gemini-2.0-flash', 'gemini-flash-latest'];
         let lastErr;
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-        const generate = async (modelName: string) => {
-            return await generateObject({
-                model: google(modelName),
-                schema: CallSchema,
-                messages: [{
-                    role: 'user',
-                    content: [
-                        { type: 'text', text: promptText },
-                        ...(imageUrl ? [{ type: 'image', image: imageUrl }] : [])
-                    ]
-                } as any],
-            });
-        };
-
-        for (const model of models) {
+        for (const modelName of models) {
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
-                    const { object } = await generate(model);
+                    const { object } = await generateObject({
+                        model: getModel(modelName) as any,
+                        schema: CallSchema,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: promptText },
+                                ...(imageUrl && provider !== 'ollama' ? [{ type: 'image', image: imageUrl }] : [])
+                            ]
+                        } as any],
+                    });
+
                     if (object.action === 'NULL') return null;
                     return object;
                 } catch (err: any) {
@@ -117,6 +128,7 @@ export async function extractCallFromText(
                         await delay((attempt + 1) * 2000);
                         continue;
                     }
+                    console.error(`[AI-Extractor] Attempt failed with ${modelName}:`, err.message);
                     break;
                 }
             }
