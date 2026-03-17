@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 export const CallSchema = z.object({
     ticker: z.string().describe('The stock ticker or major crypto symbol (e.g. BTC, NVDA, ETH).'),
-    action: z.enum(['BUY', 'SELL', 'NULL']).describe('The action/sentiment of the AUTHOR of the tweet. Return what the AUTHOR thinks (BUY/SELL). Use NULL if it is not an active call.'),
-    confidence_score: z.number().min(0).max(1).describe('Confidence score.'),
+    action: z.enum(['BUY', 'SELL', 'NULL']).describe('The action/sentiment of the AUTHOR. Return BUY or SELL. Use NULL if no trade.'),
+    confidence_score: z.number().describe('Confidence (0.0 to 1.0). If you think in percentages, divide by 100.'),
     timeframe: z.enum(['SHORT_TERM', 'LONG_TERM', 'UNKNOWN']).describe('Predicted timeframe.'),
     is_sarcasm: z.boolean().describe('Whether the tweet uses sarcasm.'),
     reasoning: z.string().describe('Brief explanation.'),
@@ -43,58 +43,34 @@ export async function extractCallFromText(
         }
 
         const promptText = `
-        ROLE:
-        You are a financial analyst extracting signals for professional investors. 
-        We ONLY track major assets found on Yahoo Finance, CoinMarketCap, or CoinGecko.
-
-        TWEET INFO:
-        Tweet Content: "${tweetText}"
-        Tweet Author: "${username || 'Unknown'}"
-        Tweet Date: "${tweetDate}"
+        ROLE: Financial Analyst. 
+        TASK: Extract financial signals (BUY/SELL) for major assets.
         
-        DIRECTIVES (HIGHEST PRIORITY):
-        1. Action: BUY (Active Long), SELL (Active Short), NULL (No trade).
-           - **PETER SCHIFF RULE**: If the author is "PeterSchiff", any mention of Bitcoin, BTC, or MSTR is ALWAYS Action: "SELL". 
-           - He is a perma-bear. Do NOT inverse him. Do NOT interpret him sarcastically. If he says "sell the rip", it is a SELL.
-        2. Ticker: Return pure symbol (e.g. BTC, HYPE, MSTR). For Nvidia, ALWAYS use "NVDA".
-           - **OIL RULE**: If the tweet mentions "Crude", "Oil", or "Crude Oil", the Ticker MUST be "CL=F".
-           - **COLGATE RULE**: The ticker "CL" is Colgate-Palmolive. Do NOT use "CL" for Oil. Use "CL=F".
-        3. Sentiment Analysis: Handle sarcasm and slang as signals for AUTHOR intent.
+        TWEET: "${tweetText}"
+        AUTHOR: "${username || 'Unknown'}"
+        DATE: "${tweetDate}"
         
-        NEGATIVE CONSTRAINTS (RETURN action: "NULL"):
-        - Meme coins / Dex-only tokens (NULL).
-        - Live shows / News Agenda (NULL).
-        - Fact stating only (NULL).
-        - Ambiguous / Two-sided (NULL).
-        - Conditional "If/Then" (NULL).
-
-        BULLISH SIGNALS:
-        - "Target $[Price高于现价]", "Road to $[Price高于现价]".
-        - "Corn is king", "Send it", "Accumulating", "Bidding", "Scooping".
-        - "Bottom is in", "Ready for takeoff", "Breaking out", "Hold support".
-        - "NW invested", "Betting the farm", "Generational opportunity".
-        - **CONTRARIAN**: "Inverse Cramer", "Blood in the streets", "Panic selling". (Do NOT use this for Peter Schiff).
-
-        BEARISH SIGNALS:
-        - "Cooked", "Trash", "Dumpster fire", "Toxic", "Ponzi", "Bubble".
-        - "Sell the rip", "Sell the bounce", "Ring the register", "Take profits".
-        - "New lows", "Breakdown", "Lost support", "Rising wedge", "Bear flag".
-        - "Still holding shorts", "Haven't covered".
-        - "I tried to warn you", "Financial illiteracy".
-
-        CONFLICT RESOLUTION:
-        - Numerical direction ALWAYS overrides emotional slang. 
-        - If Target < Current Price -> Action: SELL.
+        RULES:
+        1. Action: BUY (Long), SELL (Short), NULL (No trade).
+           - **SCHIFF RULE**: If author is "PeterSchiff" and mentions BTC/Bitcoin/MSTR, Action: "SELL".
+        2. Ticker: Symbol only (BTC, NVDA, SOL). 
+        3. Confidence: Use 0.0 to 1.0 scale. 
+        
+        CONSTRAINTS:
+        - Return NULL for meme coins, news, or ambiguity.
+        - Return NULL for factual statements without a prediction.
+        
+        OUTPUT: Return valid JSON matching the schema.
         `;
 
         const provider = process.env.AI_PROVIDER || 'google';
         const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434/v1';
-        const ollamaModel = process.env.OLLAMA_MODEL || 'llama3';
+        const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:1b';
 
         const { createOpenAI } = await import('@ai-sdk/openai');
         const ollama = createOpenAI({ 
             baseURL: ollamaBaseUrl,
-            apiKey: 'ollama' // Ignored by Ollama but required by the provider
+            apiKey: 'ollama' 
         });
 
         const getModel = (name: string) => {
@@ -104,40 +80,38 @@ export async function extractCallFromText(
             return google(name);
         };
 
-        const models = provider === 'ollama' ? [ollamaModel] : ['gemini-2.0-flash', 'gemini-flash-latest'];
-        let lastErr;
-        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        const modelNames = provider === 'ollama' ? [ollamaModel] : ['gemini-2.0-flash', 'gemini-flash-latest'];
 
-        for (const modelName of models) {
+        for (const modelName of modelNames) {
             for (let attempt = 0; attempt < 2; attempt++) {
                 try {
                     const { object } = await generateObject({
                         model: getModel(modelName) as any,
                         schema: CallSchema,
-                        messages: [{
-                            role: 'user',
-                            content: [
-                                { type: 'text', text: promptText },
-                                ...(imageUrl && provider !== 'ollama' ? [{ type: 'image', image: imageUrl }] : [])
-                            ]
-                        } as any],
+                        prompt: promptText,
                     });
+
+                    // 1B Model Post-Processing: Normalize confidence_score if > 1
+                    if (object.confidence_score > 1) {
+                        object.confidence_score = object.confidence_score / 100;
+                    }
+                    
+                    // Cap at 1.0 and floor at 0.0
+                    object.confidence_score = Math.max(0, Math.min(1, object.confidence_score));
 
                     if (object.action === 'NULL') return null;
                     return object;
-                } catch (err: any) {
-                    lastErr = err;
-                    if (err.message?.includes('Quota') || err.message?.includes('429')) {
-                        await delay((attempt + 1) * 2000);
-                        continue;
-                    }
-                    console.error(`[AI-Extractor] Attempt failed with ${modelName}:`, err.message);
-                    break;
+
+                } catch (error: any) {
+                    console.error(`[AI-Extractor] Attempt failed with ${modelName}:`, error.message);
+                    if (attempt === 1) throw error;
                 }
             }
         }
-        throw lastErr || new Error('Failed to analyze tweet.');
-    } catch (error: any) {
+
+        return null;
+
+    } catch (error) {
         console.error('[AI-Extractor] Fatal:', error);
         throw new Error('Failed to analyze tweet. The AI service is currently unavailable.');
     }
