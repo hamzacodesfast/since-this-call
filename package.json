@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backup": "npx tsx scripts/backup-data.ts",
+    "restore": "npx tsx scripts/restore-data.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",
