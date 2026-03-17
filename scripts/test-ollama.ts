@@ -6,8 +6,23 @@ import { extractCallFromText } from '../src/lib/ai-extractor';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load env
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+// Load env - Try multiple locations
+const envPaths = ['.env.local', '.env.production', '.env.production.local', '.env'];
+let foundEnv = false;
+
+for (const envFile of envPaths) {
+    const fullPath = path.resolve(__dirname, `../${envFile}`);
+    const result = dotenv.config({ path: fullPath });
+    if (!result.error) {
+        console.log(`✅ Loaded env from ${envFile}`);
+        foundEnv = true;
+        break;
+    }
+}
+
+if (!foundEnv) {
+    console.warn('⚠️ No .env file found. Using process.env defaults.');
+}
 
 async function testExtraction() {
     console.log('🧪 Testing Ollama Extraction...');
