@@ -103,7 +103,7 @@ export async function analyzeTweetContent(
         }
     }
 
-    const FORCE_CRYPTO = ['BTC', 'ETH', 'SOL', 'PEPE', 'WIF', 'BONK', 'DOGE', 'XRP', 'CHZ', 'ZEN', 'ZEC', 'TAO', 'ASTER', 'ASTR', 'WLFI'];
+    const FORCE_CRYPTO = ['BTC', 'ETH', 'SOL', 'PEPE', 'WIF', 'BONK', 'DOGE', 'XRP', 'CHZ', 'ZEN', 'ZEC', 'TAO', 'ASTER', 'ASTR', 'WLFI', 'HYPE', 'ME', 'PENGU', 'SUI', 'APT', 'TAO'];
     if (symbol && FORCE_CRYPTO.includes(symbol.toUpperCase())) {
         finalType = 'CRYPTO';
     }

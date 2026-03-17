@@ -94,8 +94,12 @@ export async function extractCallFromText(
 
         return null;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[AI-Extractor] Fatal:', error);
-        throw new Error('Failed to analyze tweet. The AI service is currently unavailable.');
+        // Do not mask specific errors unless it's a connection/timeout issue
+        if (error.message?.includes('connect') || error.message?.includes('fetch') || error.message?.includes('timeout')) {
+            throw new Error('Failed to analyze tweet. The AI service is currently unavailable.');
+        }
+        throw error;
     }
 }
