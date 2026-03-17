@@ -11,10 +11,11 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://www.sincethiscall.com'),
     title: 'SinceThisCall – Track Crypto & Stock Influencer Predictions | Accountability Tool',
     description: 'Track crypto and stock influencer calls with AI. See which gurus are actually right and which ones aren\'t. Real-time prediction accountability.',
     alternates: {
-        canonical: 'https://www.sincethiscall.com/',
+        canonical: '/',
     },
     openGraph: {
         title: 'SinceThisCall – Track Crypto & Stock Influencer Predictions',

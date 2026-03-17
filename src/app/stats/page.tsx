@@ -259,6 +259,55 @@ export default function StatsPage() {
                             </Card>
                         )}
 
+                        {/* SEO Content Section */}
+                        <section className="bg-card/30 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12 space-y-12 mt-12">
+                            <div className="max-w-3xl space-y-4">
+                                <h2 className="text-3xl font-bold tracking-tight">Understanding Platform Performance</h2>
+                                <p className="text-lg text-muted-foreground leading-relaxed">
+                                    Since This Call provides real-time benchmarking for financial influencers across X (Twitter). Our statistics are aggregated from institutional-grade feeds including Yahoo Finance, CoinGecko, and CoinMarketCap.
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-12">
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <Target className="w-5 h-5 text-primary" />
+                                        Data Integrity & Precision
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        Every call is captured at the exact timestamp of the social media post. We track the price at the time of the call ("Entry Price") and compare it against the current market value to calculate live Profit and Loss (PnL).
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5 text-green-500" />
+                                        Win Rate Calculation
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        A "Win" is defined as any call where the current price exceeds the entry price (for bullish calls) or is lower than the entry price (for bearish calls). This simple, binary approach ensures maximum transparency.
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-blue-500" />
+                                        Guru Accountability
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        By indexing thousands of "gurus," we expose the difference between actual market performance and social media narrative. No deleted tweets, no hidden losses—just the tape.
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <BarChart3 className="w-5 h-5 text-purple-500" />
+                                        Market Distribution
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        We cover a broad spectrum of the financial markets, from US Equities and ETFs to top-tier Crypto assets. Our system filters out illiquid "meme coins" to maintain high data quality standards.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
                         {/* Quick Links */}
                         <div className="flex flex-wrap gap-4 justify-center">
                             <Link href="/leaderboard">
