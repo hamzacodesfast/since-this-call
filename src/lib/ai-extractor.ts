@@ -88,11 +88,14 @@ export async function extractCallFromText(
         `;
 
         const provider = process.env.AI_PROVIDER || 'google';
-        const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/api';
+        const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1';
         const ollamaModel = process.env.OLLAMA_MODEL || 'llama3';
 
-        const { createOllama } = await import('ollama-ai-provider');
-        const ollama = createOllama({ baseURL: ollamaBaseUrl });
+        const { createOpenAI } = await import('@ai-sdk/openai');
+        const ollama = createOpenAI({ 
+            baseURL: ollamaBaseUrl,
+            apiKey: 'ollama' // Ignored by Ollama but required by the provider
+        });
 
         const getModel = (name: string) => {
             if (provider === 'ollama') {
