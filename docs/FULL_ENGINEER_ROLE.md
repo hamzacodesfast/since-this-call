@@ -54,7 +54,7 @@ You are the lead engineer for **Since This Call (STC)**, the definitive social p
 ---
 
 ## 🧠 THE INTELLIGENCE (Context Engine)
-The STC "Secret Sauce" lives in `src/lib/ai-extractor.ts`.
+The STC "Secret Sauce" lives in \`src/lib/ai-extractor.ts\`. The system is fully decentralized, running on a local **Ollama** instance (Llama 3.2 1B) to ensure zero-cost, high-privacy extraction.
 
 ### Asset Type Selection
 - **Explicit Context**: The UI forces a choice between "Crypto" and "Stock".
@@ -159,6 +159,7 @@ npm run watch -- --headless  # Run headless (standard for production)
 ## 🎯 Current Engineering Roadmap
 
 ### ✅ Completed
+- **Ollama Migration & Gemini Cleanup (Mar 17, 2026)**: Completely removed Google Gemini dependencies and migrated to local Llama 3.2 1B via Ollama. Implemented confidence normalization for small models and forced IPv4 loopback to resolve VPS connection issues. Codebase is now 100% local-first and zero-cost.
 - **VPS Migration & Optimization (Mar 16, 2026)**: Migrated entire stack (Next.js, Redis, Caddy) to Hetzner VPS. Optimized `generate-tweets.ts` and `backup-data.ts` with Redis Pipelining for remote performance. Standardized documentation across all role guides for the new self-hosted infrastructure.
 - **Data Integrity Rescue (Mar 9, 2026)**: Identified and patched a massive Read-Modify-Write list append duplication bug across Upstash pipelines. Rewrote `dualWrite()` implementation across 26 files to enforce `pipe.del()` atomicity, and purged exact duplicates from 7 targeted user accounts on Production. Fixed an ES Module `dotenv` load-order glitch that was causing localized false-positive verifications. Platform data integrity restored to 100%.
 - **Redis Cost Optimization (Mar 2, 2026)**: Added TTL caches to `/api/tickers`, `/api/profiles`, `/api/metrics`. Pipelined LPUSH writes and deduplicated user history reads in `price-refresher.ts`. Added `Cache-Control` headers for Vercel CDN caching. Estimated ~80% reduction in daily Redis commands.

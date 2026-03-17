@@ -53,7 +53,7 @@ The system has been significantly hardened for scale:
     # Sync with production before starting
     npx tsx scripts/sync-vps-to-local.ts
     ```
-2.  **Environment**: Ensure `.env.local` contains the `REDIS_URL` (VPS) and Gemini keys.
+2.  **Environment**: Ensure `.env.local` contains the `REDIS_URL` (VPS) and Ollama configuration.
 3.  **Vercel Build**: Note that `.vercelignore` excludes non-web folders from build to prevent errors.
 
 ## 📥 Input Format
@@ -79,7 +79,7 @@ npx tsx scripts/bulk-analyze.ts to_analyze.json
 
 **What it does automatically:**
 1.  **Duplicate Check**: Skips tweets already in the history.
-2.  **AI Extraction**: Uses Gemini-2.0-flash with high-accuracy prompts.
+2.  **AI Extraction**: Uses Llama 3.2 70B (Local via Ollama) with high-accuracy prompts.
 3.  **Storage**: Saves to Production via `AnalysisStore`.
 4.  **Auto-Sync**: Pulls the results back to your local environment.
 

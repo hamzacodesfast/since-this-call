@@ -10,6 +10,7 @@ The application runs on a Hetzner VPS using **Docker Compose**.
 - **Redis (Database)**: Self-hosted Redis instance for lightning-fast performance and zero per-request costs.
 - **Caddy (Reverse Proxy)**: Automatically manages SSL certificates (Let's Encrypt) and routes traffic to the container.
 - **Redis Proxy**: A tiny helper that enables legacyREST API support for internal services.
+- **Ollama (AI Engine)**: Local LLM runner (Llama 3.2 1B) for tweet analysis and signal extraction. Runs as a system service.
 
 ## 🚀 Deployment Steps
 
