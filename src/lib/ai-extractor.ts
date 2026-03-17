@@ -88,7 +88,7 @@ export async function extractCallFromText(
         `;
 
         const provider = process.env.AI_PROVIDER || 'google';
-        const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1';
+        const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434/v1';
         const ollamaModel = process.env.OLLAMA_MODEL || 'llama3';
 
         const { createOpenAI } = await import('@ai-sdk/openai');
