@@ -16,7 +16,6 @@ for (const envFile of envPaths) {
     if (!result.error) {
         console.log(`✅ Loaded env from ${envFile}`);
         foundEnv = true;
-        break;
     }
 }
 
