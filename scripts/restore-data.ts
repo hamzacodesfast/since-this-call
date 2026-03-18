@@ -73,6 +73,7 @@ async function restore() {
     // 3. Restore Tickers
     console.log('📈 Restoring ticker data...');
     const tickers = data.trackedTickers || [];
+    let restoredTickers = 0;
     for (const ticker of tickers) {
         await redis.sadd('tracked_tickers', ticker);
         if (data.tickerProfiles[ticker]) {
@@ -80,14 +81,29 @@ async function restore() {
         }
         if (data.tickerIndices[ticker]) {
             await redis.del(`ticker_index:${ticker}`);
-            // tickerIndices is likely [score, member, score, member...] from persistence
             const index = data.tickerIndices[ticker];
+            const pipe = redis.pipeline();
+            let hasValidMembers = false;
+            
             for (let i = 0; i < index.length; i += 2) {
-                await redis.zadd(`ticker_index:${ticker}`, { 
-                    score: parseFloat(index[i+1]), 
-                    member: index[i] 
-                });
+                const member = index[i];
+                const score = parseFloat(index[i+1]);
+                
+                if (!isNaN(score)) {
+                    pipe.zadd(`ticker_index:${ticker}`, { score, member });
+                    hasValidMembers = true;
+                } else {
+                    console.warn(`   ⚠️ Skipping NaN score for ticker ${ticker}, member ${member}`);
+                }
             }
+            
+            if (hasValidMembers) {
+                await pipe.exec();
+            }
+        }
+        restoredTickers++;
+        if (restoredTickers % 100 === 0) {
+            console.log(`   [Restore] Processed ${restoredTickers}/${tickers.length} tickers...`);
         }
     }
     console.log(`   Restored ${tickers.length} tickers`);
