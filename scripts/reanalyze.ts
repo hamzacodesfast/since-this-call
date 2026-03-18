@@ -44,9 +44,15 @@ async function reanalyze() {
     for (const user of users) {
         const historyKey = `user:history:${user}`;
         const historyData = await redis.lrange(historyKey, 0, -1);
-        const history: StoredAnalysis[] = historyData.map((item: any) =>
-            typeof item === 'string' ? JSON.parse(item) : item
-        );
+        const history: StoredAnalysis[] = historyData.map((item: any) => {
+            if (typeof item !== 'string') return item;
+            try {
+                return JSON.parse(item);
+            } catch (e) {
+                console.error(`❌ Failed to parse history item for user ${user}:`, item.substring(0, 100));
+                throw e;
+            }
+        });
 
         const found = history.find(a => a.id === tweetId);
         if (found) {
