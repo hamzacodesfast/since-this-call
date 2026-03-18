@@ -8,10 +8,23 @@ import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import path from 'path';
 
+// Try loading multiple env files
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-// Use local wrapper which connects to 6379 directly
-const redis = new LocalRedisWrapper(process.env.REDIS_URL || 'redis://localhost:6379');
+// Construct Redis URL safely
+let redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const redisPassword = process.env.REDIS_PASSWORD;
+
+if (redisPassword && redisUrl.includes('localhost') && !redisUrl.includes(':') && !redisUrl.includes('@')) {
+    // If we have a password but it's not in the URL, inject it
+    redisUrl = `redis://default:${redisPassword}@localhost:6379`;
+} else if (redisPassword && (redisUrl === 'redis://localhost:6379' || redisUrl === 'redis://127.0.0.1:6379')) {
+    redisUrl = `redis://default:${redisPassword}@127.0.0.1:6379`;
+}
+
+const redis = new LocalRedisWrapper(redisUrl);
 
 interface BackupData {
     timestamp: string;
